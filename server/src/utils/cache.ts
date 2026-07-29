@@ -34,7 +34,9 @@ export const cache = {
     try {
       await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
       await redis.sadd(`tag:${tag}`, key);
-    } catch (err) {}
+    } catch (err) {
+      // Ignore cache errors
+    }
   },
 
   async invalidateTag(tag: string): Promise<void> {
@@ -44,6 +46,8 @@ export const cache = {
       if (keys.length > 0) {
         await redis.del(...keys, `tag:${tag}`);
       }
-    } catch (err) {}
+    } catch (err) {
+      // Ignore cache errors
+    }
   },
 };

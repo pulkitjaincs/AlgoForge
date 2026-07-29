@@ -12,12 +12,12 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const topic = await topicService.updateTopic(req.params.topicId, (req as any).user.id, req.body);
+  const topic = await topicService.updateTopic(req.params.topicId as string, (req as any).user.id, req.body);
   res.status(200).json({ success: true, data: topic });
 };
 
 export const remove = async (req: Request, res: Response) => {
-  await topicService.deleteTopic(req.params.topicId, (req as any).user.id);
+  await topicService.deleteTopic(req.params.topicId as string, (req as any).user.id);
   res.status(200).json({ success: true, data: {} });
 };
 

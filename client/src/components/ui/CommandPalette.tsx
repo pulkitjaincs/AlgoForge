@@ -1,18 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Hash, FolderOpen, BookOpen, CornerDownLeft } from 'lucide-react';
 import { useQuestionStore } from '../../store/useQuestionStore';
 
-export const CommandPalette = ({ isOpen, onClose }) => {
+interface CommandPaletteProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+interface CommandItem {
+    type: 'topic' | 'subtopic' | 'question';
+    id: string;
+    title: string;
+    subtitle: string;
+    isSolved?: boolean;
+}
+
+export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const topics = useQuestionStore(state => state.topics);
     const setNavigationTarget = useQuestionStore(state => state.setNavigationTarget);
-    const inputRef = useRef(null);
-    const scrollRef = useRef(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Flatten data for searching
-    const flattenedItems = [];
+    const flattenedItems: CommandItem[] = [];
     topics.forEach(topic => {
         flattenedItems.push({ type: 'topic', id: topic.id, title: topic.title, subtitle: 'Topic' });
 
@@ -20,9 +32,10 @@ export const CommandPalette = ({ isOpen, onClose }) => {
             flattenedItems.push({ type: 'subtopic', id: st.id, title: st.title, subtitle: `Sub-topic in ${topic.title}` });
 
             st.questions?.forEach(q => {
+                const qId = q._id || q.id || '';
                 flattenedItems.push({
                     type: 'question',
-                    id: q._id,
+                    id: qId,
                     title: q.title,
                     subtitle: `In ${st.title}`,
                     isSolved: q.isSolved
@@ -31,9 +44,10 @@ export const CommandPalette = ({ isOpen, onClose }) => {
         });
 
         topic.questions?.forEach(q => {
+            const qId = q._id || q.id || '';
             flattenedItems.push({
                 type: 'question',
-                id: q._id,
+                id: qId,
                 title: q.title,
                 subtitle: `In ${topic.title}`,
                 isSolved: q.isSolved
@@ -47,36 +61,7 @@ export const CommandPalette = ({ isOpen, onClose }) => {
             item.title.toLowerCase().includes(query.toLowerCase())
         ).slice(0, 7);
 
-    useEffect(() => {
-        if (isOpen) {
-            setQuery('');
-            setSelectedIndex(0);
-            setTimeout(() => inputRef.current?.focus(), 10);
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (!isOpen) return;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev + 1) % Math.max(filteredItems.length, 1));
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev - 1 + filteredItems.length) % Math.max(filteredItems.length, 1));
-            } else if (e.key === 'Enter' && filteredItems[selectedIndex]) {
-                handleSelect(filteredItems[selectedIndex]);
-            } else if (e.key === 'Escape') {
-                onClose();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, filteredItems, selectedIndex]);
-
-    const handleSelect = (item) => {
+    const handleSelect = (item: CommandItem) => {
         setNavigationTarget(item.id);
 
         setTimeout(() => {
@@ -94,7 +79,38 @@ export const CommandPalette = ({ isOpen, onClose }) => {
         onClose();
     };
 
+    useEffect(() => {
+        if (isOpen) {
+            setQuery('');
+            setSelectedIndex(0);
+            setTimeout(() => inputRef.current?.focus(), 10);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!isOpen) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(prev => (prev + 1) % Math.max(filteredItems.length, 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(prev => (prev - 1 + filteredItems.length) % Math.max(filteredItems.length, 1));
+            } else if (e.key === 'Enter' && filteredItems[selectedIndex]) {
+                handleSelect(filteredItems[selectedIndex]);
+            } else if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, filteredItems, selectedIndex, onClose]);
+
     if (!isOpen) return null;
+
+    const modalRoot = document.getElementById('modal-root') || document.body;
 
     return createPortal(
         <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh]">
@@ -210,6 +226,6 @@ export const CommandPalette = ({ isOpen, onClose }) => {
                 </div>
             </div>
         </div>,
-        document.getElementById('modal-root')
+        modalRoot
     );
 };

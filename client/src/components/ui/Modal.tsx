@@ -1,8 +1,18 @@
+import { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
-export const Modal = ({ isOpen, onClose, title, children }) => {
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+}
+
+export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
   if (!isOpen) return null;
+
+  const modalRoot = document.getElementById('modal-root') || document.body;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -23,6 +33,6 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
         {children}
       </div>
     </div>,
-    document.getElementById('modal-root')
+    modalRoot
   );
 };

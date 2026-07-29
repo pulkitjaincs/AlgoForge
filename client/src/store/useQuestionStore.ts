@@ -1,18 +1,44 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { Topic, SubTopic, Question } from '../types';
 
-export const useQuestionStore = create(
+export interface QuestionState {
+    topics: Topic[];
+    loading: boolean;
+    navigationTarget: string | null;
+
+    setTopics: (topics: Topic[]) => void;
+    setNavigationTarget: (id: string | null) => void;
+    addTopic: (title: string, description?: string) => Promise<void>;
+    deleteTopic: (topicId: string) => Promise<void>;
+    editTopic: (topicId: string, newTitle: string, newDescription?: string) => Promise<void>;
+    addSubTopic: (topicId: string, title: string) => Promise<void>;
+    deleteSubTopic: (topicId: string, subTopicId: string) => Promise<void>;
+    editSubTopic: (topicId: string, subTopicId: string, newTitle: string) => Promise<void>;
+    addQuestion: (topicId: string, subTopicId: string | null, questionData: Partial<Question>) => Promise<void>;
+    deleteQuestion: (topicId: string, subTopicId: string | null, questionId: string) => Promise<void>;
+    editQuestion: (topicId: string, subTopicId: string | null, questionId: string, updatedData: Partial<Question>) => Promise<void>;
+    toggleSolved: (topicId: string, subTopicId: string | null, questionId: string) => Promise<void>;
+    toggleStarred: (topicId: string, subTopicId: string | null, questionId: string) => Promise<void>;
+    updateNotes: (topicId: string, subTopicId: string | null, questionId: string, notes: string) => Promise<void>;
+    reorderTopics: (startIndex: number, endIndex: number) => void;
+    reorderSubTopics: (topicId: string, startIndex: number, endIndex: number) => void;
+    reorderQuestions: (topicId: string, subTopicId: string | null, startIndex: number, endIndex: number) => void;
+    resetProgress: () => Promise<boolean>;
+    fullReset: () => Promise<boolean>;
+}
+
+export const useQuestionStore = create<QuestionState>()(
     persist(
         (set, get) => ({
             topics: [],
             loading: false,
             navigationTarget: null,
 
-            setTopics: (topics) => set({ topics }),
-            setNavigationTarget: (id) => set({ navigationTarget: id }),
+            setTopics: (topics: Topic[]) => set({ topics }),
+            setNavigationTarget: (id: string | null) => set({ navigationTarget: id }),
 
-
-            addTopic: async (title, description = '') => {
+            addTopic: async (title: string, description = '') => {
                 try {
                     const response = await fetch('/api/topics', {
                         method: 'POST',
@@ -29,7 +55,7 @@ export const useQuestionStore = create(
                     console.error('Failed to add topic:', error);
                 }
             },
-            deleteTopic: async (topicId) => {
+            deleteTopic: async (topicId: string) => {
                 try {
                     const response = await fetch(`/api/topics/${topicId}`, { method: 'DELETE' });
                     const result = await response.json();
@@ -42,7 +68,7 @@ export const useQuestionStore = create(
                     console.error('Failed to delete topic:', error);
                 }
             },
-            editTopic: async (topicId, newTitle, newDescription) => {
+            editTopic: async (topicId: string, newTitle: string, newDescription?: string) => {
                 try {
                     const response = await fetch(`/api/topics/${topicId}`, {
                         method: 'PUT',
@@ -60,7 +86,7 @@ export const useQuestionStore = create(
                 }
             },
 
-            addSubTopic: async (topicId, title) => {
+            addSubTopic: async (topicId: string, title: string) => {
                 try {
                     const response = await fetch(`/api/topics/${topicId}/subtopics`, {
                         method: 'POST',
@@ -81,7 +107,7 @@ export const useQuestionStore = create(
                 }
             },
 
-            deleteSubTopic: async (topicId, subTopicId) => {
+            deleteSubTopic: async (topicId: string, subTopicId: string) => {
                 try {
                     const response = await fetch(`/api/topics/${topicId}/subtopics/${subTopicId}`, { method: 'DELETE' });
                     const result = await response.json();
@@ -89,7 +115,7 @@ export const useQuestionStore = create(
                         set((state) => ({
                             topics: state.topics.map(t => t.id === topicId ? {
                                 ...t,
-                                subTopics: t.subTopics.filter(st => st.id !== subTopicId)
+                                subTopics: (t.subTopics || []).filter(st => st.id !== subTopicId)
                             } : t)
                         }));
                     }
@@ -97,7 +123,7 @@ export const useQuestionStore = create(
                     console.error('Failed to delete sub-topic:', error);
                 }
             },
-            editSubTopic: async (topicId, subTopicId, newTitle) => {
+            editSubTopic: async (topicId: string, subTopicId: string, newTitle: string) => {
                 try {
                     const response = await fetch(`/api/subtopics/${subTopicId}`, {
                         method: 'PUT',
@@ -109,7 +135,7 @@ export const useQuestionStore = create(
                         set((state) => ({
                             topics: state.topics.map(t => t.id === topicId ? {
                                 ...t,
-                                subTopics: t.subTopics.map(st => st.id === subTopicId ? { ...st, title: newTitle } : st)
+                                subTopics: (t.subTopics || []).map(st => st.id === subTopicId ? { ...st, title: newTitle } : st)
                             } : t)
                         }));
                     }
@@ -118,7 +144,7 @@ export const useQuestionStore = create(
                 }
             },
 
-            addQuestion: async (topicId, subTopicId, questionData) => {
+            addQuestion: async (topicId: string, subTopicId: string | null, questionData: Partial<Question>) => {
                 try {
                     const url = subTopicId
                         ? `/api/topics/${topicId}/subtopics/${subTopicId}/questions`
@@ -142,7 +168,7 @@ export const useQuestionStore = create(
 
                                 return {
                                     ...topic,
-                                    subTopics: topic.subTopics.map(st =>
+                                    subTopics: (topic.subTopics || []).map(st =>
                                         st.id === subTopicId
                                             ? { ...st, questions: [...(st.questions || []), result.data] }
                                             : st
@@ -157,7 +183,7 @@ export const useQuestionStore = create(
                 }
             },
 
-            deleteQuestion: async (topicId, subTopicId, questionId) => {
+            deleteQuestion: async (topicId: string, subTopicId: string | null, questionId: string) => {
                 try {
                     const url = subTopicId
                         ? `/api/topics/${topicId}/subtopics/${subTopicId}/questions/${questionId}`
@@ -172,14 +198,14 @@ export const useQuestionStore = create(
                                 if (topic.id !== topicId) return topic;
 
                                 if (!subTopicId) {
-                                    return { ...topic, questions: topic.questions.filter(q => q._id !== questionId) };
+                                    return { ...topic, questions: (topic.questions || []).filter(q => (q._id || q.id) !== questionId) };
                                 }
 
                                 return {
                                     ...topic,
-                                    subTopics: topic.subTopics.map(st =>
+                                    subTopics: (topic.subTopics || []).map(st =>
                                         st.id === subTopicId
-                                            ? { ...st, questions: st.questions.filter(q => q._id !== questionId) }
+                                            ? { ...st, questions: (st.questions || []).filter(q => (q._id || q.id) !== questionId) }
                                             : st
                                     )
                                 };
@@ -192,7 +218,7 @@ export const useQuestionStore = create(
                 }
             },
 
-            editQuestion: async (topicId, subTopicId, questionId, updatedData) => {
+            editQuestion: async (topicId: string, subTopicId: string | null, questionId: string, updatedData: Partial<Question>) => {
                 try {
                     const response = await fetch(`/api/questions/${questionId}`, {
                         method: 'PUT',
@@ -209,17 +235,17 @@ export const useQuestionStore = create(
                                 if (!subTopicId) {
                                     return {
                                         ...topic,
-                                        questions: topic.questions.map(q =>
-                                            q._id === questionId ? { ...q, ...result.data } : q
+                                        questions: (topic.questions || []).map(q =>
+                                            (q._id || q.id) === questionId ? { ...q, ...result.data } : q
                                         )
                                     };
                                 }
 
                                 return {
                                     ...topic,
-                                    subTopics: topic.subTopics.map(st =>
+                                    subTopics: (topic.subTopics || []).map(st =>
                                         st.id === subTopicId
-                                            ? { ...st, questions: st.questions.map(q => q._id === questionId ? { ...q, ...result.data } : q) }
+                                            ? { ...st, questions: (st.questions || []).map(q => (q._id || q.id) === questionId ? { ...q, ...result.data } : q) }
                                             : st
                                     )
                                 };
@@ -232,24 +258,24 @@ export const useQuestionStore = create(
                 }
             },
 
-            toggleSolved: async (topicId, subTopicId, questionId) => {
+            toggleSolved: async (topicId: string, subTopicId: string | null, questionId: string) => {
                 const previousTopics = get().topics;
 
                 // Optimistic update
                 set((state) => ({
                     topics: state.topics.map(topic => {
                         if (topic.id !== topicId) return topic;
-                        const updateQ = q => q._id === questionId ? { ...q, isSolved: !q.isSolved } : q;
+                        const updateQ = (q: Question) => (q._id || q.id) === questionId ? { ...q, isSolved: !q.isSolved } : q;
 
                         if (!subTopicId) {
-                            return { ...topic, questions: topic.questions.map(updateQ) };
+                            return { ...topic, questions: (topic.questions || []).map(updateQ) };
                         }
 
                         return {
                             ...topic,
-                            subTopics: topic.subTopics.map(st =>
+                            subTopics: (topic.subTopics || []).map(st =>
                                 st.id === subTopicId
-                                    ? { ...st, questions: st.questions.map(updateQ) }
+                                    ? { ...st, questions: (st.questions || []).map(updateQ) }
                                     : st
                             )
                         };
@@ -269,24 +295,24 @@ export const useQuestionStore = create(
                 }
             },
 
-            toggleStarred: async (topicId, subTopicId, questionId) => {
+            toggleStarred: async (topicId: string, subTopicId: string | null, questionId: string) => {
                 const previousTopics = get().topics;
 
                 // Optimistic update
                 set((state) => ({
                     topics: state.topics.map(topic => {
                         if (topic.id !== topicId) return topic;
-                        const updateQ = q => q._id === questionId ? { ...q, isStarred: !q.isStarred } : q;
+                        const updateQ = (q: Question) => (q._id || q.id) === questionId ? { ...q, isStarred: !q.isStarred } : q;
 
                         if (!subTopicId) {
-                            return { ...topic, questions: topic.questions.map(updateQ) };
+                            return { ...topic, questions: (topic.questions || []).map(updateQ) };
                         }
 
                         return {
                             ...topic,
-                            subTopics: topic.subTopics.map(st =>
+                            subTopics: (topic.subTopics || []).map(st =>
                                 st.id === subTopicId
-                                    ? { ...st, questions: st.questions.map(updateQ) }
+                                    ? { ...st, questions: (st.questions || []).map(updateQ) }
                                     : st
                             )
                         };
@@ -306,24 +332,24 @@ export const useQuestionStore = create(
                 }
             },
 
-            updateNotes: async (topicId, subTopicId, questionId, notes) => {
+            updateNotes: async (topicId: string, subTopicId: string | null, questionId: string, notes: string) => {
                 const previousTopics = get().topics;
 
                 // Optimistic update
                 set((state) => ({
                     topics: state.topics.map(topic => {
                         if (topic.id !== topicId) return topic;
-                        const updateQ = q => q._id === questionId ? { ...q, notes } : q;
+                        const updateQ = (q: Question) => (q._id || q.id) === questionId ? { ...q, notes } : q;
 
                         if (!subTopicId) {
-                            return { ...topic, questions: topic.questions.map(updateQ) };
+                            return { ...topic, questions: (topic.questions || []).map(updateQ) };
                         }
 
                         return {
                             ...topic,
-                            subTopics: topic.subTopics.map(st =>
+                            subTopics: (topic.subTopics || []).map(st =>
                                 st.id === subTopicId
-                                    ? { ...st, questions: st.questions.map(updateQ) }
+                                    ? { ...st, questions: (st.questions || []).map(updateQ) }
                                     : st
                             )
                         };
@@ -345,29 +371,29 @@ export const useQuestionStore = create(
                 }
             },
 
-            reorderTopics: (startIndex, endIndex) => set((state) => {
+            reorderTopics: (startIndex: number, endIndex: number) => set((state) => {
                 const newTopics = [...state.topics];
                 const [removed] = newTopics.splice(startIndex, 1);
                 newTopics.splice(endIndex, 0, removed);
                 return { topics: newTopics };
             }),
 
-            reorderSubTopics: (topicId, startIndex, endIndex) => set((state) => ({
+            reorderSubTopics: (topicId: string, startIndex: number, endIndex: number) => set((state) => ({
                 topics: state.topics.map(topic => {
                     if (topic.id !== topicId) return topic;
-                    const newSubTopics = [...topic.subTopics];
+                    const newSubTopics = [...(topic.subTopics || [])];
                     const [removed] = newSubTopics.splice(startIndex, 1);
                     newSubTopics.splice(endIndex, 0, removed);
                     return { ...topic, subTopics: newSubTopics };
                 })
             })),
 
-            reorderQuestions: (topicId, subTopicId, startIndex, endIndex) => set((state) => ({
+            reorderQuestions: (topicId: string, subTopicId: string | null, startIndex: number, endIndex: number) => set((state) => ({
                 topics: state.topics.map(topic => {
                     if (topic.id !== topicId) return topic;
 
                     if (!subTopicId) {
-                        const newQuestions = [...topic.questions];
+                        const newQuestions = [...(topic.questions || [])];
                         const [removed] = newQuestions.splice(startIndex, 1);
                         newQuestions.splice(endIndex, 0, removed);
                         return { ...topic, questions: newQuestions };
@@ -375,9 +401,9 @@ export const useQuestionStore = create(
 
                     return {
                         ...topic,
-                        subTopics: topic.subTopics.map(st => {
+                        subTopics: (topic.subTopics || []).map(st => {
                             if (st.id !== subTopicId) return st;
-                            const newQuestions = [...st.questions];
+                            const newQuestions = [...(st.questions || [])];
                             const [removed] = newQuestions.splice(startIndex, 1);
                             newQuestions.splice(endIndex, 0, removed);
                             return { ...st, questions: newQuestions };

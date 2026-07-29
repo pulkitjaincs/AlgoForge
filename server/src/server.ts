@@ -1,10 +1,8 @@
 import 'dotenv/config';
-import app from './src/app.js';
-import { env } from './src/config/env.js';
-import { logger } from './src/utils/logger.js';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import app from './app.js';
+import { env } from './config/env.js';
+import { logger } from './utils/logger.js';
+import { prisma } from './config/database.js';
 
 const startServer = async () => {
     try {

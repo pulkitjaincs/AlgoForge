@@ -1,8 +1,17 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { LinkIcon, Youtube, Building2, Globe, Star, Check } from 'lucide-react';
+import { Question } from '../../types';
 
-export const AddQuestionModal = ({ isOpen, onClose, onSubmit, initialData = null, mode = 'add' }) => {
+interface AddQuestionModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (data: Partial<Question> & { companyTags: string[] }) => void;
+    initialData?: any;
+    mode?: 'add' | 'edit';
+}
+
+export const AddQuestionModal = ({ isOpen, onClose, onSubmit, initialData = null, mode = 'add' }: AddQuestionModalProps) => {
     const [formData, setFormData] = useState({
         title: '',
         problemUrl: '',
@@ -17,14 +26,15 @@ export const AddQuestionModal = ({ isOpen, onClose, onSubmit, initialData = null
     useEffect(() => {
         if (isOpen) {
             if (initialData && mode === 'edit') {
+                const qObj = initialData.questionId || initialData;
                 setFormData({
-                    title: initialData.title || '',
-                    problemUrl: initialData.questionId?.problemUrl || '',
-                    difficulty: initialData.questionId?.difficulty || 'Medium',
-                    platform: initialData.questionId?.platform || 'leetcode',
-                    resource: initialData.questionId?.resource || '',
-                    companyTags: Array.isArray(initialData.questionId?.companyTags)
-                        ? initialData.questionId.companyTags.join(', ')
+                    title: initialData.title || qObj.title || '',
+                    problemUrl: qObj.problemUrl || '',
+                    difficulty: qObj.difficulty || 'Medium',
+                    platform: qObj.platform || 'leetcode',
+                    resource: qObj.resource || '',
+                    companyTags: Array.isArray(qObj.companyTags)
+                        ? qObj.companyTags.join(', ')
                         : '',
                     isStarred: initialData.isStarred || false,
                     notes: initialData.notes || ''
@@ -44,7 +54,7 @@ export const AddQuestionModal = ({ isOpen, onClose, onSubmit, initialData = null
         }
     }, [isOpen, initialData, mode]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.title.trim()) return;
 
@@ -61,7 +71,7 @@ export const AddQuestionModal = ({ isOpen, onClose, onSubmit, initialData = null
         onClose();
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };

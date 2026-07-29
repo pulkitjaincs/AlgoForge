@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 export function ThemeToggle() {
-    const [theme, setTheme] = useState(() => {
+    const [theme, setTheme] = useState<string>(() => {
         return localStorage.getItem('theme') || 'system';
     });
 
@@ -10,7 +10,7 @@ export function ThemeToggle() {
         const root = window.document.documentElement;
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-        const applyTheme = (currentTheme) => {
+        const applyTheme = (currentTheme: string) => {
             const updateDOM = () => {
                 root.classList.remove('light', 'dark');
                 if (currentTheme === 'system') {
@@ -22,12 +22,13 @@ export function ThemeToggle() {
                 localStorage.setItem('theme', currentTheme);
             };
 
-            if (!document.startViewTransition) {
+            const doc = document as unknown as { startViewTransition?: (cb: () => void) => void };
+            if (!doc.startViewTransition) {
                 updateDOM();
                 return;
             }
 
-            document.startViewTransition(() => updateDOM());
+            doc.startViewTransition(() => updateDOM());
         };
 
         applyTheme(theme);

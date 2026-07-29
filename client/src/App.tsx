@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -6,6 +6,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -48,7 +49,7 @@ function App() {
     progress: totalNum > 0 ? Math.round((solvedNum / totalNum) * 100) : 0
   };
 
-  const handleAddTopic = (e) => {
+  const handleAddTopic = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTopicTitle.trim()) return;
     addTopic(newTopicTitle, newTopicDescription);
@@ -72,7 +73,7 @@ function App() {
   useEffect(() => {
     fetchData();
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
@@ -83,11 +84,11 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setTopics]);
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
       const oldIndex = topics.findIndex((t) => t.id === active.id);
-      const newIndex = topics.findIndex((t) => t.id === over.id);
+      const newIndex = topics.findIndex((t) => t.id === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderTopics(oldIndex, newIndex);
       }

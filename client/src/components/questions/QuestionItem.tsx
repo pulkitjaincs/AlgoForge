@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { ExternalLink, Check, Trash2, Pencil, Star, StickyNote, Building2 } from 'lucide-react';
 import { useQuestionStore } from '../../store/useQuestionStore';
 
-export const QuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
+interface QuestionItemProps {
+    question: any;
+    topicId: string;
+    subTopicId: string | null;
+    onEdit: () => void;
+}
+
+export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: QuestionItemProps) => {
     const toggleSolved = useQuestionStore(state => state.toggleSolved);
     const toggleStarred = useQuestionStore(state => state.toggleStarred);
     const updateNotes = useQuestionStore(state => state.updateNotes);
@@ -10,35 +17,39 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [noteText, setNoteText] = useState(question.notes || '');
 
-    const difficultyClass = {
+    const qId = question._id || question.id || '';
+    const qObj = question.questionId || question;
+
+    const difficultyMap: Record<string, string> = {
         'Basic': 'badge-easy bg-brand-accent/15 text-brand-accent border-brand-accent/20',
         'Easy': 'badge-easy',
         'Medium': 'badge-medium',
         'Hard': 'badge-hard'
-    }[question.questionId?.difficulty] || 'badge-medium';
+    };
+    const difficultyClass = difficultyMap[qObj.difficulty] || 'badge-medium';
 
-    const companies = question.questionId?.companyTags || [];
+    const companies: string[] = qObj.companyTags || [];
 
     const handleNotesToggle = () => {
         if (isNotesOpen) {
-            updateNotes(topicId, subTopicId, question._id, noteText);
+            updateNotes(topicId, subTopicId, qId, noteText);
         }
         setIsNotesOpen(!isNotesOpen);
     };
 
     return (
-        <div id={question._id} className="glass-subtle p-3 hover:border-brand-primary/30 transition-all duration-300 group/item">
+        <div id={qId} className="glass-subtle p-3 hover:border-brand-primary/30 transition-all duration-300 group/item">
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => toggleSolved(topicId, subTopicId, question._id)}
+                        onClick={() => toggleSolved(topicId, subTopicId, qId)}
                         className={`checkbox-solved ${question.isSolved ? 'checked' : ''}`}
                     >
                         {question.isSolved && <Check className="w-3 h-3 text-white" />}
                     </button>
 
                     <button
-                        onClick={() => toggleStarred(topicId, subTopicId, question._id)}
+                        onClick={() => toggleStarred(topicId, subTopicId, qId)}
                         className={`transition-colors duration-200 ${question.isStarred ? 'text-warning' : 'text-text-muted hover:text-warning'}`}
                     >
                         <Star className={`w-4 h-4 ${question.isStarred ? 'fill-current' : ''}`} />
@@ -53,7 +64,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
                                 className="text-[10px] uppercase tracking-wider text-text-muted font-bold px-1.5 py-0.5 border border-white/5"
                                 style={{ borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255,255,255,0.05)' }}
                             >
-                                {question.questionId?.platform}
+                                {qObj.platform || 'leetcode'}
                             </span>
                         </div>
                     </div>
@@ -61,13 +72,13 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
 
                 <div className="flex items-center gap-2">
                     <span className={`badge ${difficultyClass} hidden sm:inline-flex`}>
-                        {question.questionId?.difficulty}
+                        {qObj.difficulty || 'Medium'}
                     </span>
 
                     <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover/item:opacity-100 transition-all">
-                        {question.questionId?.problemUrl && (
+                        {qObj.problemUrl && (
                             <a
-                                href={question.questionId.problemUrl}
+                                href={qObj.problemUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="btn-icon text-brand-primary"
@@ -91,7 +102,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
                             <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                            onClick={() => deleteQuestion(topicId, subTopicId, question._id)}
+                            onClick={() => deleteQuestion(topicId, subTopicId, qId)}
                             className="btn-danger"
                             title="Delete"
                         >
@@ -109,7 +120,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
                         onChange={(e) => setNoteText(e.target.value)}
                         placeholder="Add your private notes here..."
                         className="input-field min-h-[80px] text-sm py-2"
-                        onBlur={() => updateNotes(topicId, subTopicId, question._id, noteText)}
+                        onBlur={() => updateNotes(topicId, subTopicId, qId, noteText)}
                     />
                     <div className="flex justify-end mt-1">
                         <span className="text-[10px] text-text-muted">Auto-saves on blur</span>

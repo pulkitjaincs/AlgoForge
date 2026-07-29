@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, BookOpen, GripVertical, Trash2, Plus, FolderOpen, Pencil } from 'lucide-react';
@@ -8,9 +8,18 @@ import { QuestionItem } from './QuestionItem';
 import { useQuestionStore } from '../../store/useQuestionStore';
 import { AddQuestionModal } from '../ui/AddQuestionModal';
 import { Modal } from '../ui/Modal';
+import { Topic, SubTopic, Question } from '../../types';
 
-const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question._id });
+interface SortableQuestionItemProps {
+  question: Question;
+  topicId: string;
+  subTopicId: string | null;
+  onEdit: (q: Question) => void;
+}
+
+const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }: SortableQuestionItemProps) => {
+  const itemId = question._id || question.id || '';
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: itemId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -36,23 +45,32 @@ const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }) => {
   );
 };
 
-const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTopic, onEditQuestion }) => {
+interface SortableSubTopicSectionProps {
+  subTopic: SubTopic;
+  topicId: string;
+  onAddQuestion: (stId: string) => void;
+  onEditSubTopic: (st: SubTopic) => void;
+  onEditQuestion: (stId: string, q: Question) => void;
+}
+
+const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTopic, onEditQuestion }: SortableSubTopicSectionProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const deleteSubTopic = useQuestionStore(state => state.deleteSubTopic);
   const reorderQuestions = useQuestionStore(state => state.reorderQuestions);
   const navigationTarget = useQuestionStore(state => state.navigationTarget);
 
+  const questions = subTopic.questions || [];
+
   useEffect(() => {
     if (navigationTarget) {
-      const isTargetChild = subTopic.questions.some(q => q._id === navigationTarget);
+      const isTargetChild = questions.some(q => (q._id || q.id) === navigationTarget);
       if (isTargetChild || subTopic.id === navigationTarget) {
         setIsOpen(true);
       }
     }
-  }, [navigationTarget, subTopic.id, subTopic.questions]);
+  }, [navigationTarget, subTopic.id, questions]);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subTopic.id });
-
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -66,19 +84,19 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleQuestionDragEnd = (event) => {
+  const handleQuestionDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
-      const oldIndex = subTopic.questions.findIndex(q => q._id === active.id);
-      const newIndex = subTopic.questions.findIndex(q => q._id === over.id);
+      const oldIndex = questions.findIndex(q => (q._id || q.id) === active.id);
+      const newIndex = questions.findIndex(q => (q._id || q.id) === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderQuestions(topicId, subTopic.id, oldIndex, newIndex);
       }
     }
   };
 
-  const solvedCount = subTopic.questions.filter(q => q.isSolved).length;
-  const progress = (solvedCount / subTopic.questions.length) * 100 || 0;
+  const solvedCount = questions.filter(q => q.isSolved).length;
+  const progress = questions.length > 0 ? (solvedCount / questions.length) * 100 : 0;
 
   return (
     <div ref={setNodeRef} style={style} id={subTopic.id} className="glass-subtle overflow-hidden group/subtopic">
@@ -100,7 +118,7 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
             </div>
             <div>
               <h3 className="text-sm font-medium text-text-main">{subTopic.title}</h3>
-              <p className="text-xs text-text-muted">{solvedCount} / {subTopic.questions.length} solved</p>
+              <p className="text-xs text-text-muted">{solvedCount} / {questions.length} solved</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -127,11 +145,11 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
       {isOpen && (
         <div className="p-3 pt-0 border-t border-white/5 animate-fade-in">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleQuestionDragEnd}>
-            <SortableContext items={subTopic.questions.map(q => q._id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={questions.map(q => (q._id || q.id || ''))} strategy={verticalListSortingStrategy}>
               <div className="space-y-1 mt-3">
-                {subTopic.questions.map(q => (
+                {questions.map(q => (
                   <SortableQuestionItem
-                    key={q._id}
+                    key={q._id || q.id}
                     question={q}
                     topicId={topicId}
                     subTopicId={subTopic.id}
@@ -141,7 +159,7 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
               </div>
             </SortableContext>
           </DndContext>
-          {subTopic.questions.length === 0 && (
+          {questions.length === 0 && (
             <p className="text-xs text-text-muted italic py-4 text-center">No questions yet</p>
           )}
         </div>
@@ -150,7 +168,11 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
   );
 };
 
-export const TopicCard = ({ topic }) => {
+interface TopicCardProps {
+  topic: Topic;
+}
+
+export const TopicCard = ({ topic }: TopicCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const deleteTopic = useQuestionStore(state => state.deleteTopic);
   const addSubTopic = useQuestionStore(state => state.addSubTopic);
@@ -162,20 +184,33 @@ export const TopicCard = ({ topic }) => {
   const reorderQuestions = useQuestionStore(state => state.reorderQuestions);
   const navigationTarget = useQuestionStore(state => state.navigationTarget);
 
+  const subTopics = topic.subTopics || [];
+  const questions = topic.questions || [];
+
   useEffect(() => {
     if (navigationTarget) {
-      const isTargetChild = topic.questions?.some(q => q._id === navigationTarget) ||
-        topic.subTopics?.some(st => st.id === navigationTarget || st.questions?.some(q => q._id === navigationTarget));
+      const isTargetChild = questions.some(q => (q._id || q.id) === navigationTarget) ||
+        subTopics.some(st => st.id === navigationTarget || st.questions?.some(q => (q._id || q.id) === navigationTarget));
       if (isTargetChild || topic.id === navigationTarget) {
         setIsOpen(true);
       }
     }
-  }, [navigationTarget, topic.id, topic.questions, topic.subTopics]);
+  }, [navigationTarget, topic.id, questions, subTopics]);
 
   // Shared Modals State
 
-  const [questionModal, setQuestionModal] = useState({ isOpen: false, subTopicId: null, mode: 'add', initialData: null });
-  const [subTopicModal, setSubTopicModal] = useState({ isOpen: false, subTopic: null });
+  const [questionModal, setQuestionModal] = useState<{
+    isOpen: boolean;
+    subTopicId: string | null;
+    mode: 'add' | 'edit';
+    initialData: any;
+  }>({ isOpen: false, subTopicId: null, mode: 'add', initialData: null });
+
+  const [subTopicModal, setSubTopicModal] = useState<{
+    isOpen: boolean;
+    subTopic: SubTopic | null;
+  }>({ isOpen: false, subTopic: null });
+
   const [topicModal, setTopicModal] = useState({ isOpen: false, title: topic.title, description: topic.description || '' });
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: topic.id });
@@ -192,53 +227,55 @@ export const TopicCard = ({ topic }) => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleSubTopicDragEnd = (event) => {
+  const handleSubTopicDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
-      const oldIndex = topic.subTopics.findIndex(st => st.id === active.id);
-      const newIndex = topic.subTopics.findIndex(st => st.id === over.id);
+      const oldIndex = subTopics.findIndex(st => st.id === active.id);
+      const newIndex = subTopics.findIndex(st => st.id === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderSubTopics(topic.id, oldIndex, newIndex);
       }
     }
   };
 
-  const handleQuestionDragEnd = (event) => {
+  const handleQuestionDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
-      const oldIndex = topic.questions.findIndex(q => q._id === active.id);
-      const newIndex = topic.questions.findIndex(q => q._id === over.id);
+      const oldIndex = questions.findIndex(q => (q._id || q.id) === active.id);
+      const newIndex = questions.findIndex(q => (q._id || q.id) === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderQuestions(topic.id, null, oldIndex, newIndex);
       }
     }
   };
 
-  const handleQuestionSubmit = (data) => {
+  const handleQuestionSubmit = (data: Partial<Question>) => {
     if (questionModal.mode === 'add') {
       addQuestion(topic.id, questionModal.subTopicId, data);
     } else {
-      editQuestion(topic.id, questionModal.subTopicId, questionModal.initialData._id, data);
+      const qId = questionModal.initialData?._id || questionModal.initialData?.id || '';
+      editQuestion(topic.id, questionModal.subTopicId, qId, data);
     }
     setQuestionModal({ ...questionModal, isOpen: false });
   };
 
-  const handleSubTopicSubmit = (e) => {
+  const handleSubTopicSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    editSubTopic(topic.id, subTopicModal.subTopic.id, subTopicModal.subTopic.title);
+    if (subTopicModal.subTopic) {
+      editSubTopic(topic.id, subTopicModal.subTopic.id, subTopicModal.subTopic.title);
+    }
     setSubTopicModal({ ...subTopicModal, isOpen: false });
   };
 
-  const handleTopicSubmit = (e) => {
+  const handleTopicSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     editTopic(topic.id, topicModal.title, topicModal.description);
     setTopicModal({ ...topicModal, isOpen: false });
   };
 
-  const totalQuestions = (topic.questions?.length || 0) +
-    (topic.subTopics?.reduce((acc, st) => acc + (st.questions?.length || 0), 0) || 0);
-  const solvedQuestions = (topic.questions?.filter(q => q.isSolved).length || 0) +
-    (topic.subTopics?.reduce((acc, st) => acc + (st.questions?.filter(q => q.isSolved).length || 0), 0) || 0);
+  const totalQuestions = questions.length + subTopics.reduce((acc, st) => acc + (st.questions?.length || 0), 0);
+  const solvedQuestions = questions.filter(q => q.isSolved).length +
+    subTopics.reduce((acc, st) => acc + (st.questions?.filter(q => q.isSolved).length || 0), 0);
   const progress = totalQuestions > 0 ? (solvedQuestions / totalQuestions) * 100 : 0;
 
   return (
@@ -260,7 +297,7 @@ export const TopicCard = ({ topic }) => {
               <h2 className="text-lg font-semibold text-text-main">{topic.title}</h2>
               <p className="text-sm text-text-muted">
                 {solvedQuestions} / {totalQuestions} solved
-                {topic.subTopics?.length > 0 && ` • ${topic.subTopics.length} sub-topics`}
+                {subTopics.length > 0 && ` • ${subTopics.length} sub-topics`}
               </p>
             </div>
           </div>
@@ -298,11 +335,11 @@ export const TopicCard = ({ topic }) => {
 
       {isOpen && (
         <div className="px-4 pb-4 space-y-3 animate-fade-in">
-          {topic.subTopics?.length > 0 && (
+          {subTopics.length > 0 && (
             <div className="space-y-2">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubTopicDragEnd}>
-                <SortableContext items={topic.subTopics.map(st => st.id)} strategy={verticalListSortingStrategy}>
-                  {topic.subTopics.map(st => (
+                <SortableContext items={subTopics.map(st => st.id)} strategy={verticalListSortingStrategy}>
+                  {subTopics.map(st => (
                     <SortableSubTopicSection
                       key={st.id}
                       subTopic={st}
@@ -317,13 +354,13 @@ export const TopicCard = ({ topic }) => {
             </div>
           )}
 
-          {topic.questions?.length > 0 && (
+          {questions.length > 0 && (
             <div className="space-y-1 pt-2 border-t border-white/5">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleQuestionDragEnd}>
-                <SortableContext items={topic.questions.map(q => q._id)} strategy={verticalListSortingStrategy}>
-                  {topic.questions.map(q => (
+                <SortableContext items={questions.map(q => (q._id || q.id || ''))} strategy={verticalListSortingStrategy}>
+                  {questions.map(q => (
                     <SortableQuestionItem
-                      key={q._id}
+                      key={q._id || q.id}
                       question={q}
                       topicId={topic.id}
                       subTopicId={null}
@@ -360,7 +397,11 @@ export const TopicCard = ({ topic }) => {
               type="text"
               className="input-field"
               value={subTopicModal.subTopic?.title || ''}
-              onChange={(e) => setSubTopicModal({ ...subTopicModal, subTopic: { ...subTopicModal.subTopic, title: e.target.value } })}
+              onChange={(e) => {
+                if (subTopicModal.subTopic) {
+                  setSubTopicModal({ ...subTopicModal, subTopic: { ...subTopicModal.subTopic, title: e.target.value } });
+                }
+              }}
               required
             />
           </div>

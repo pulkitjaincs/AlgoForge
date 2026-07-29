@@ -1,20 +1,18 @@
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
-import { connectDB, disconnectDB } from '../config/database.js';
-import { Topic } from '../models/Topic.model.js';
-import SubTopic from '../models/SubTopic.model.js';
-import Question from '../models/Question.model.js';
+import { prisma } from '../config/database.js';
+
+const ALLOWED_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codestudio', 'hackerrank', 'codechef', 'interviewbit', 'ninjas', 'other'] as const;
 
 const seedData = async () => {
     try {
-        const connected = await connectDB();
-        if (!connected) return;
+        await prisma.$connect();
 
         console.log('🧹 Clearing existing data...');
-        await Question.deleteMany({});
-        await SubTopic.deleteMany({});
-        await Topic.deleteMany({});
+        await prisma.question.deleteMany({});
+        await prisma.subTopic.deleteMany({});
+        await prisma.topic.deleteMany({});
 
         const filePath = path.join(process.cwd(), '..', 'sheet.json');
         const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -23,79 +21,85 @@ const seedData = async () => {
 
         console.log(`📦 Processing ${questions.length} questions...`);
 
-        const topicsMap = new Map();
+        // We need a seed user — use the first user in the DB, or skip if none exists
+        const seedUser = await prisma.user.findFirst();
+        if (!seedUser) {
+            console.warn('⚠️  No users found in the database. Create a user first, then re-run the seed.');
+            return;
+        }
+
+        const topicsMap = new Map<string, Map<string, any[]>>();
 
         // Group questions by Topic and Sub-Topic
         for (const q of questions) {
-            const topicTitle = q.topic || 'General';
-            const subTopicTitle = q.subTopic || 'Miscellaneous';
+            const topicTitle: string = q.topic || 'General';
+            const subTopicTitle: string = q.subTopic || 'Miscellaneous';
 
             if (!topicsMap.has(topicTitle)) {
                 topicsMap.set(topicTitle, new Map());
             }
 
-            const subTopicsMap = topicsMap.get(topicTitle);
+            const subTopicsMap = topicsMap.get(topicTitle)!;
             if (!subTopicsMap.has(subTopicTitle)) {
                 subTopicsMap.set(subTopicTitle, []);
             }
 
-            subTopicsMap.get(subTopicTitle).push(q);
+            subTopicsMap.get(subTopicTitle)!.push(q);
         }
 
         let topicOrder = 1;
         for (const [topicTitle, subTopicsMap] of topicsMap) {
             console.log(`🔹 Creating Topic: ${topicTitle}`);
 
-            const topic = await Topic.create({
-                title: topicTitle,
-                order: topicOrder++,
-                description: `Questions for ${topicTitle}`
+            const topic = await prisma.topic.create({
+                data: {
+                    title: topicTitle,
+                    order: topicOrder++,
+                    description: `Questions for ${topicTitle}`,
+                    userId: seedUser.id,
+                },
             });
 
             let subTopicOrder = 1;
             for (const [subTopicTitle, qList] of subTopicsMap) {
                 console.log(`  🔸 Creating Sub-Topic: ${subTopicTitle}`);
 
-                const subTopic = await SubTopic.create({
-                    title: subTopicTitle,
-                    order: subTopicOrder++
+                const subTopic = await prisma.subTopic.create({
+                    data: {
+                        title: subTopicTitle,
+                        order: subTopicOrder++,
+                        topicId: topic.id,
+                    },
                 });
 
                 let questionOrder = 1;
-                const questionIds = [];
-                const ALLOWED_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codestudio', 'hackerrank', 'codechef', 'interviewbit', 'ninjas', 'other'];
-
                 for (const qData of qList) {
                     const rawPlatform = qData.questionId?.platform;
                     const platform = ALLOWED_PLATFORMS.includes(rawPlatform) ? rawPlatform : 'other';
 
-                    const question = await Question.create({
-                        title: qData.title || qData.questionId?.name || 'Untitled Question',
-                        isSolved: false,
-                        difficulty: qData.questionId?.difficulty || 'Medium',
-                        order: questionOrder++,
-                        problemUrl: qData.questionId?.problemUrl || '#',
-                        platform: platform,
-                        resource: qData.resource || '#',
-                        companyTags: qData.questionId?.companyTags || []
+                    await prisma.question.create({
+                        data: {
+                            title: qData.title || qData.questionId?.name || 'Untitled Question',
+                            isSolved: false,
+                            difficulty: qData.questionId?.difficulty || 'Medium',
+                            order: questionOrder++,
+                            problemUrl: qData.questionId?.problemUrl || '#',
+                            platform,
+                            resource: qData.resource || '#',
+                            companyTags: qData.questionId?.companyTags || [],
+                            topicId: topic.id,
+                            subTopicId: subTopic.id,
+                        },
                     });
-                    questionIds.push(question._id);
                 }
-
-                subTopic.questions = questionIds;
-                await subTopic.save();
-
-                topic.subTopics.push(subTopic._id);
             }
-
-            await topic.save();
         }
 
         console.log('✅ Seeding completed successfully!');
     } catch (error) {
         console.error('❌ Seeding failed:', error);
     } finally {
-        await disconnectDB();
+        await prisma.$disconnect();
     }
 };
 
