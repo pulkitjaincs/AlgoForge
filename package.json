@@ -1,0 +1,19 @@
+{
+  "name": "algoforge",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A full-stack DSA preparation platform with progress tracking",
+  "scripts": {
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "cd client && npm run build && cd ../server && npm run build",
+    "lint": "cd server && npm run lint && cd ../client && npm run lint",
+    "test": "cd server && npm run test",
+    "test:coverage": "cd server && npm run test:coverage",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "author": "pulkitjaincs",
+  "license": "MIT"
+}

@@ -22,3 +22,7 @@ yarn-debug.log*
 *.njsproj
 *.sln
 *.sw?
+.windsurf
+.claude
+.agents
+ENGINEERING_UPLIFT_PLAN.md

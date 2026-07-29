@@ -1,105 +1,145 @@
-# CodolioQuestions - Premium DSA Tracker
+# AlgoForge ⚡
 
-CodolioQuestions is a high-fidelity, full-stack DSA (Data Structures and Algorithms) sheet tracker. It allows students to track their progress through comprehensive problem sets (like the Striver A2Z Sheet), add custom questions, and stay organized throughout their interview preparation journey.
+A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation platform designed to help software engineers track their interview prep progress.
 
-## 🚀 Key Features
-
-- **Dynamic Theme Architecture**: A beautiful, premium interface with **Light**, **Dark**, and **System** mode support.
-- **Redesigned Command Palette (Ctrl + K)**: A minimalist, high-contrast search interface to jump to any Topic, Sub-topic, or Question instantly. Optimized for surgical efficiency with keyboard-native navigation.
-- **Perfectly Synced Design System**: Harmonized corner radii (16px/12px/8px) and theme-aware styling across every component—from Topic Cards to individual Badges—using global CSS variables.
-- **Buttery Smooth Transitions**: Native **View Transitions API** implementation for a hardware-accelerated, perfectly smooth cross-fade effect when switching themes.
-
-
-- **Optimistic UI Updates**: Instant feedback for solving questions, starring, and adding notes. The UI updates immediately while background server sync handles persistence and automatic rollbacks on failure.
-- **Performance Optimized**: 
-    - **Shared Modal Architecture**: Reduces DOM weight by >50% by consolidating hundreds of redundant modals.
-    - **MongoDB Lean Queries**: Fast data retrieval using `.lean()` to bypass Mongoose document overhead.
-    - **Hardware-Accelerated CSS**: Refined transitions to reduce CPU/GPU load.
-- **Hierarchical Organization**: Problems are organized into Topics, which contain Sub-topics and individual Questions.
-- **Interactive Progress**: Real-time progress bars at the Topic and Sub-topic levels.
-- **Drag-and-Drop**: Easily reorder Topics, Sub-topics, and Questions using a smooth drag-and-drop interface.
-- **Enhanced Question Metadata**: Track problem difficulty, platform, YouTube/Article resources, and **Personal Notes**.
-- **Data Sync & Refresh**: High-reliability syncing with a manual **Sync** button and automatic fetch-on-mount to ensure you always see the "source of truth".
-- **Two-Tier Reset System**: 
-    - **Reset Progress Only**: Unmarks all solved questions while preserving custom questions and topics.
-    - **Restore Factory Settings**: Wipes the database and re-seeds it with the original Striver A2Z DSA data.
-- **Edit Functionality**: Full support for editing Topic titles/descriptions, Sub-topic titles, and Question details through pre-filled shared modals.
-- **Full-Stack Persistence**: Data is stored in a MongoDB Atlas database with frontend state management via Zustand and Vite API Proxying.
-
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 18** (Vite)
-- **Tailwind CSS v4** (Modern utility-first styling)
-- **Zustand** (Global state management with persistence)
-- **@dnd-kit** (For robust drag-and-drop interactions)
-- **View Transitions API** (Native, hardware-accelerated cross-fades)
-- **Lucide React** (Beautiful, consistent iconography)
-
-
-### Backend
-- **Node.js & Express**
-- **MongoDB Atlas** (Cloud database)
-- **Mongoose** (Referenced document schemas)
-- **Dotenv** (Environment variable management)
-
-## 📂 Project Structure
-
-```text
-CodolioProject/
-├── client/                # React Frontend
-│   ├── src/
-│   │   ├── components/    # UI Components (TopicCard, QuestionItem, Modals)
-│   │   ├── store/         # Zustand Store logic
-│   │   └── App.jsx        # Main application layout
-│   └── index.html         # Portal root and entry point
-├── server/                # Node.js Backend
-│   ├── src/
-│   │   ├── config/        # Database connectivity
-│   │   ├── models/        # Mongoose Referenced Schemas
-│   │   ├── controllers/   # Business logic / CRUD
-│   │   └── routes/        # API Endpoints
-│   └── index.js           # Server entry point
-└── README.md              # Documentation
-```
-
-## ⚙️ Setup Instructions
-
-### Prerequisites
-- Node.js installed
-- A MongoDB Atlas account (or local MongoDB)
-
-### 1. Server Setup
-1. Navigate to the `server` directory: `cd server`
-2. Install dependencies: `npm install`
-3. Create a `.env` file and add your MongoDB connection string:
-   ```env
-   ATLASDB_URL=your_mongodb_atlas_url
-   PORT=3001
-   CORS_ORIGIN=http://localhost:5173
-   ```
-4. Start the server: `npm run dev`
-
-### 2. Client Setup
-1. Navigate to the `client` directory: `cd client`
-2. Install dependencies: `npm install`
-3. Start the Vite dev server: `npm run dev`
-4. Open the app at `http://localhost:5173`
-
-### 3. Data Seeding (Optional)
-If you want to load the Striver A2Z DSA Sheet data from `sheet.json`:
-1. Ensure the server is running.
-2. Open a new terminal in the `server` directory.
-3. Run: `npm run seed`
-4. This will clear existing data and populate exactly 449 questions from the provided JSON.
-
-## 🔗 Models & Data
-The database uses a referenced model structure:
-- **Topics**: Top-level containers with descriptions and order.
-- **Sub-Topics**: Nested categories within topics.
-- **Questions**: Individual problems with links, resources, difficulty, and company tags.
+> **Architecture Deep-Dive:** Want to see how the system is engineered? Read the [ARCHITECTURE.md](./ARCHITECTURE.md) for a breakdown of the layered design, caching strategy, and security pipeline.
 
 ---
 
-Built for high-performance DSA tracking.
+## 🎯 Key Features
+
+### For Students
+- **Hierarchical Tracking:** Organize questions into Topics and Subtopics.
+- **Progress Metrics:** Visual indicators of solved vs. total questions.
+- **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
+- **Study Notes:** Markdown-supported notes attached directly to questions.
+- **Drag-and-Drop:** Freely reorder your curriculum to match your study plan.
+
+### Engineering Excellence
+- **Strictly Typed:** 100% TypeScript across frontend and backend.
+- **High Performance:** Redis cache-aside pattern for heavy hierarchical queries.
+- **Secure:** JWT Auth (HttpOnly cookies), Zod validation, Helmet, Rate Limiting, and NoSQL/SQL injection prevention.
+- **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers.
+- **Containerized:** Multi-stage Docker builds and `docker-compose` ready.
+
+---
+
+## 🛠 Tech Stack
+
+| Frontend | Backend | Infrastructure |
+|---|---|---|
+| React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM) |
+| Zustand (State) | Express 5 | Redis (Caching) |
+| Tailwind CSS | Zod (Validation) | Docker & Docker Compose |
+| dnd-kit | Pino (Structured Logging) | GitHub Actions (CI) |
+
+---
+
+## 🚀 Quick Start (Docker - Recommended)
+
+The easiest way to run the entire stack (Postgres + Redis + API + Web) is using Docker.
+
+**1. Clone and configure:**
+```bash
+git clone https://github.com/yourusername/AlgoForge.git
+cd AlgoForge
+cp .env.example .env
+```
+
+**2. Start the stack:**
+```bash
+npm run docker:up
+```
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:3001`
+
+---
+
+## 💻 Manual Setup (Local Development)
+
+If you prefer to run the apps locally for development:
+
+**Prerequisites:**
+- Node.js 20+
+- PostgreSQL (Local or managed e.g., Supabase/Neon)
+- Redis (Optional, degrades gracefully if not provided)
+
+**1. Install dependencies:**
+```bash
+npm run install:all
+```
+
+**2. Environment variables:**
+Configure your `.env` in the `server/` directory with your Postgres connection string.
+
+**3. Database setup:**
+```bash
+cd server
+npx prisma db push
+```
+
+**4. Start development servers:**
+```bash
+# Terminal 1 - Backend
+npm run dev:server
+
+# Terminal 2 - Frontend
+npm run dev:client
+```
+
+---
+
+## 📜 Available Scripts
+
+Run these from the root directory:
+
+| Command | Description |
+|---|---|
+| `npm run install:all` | Installs dependencies for root, client, and server. |
+| `npm run dev:client` | Starts the Vite frontend in dev mode. |
+| `npm run dev:server` | Starts the Express backend in watch mode. |
+| `npm run build` | Builds both frontend and backend for production. |
+| `npm run lint` | Runs ESLint on both projects. |
+| `npm run test` | Runs the backend unit tests using Vitest. |
+| `npm run docker:up` | Builds and starts all containers. |
+
+---
+
+## 🧪 Testing & Code Quality
+
+AlgoForge treats testing as a first-class citizen. 
+
+```bash
+npm run test
+npm run test:coverage
+```
+*Note: Tests run entirely in-memory using `vitest-mock-extended` for Prisma. No database connection is required to run the test suite.*
+
+**CI/CD:** Every push to `main` triggers a GitHub Actions pipeline that enforces Type-checking, Linting, and Test coverage.
+
+---
+
+## 🗺️ API Overview
+
+All endpoints are versioned under `/api/v1/`. Responses follow a consistent envelope:
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": "Error message if success is false"
+}
+```
+
+| Domain | Endpoints |
+|---|---|
+| **Auth** | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` |
+| **Topics** | `GET /topics`, `POST /topics`, `PUT /topics/:id`, `PUT /topics/reorder` |
+| **SubTopics**| `POST /topics/:id/subtopics`, `PUT /subtopics/:id` |
+| **Questions**| `POST /topics/:id/subtopics/:id/questions`, `PATCH /questions/:id/solved` |
+| **System** | `GET /health` |
+
+---
+
+## 📝 License
+
+MIT License - Created by Pulkit Jain.

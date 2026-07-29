@@ -108,7 +108,7 @@ function App() {
                   <Sparkles className="w-6 h-6 text-brand-primary" />
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-gradient">
-                  CodolioQuestions
+                  AlgoForgeQuestions
                 </h1>
               </div>
               <p className="text-text-muted text-sm md:text-base">

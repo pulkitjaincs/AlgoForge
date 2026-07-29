@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topics    Topic[]
+}
+
+model Topic {
+  id          String     @id @default(uuid())
+  title       String
+  description String?    @default("")
+  order       Int        @default(0)
+  status      String     @default("Pending")
+  
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+
+  subTopics   SubTopic[]
+  questions   Question[]
+}
+
+model SubTopic {
+  id          String     @id @default(uuid())
+  title       String
+  order       Int        @default(0)
+  
+  topic       Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId     String
+  
+  questions   Question[]
+}
+
+model Question {
+  id          String     @id @default(uuid())
+  title       String
+  isSolved    Boolean    @default(false)
+  difficulty  String     @default("Medium")
+  order       Int        @default(0)
+  problemUrl  String     @default("#")
+  platform    String     @default("leetcode")
+  resource    String     @default("#")
+  companyTags String[]   
+  isStarred   Boolean    @default(false)
+  notes       String     @default("")
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  topic       Topic?     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId     String?
+
+  subTopic    SubTopic?  @relation(fields: [subTopicId], references: [id], onDelete: Cascade)
+  subTopicId  String?
+}

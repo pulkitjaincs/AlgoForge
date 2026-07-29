@@ -427,6 +427,6 @@ export const useQuestionStore = create(
                 return false;
             },
         }),
-        { name: 'codolio-questions-storage' }
+        { name: 'algoforge-questions-storage' }
     )
 );
