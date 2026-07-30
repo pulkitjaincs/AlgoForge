@@ -12,9 +12,10 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Personalized Accounts:** Secure sign-up, login, and user profile management.
 - **Hierarchical Tracking:** Organize questions into Topics and Subtopics.
 - **Multi-page Dashboard:** Dedicated views for your main sheet, analytics dashboard, and spaced-repetition review.
-- **Progress Metrics:** Visual indicators of solved vs. total questions.
+- **Progress Metrics & Analytics:** Visual indicators of solved questions, streaks, weekly velocity, activity heatmaps, and topic mastery radar charts.
+- **Spaced Repetition & Practice Plans:** SM-2 based spaced repetition system that generates daily review queues and custom practice plans targeting weak areas.
 - **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
-- **Study Notes:** Markdown-supported notes attached directly to questions.
+- **Study Notes & Timers:** Markdown-supported notes and inline timers attached directly to questions.
 - **Drag-and-Drop:** Freely reorder your curriculum to match your study plan.
 
 ### Engineering Excellence

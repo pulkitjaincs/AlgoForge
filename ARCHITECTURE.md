@@ -123,7 +123,18 @@ erDiagram
     }
 ```
 
-## 7. Error Handling
+## 7. Intelligence Layer & Spaced Repetition
+
+AlgoForge incorporates an intelligent learning system to optimize study efficiency:
+
+- **Spaced Repetition (SM-2 Variant):** Questions are scheduled for review based on a modified SM-2 algorithm. When a user submits an attempt, they provide a self-evaluated confidence score (1-5). The system calculates the next optimal review date (`nextReviewAt`) to maximize retention.
+- **Analytics Engine:** The `analytics.service.ts` heavily leverages Prisma aggregation queries over the `QuestionAttempt` table to compute streaks, weekly velocity, and topic-specific mastery percentages.
+- **Daily Practice Plans:** The `practice.service.ts` dynamically generates a daily practice session by pulling from three strategic queues:
+  1. **Review Queue:** Questions due for spaced repetition today.
+  2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.
+  3. **Random Exploration:** A selection of completely unsolved questions to introduce new concepts.
+
+## 8. Error Handling
 
 Express 5 natively catches rejected promises, eliminating the need for `try/catch` in controllers. Errors bubble up to `errorHandler.ts`, which categorizes them:
 - **ZodError:** 400 Bad Request with field-level details.
@@ -131,13 +142,13 @@ Express 5 natively catches rejected promises, eliminating the need for `try/catc
 - **AppError:** Custom operational errors (e.g., 404 Not Found, 403 Forbidden).
 - **Unknown Errors:** Logged via Pino and obscured as 500 Internal Server Error to prevent leaking stack traces.
 
-## 8. Testing Infrastructure
+## 9. Testing Infrastructure
 
 - **Framework:** Vitest + Supertest.
 - **Mocking:** `vitest-mock-extended` deeply mocks the `PrismaClient` and Redis utility.
 - **Advantage:** Tests run entirely in-memory at lightning speed without requiring a live Docker database container.
 
-## 9. Containerization
+## 10. Containerization
 
 The project uses multi-stage Docker builds to minimize image sizes.
 - **Builder Stage:** Installs all `devDependencies` and compiles TypeScript / Vite.

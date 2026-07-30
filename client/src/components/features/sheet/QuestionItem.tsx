@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ExternalLink, Check, Trash2, Pencil, Star, StickyNote, Building2 } from 'lucide-react';
 import { useUpdateQuestion, useDeleteQuestion } from '../../../hooks/useQuestions';
+import { Timer } from '../../shared/Timer';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { questionsApi } from '../../../api/questions';
 
 interface QuestionItemProps {
     question: any;
@@ -14,6 +17,40 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
     const deleteQuestion = useDeleteQuestion();
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [noteText, setNoteText] = useState(question.notes || '');
+    
+    const queryClient = useQueryClient();
+    const addAttemptMutation = useMutation({
+        mutationFn: ({ duration, confidence }: { duration?: number, confidence?: number }) => questionsApi.addAttempt(question.id, duration, confidence),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['topics'] });
+            queryClient.invalidateQueries({ queryKey: ['analytics'] });
+            queryClient.invalidateQueries({ queryKey: ['practice'] });
+            queryClient.invalidateQueries({ queryKey: ['review'] });
+        }
+    });
+
+    const [isTimerActive, setIsTimerActive] = useState(false);
+    const [duration, setDuration] = useState<number | null>(null);
+    const [showConfidence, setShowConfidence] = useState(false);
+
+    const handleTimerStop = (durationSecs: number) => {
+        setIsTimerActive(false);
+        setDuration(durationSecs);
+    };
+
+    const handleSolveToggle = () => {
+        if (!question.isSolved) {
+            setShowConfidence(true);
+        } else {
+            updateQuestion.mutate({ questionId: question.id, data: { isSolved: false } });
+        }
+    };
+
+    const submitAttempt = (confidenceScore: number) => {
+        addAttemptMutation.mutate({ duration: duration || undefined, confidence: confidenceScore });
+        setShowConfidence(false);
+        setDuration(null);
+    };
 
     const qId = question.id || '';
     const qObj = question.questionId || question;
@@ -40,8 +77,8 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => updateQuestion.mutate({ questionId: qId, data: { isSolved: !question.isSolved } })}
-                        className={`checkbox-solved ${question.isSolved ? 'checked' : ''}`}
+                        onClick={handleSolveToggle}
+                        className={`checkbox-solved flex-shrink-0 ${question.isSolved ? 'checked' : ''}`}
                     >
                         {question.isSolved && <Check className="w-3 h-3 text-white" />}
                     </button>
@@ -100,6 +137,13 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
                             <Pencil className="w-4 h-4" />
                         </button>
                         <button
+                            onClick={() => setIsTimerActive(!isTimerActive)}
+                            className={`btn-icon ${isTimerActive ? 'text-brand-accent bg-brand-accent/10' : ''}`}
+                            title="Timer"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </button>
+                        <button
                             onClick={() => deleteQuestion.mutate({ topicId, subTopicId, questionId: qId })}
                             className="btn-danger"
                             title="Delete"
@@ -143,6 +187,26 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
                     )}
                 </div>
             )}
+            
+            <div className="mt-2 ml-8 flex items-center justify-between">
+              <Timer isActive={isTimerActive} onStop={handleTimerStop} />
+              
+              {showConfidence && (
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg ml-auto">
+                    <span className="text-sm font-medium text-text-main">Rate confidence:</span>
+                    {[1,2,3,4,5].map(score => (
+                        <button 
+                            key={score}
+                            onClick={() => submitAttempt(score)}
+                            className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 hover:bg-brand-primary hover:text-white flex items-center justify-center text-xs font-bold transition-colors"
+                        >
+                            {score}
+                        </button>
+                    ))}
+                    <button onClick={() => setShowConfidence(false)} className="ml-2 text-xs text-text-muted hover:text-text-main">Cancel</button>
+                </div>
+              )}
+            </div>
         </div>
     );
 };

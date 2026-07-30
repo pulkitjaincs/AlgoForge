@@ -22,3 +22,9 @@ export const remove = async (req: Request, res: Response) => {
   await questionService.deleteQuestion(req.user!.id, req.params.questionId as string);
   res.status(200).json({ success: true, data: {} });
 };
+
+export const addAttempt = async (req: Request, res: Response) => {
+  const question = await questionService.addAttempt(req.user!.id, req.params.questionId as string, req.body);
+  res.status(201).json({ success: true, data: question });
+};
+

@@ -19,13 +19,16 @@ import { Modal } from '../components/shared/Modal';
 import { ThemeToggle } from '../components/shared/ThemeToggle';
 import { CommandPalette } from '../components/shared/CommandPalette';
 import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search } from 'lucide-react';
+import { FilterBar } from '../components/features/sheet/FilterBar';
 import { useTopics, useCreateTopic, useReorderTopics } from '../hooks/useTopics';
 import { useResetProgress, useFullReset } from '../hooks/useQuestions';
+import { useSearchParams } from 'react-router-dom';
 
 export default function SheetPage() {
+  const [searchParams] = useSearchParams();
   const { isCommandPaletteOpen, setCommandPaletteOpen } = useQuestionStore();
   
-  const { data: topics = [], isLoading, refetch } = useTopics();
+  const { data: topics = [], isLoading, refetch } = useTopics(searchParams.toString());
   const createTopic = useCreateTopic();
   const reorderTopics = useReorderTopics();
   const resetProgress = useResetProgress();
@@ -191,6 +194,8 @@ export default function SheetPage() {
             </div>
           </div>
         </header>
+        
+        <FilterBar />
 
         {isLoading ? (
           <div className="space-y-4">

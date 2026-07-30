@@ -3,11 +3,35 @@ import { AppError } from '../utils/AppError.js';
 import { cache } from '../utils/cache.js';
 import { CreateTopicInput, UpdateTopicInput } from '../schemas/topic.schema.js';
 
-export const getAllTopics = async (userId: string) => {
+export interface TopicFilters {
+  difficulty?: string;
+  platform?: string;
+  isSolved?: string;
+  isStarred?: string;
+  tag?: string;
+}
+
+export const getAllTopics = async (userId: string, filters: TopicFilters = {}) => {
+  // Can't cache effectively with many filter combinations, so we bypass cache if filters are present
+  const hasFilters = Object.keys(filters).length > 0;
   const cacheKey = `topics:${userId}`;
   
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached;
+  if (!hasFilters) {
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
+  }
+
+  const questionFilter: any = { deletedAt: null };
+  if (filters.difficulty) questionFilter.difficulty = filters.difficulty;
+  if (filters.platform) questionFilter.platform = filters.platform;
+  if (filters.isSolved !== undefined) questionFilter.isSolved = filters.isSolved === 'true';
+  if (filters.isStarred !== undefined) questionFilter.isStarred = filters.isStarred === 'true';
+  if (filters.tag) {
+    questionFilter.OR = [
+      { companyTags: { has: filters.tag } },
+      { tags: { some: { tag: { name: filters.tag } } } }
+    ];
+  }
 
   const topics = await prisma.topic.findMany({
     where: { userId, deletedAt: null },
@@ -18,19 +42,21 @@ export const getAllTopics = async (userId: string) => {
         orderBy: { order: 'asc' },
         include: {
           questions: { 
-            where: { deletedAt: null },
+            where: questionFilter,
             orderBy: { order: 'asc' } 
           },
         },
       },
       questions: { 
-        where: { deletedAt: null },
+        where: questionFilter,
         orderBy: { order: 'asc' } 
       },
     },
   });
 
-  await cache.setWithTag(cacheKey, `user:${userId}`, topics, 300);
+  if (!hasFilters) {
+    await cache.setWithTag(cacheKey, `user:${userId}`, topics, 300);
+  }
   return topics;
 };
 

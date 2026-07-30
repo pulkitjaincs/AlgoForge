@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { topicsApi } from '../api/topics';
 import { toast } from 'sonner';
 
-export const useTopics = () => {
+export const useTopics = (queryStr: string = '') => {
   return useQuery({
-    queryKey: ['topics'],
-    queryFn: topicsApi.getAll,
+    queryKey: ['topics', queryStr],
+    queryFn: () => topicsApi.getAll(queryStr),
   });
 };
 

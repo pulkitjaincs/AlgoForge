@@ -24,5 +24,14 @@ export const updateNotesSchema = z.object({
   }),
 });
 
+export const addAttemptSchema = z.object({
+  params: z.object({ questionId: uuid }),
+  body: z.object({
+    duration: z.number().int().nonnegative().optional(),
+    confidence: z.number().int().min(1).max(5).optional()
+  }),
+});
+
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>['body'];
 export type UpdateNotesInput = z.infer<typeof updateNotesSchema>['body'];
+export type AddAttemptInput = z.infer<typeof addAttemptSchema>['body'];

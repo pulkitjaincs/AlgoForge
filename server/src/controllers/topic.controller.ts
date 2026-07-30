@@ -2,7 +2,16 @@ import { Request, Response } from 'express';
 import * as topicService from '../services/topic.service.js';
 
 export const getAll = async (req: Request, res: Response) => {
-  const topics = await topicService.getAllTopics(req.user!.id);
+  const filters: topicService.TopicFilters = {
+    difficulty: req.query.difficulty as string,
+    platform: req.query.platform as string,
+    isSolved: req.query.isSolved as string,
+    isStarred: req.query.isStarred as string,
+    tag: req.query.tag as string,
+  };
+  Object.keys(filters).forEach(key => filters[key as keyof topicService.TopicFilters] === undefined && delete filters[key as keyof topicService.TopicFilters]);
+
+  const topics = await topicService.getAllTopics(req.user!.id, filters);
   res.status(200).json({ success: true, data: topics });
 };
 
