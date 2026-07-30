@@ -9,7 +9,9 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 ## 🎯 Key Features
 
 ### For Students
+- **Personalized Accounts:** Secure sign-up, login, and user profile management.
 - **Hierarchical Tracking:** Organize questions into Topics and Subtopics.
+- **Multi-page Dashboard:** Dedicated views for your main sheet, analytics dashboard, and spaced-repetition review.
 - **Progress Metrics:** Visual indicators of solved vs. total questions.
 - **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
 - **Study Notes:** Markdown-supported notes attached directly to questions.
@@ -29,9 +31,10 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 | Frontend | Backend | Infrastructure |
 |---|---|---|
 | React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM) |
-| Zustand (State) | Express 5 | Redis (Caching) |
-| Tailwind CSS | Zod (Validation) | Docker & Docker Compose |
-| dnd-kit | Pino (Structured Logging) | GitHub Actions (CI) |
+| React Router (Routing) | Express 5 | Redis (Caching) |
+| React Query (Server State) | Zod (Validation) | Docker & Docker Compose |
+| Zustand (UI State) | Pino (Structured Logging) | GitHub Actions (CI) |
+| Tailwind CSS & dnd-kit | JWT Authentication | |
 
 ---
 
@@ -75,7 +78,7 @@ Configure your `.env` in the `server/` directory with your Postgres connection s
 **3. Database setup:**
 ```bash
 cd server
-npx prisma db push
+npx prisma migrate dev
 ```
 
 **4. Start development servers:**
@@ -136,6 +139,7 @@ All endpoints are versioned under `/api/v1/`. Responses follow a consistent enve
 | **Topics** | `GET /topics`, `POST /topics`, `PUT /topics/:id`, `PUT /topics/reorder` |
 | **SubTopics**| `POST /topics/:id/subtopics`, `PUT /subtopics/:id` |
 | **Questions**| `POST /topics/:id/subtopics/:id/questions`, `PATCH /questions/:id/solved` |
+| **Trash** | `GET /trash`, `PATCH /trash/:id/restore`, `DELETE /trash/:id` |
 | **System** | `GET /health` |
 
 ---

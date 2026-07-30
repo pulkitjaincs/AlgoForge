@@ -3,6 +3,7 @@ import authRoutes from './auth.routes.js';
 import topicRoutes from './topic.routes.js';
 import subTopicRoutes from './subtopic.routes.js';
 import questionRoutes from './question.routes.js';
+import trashRoutes from './trash.routes.js';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.get('/health', (req, res) => {
 // Route groupings
 router.use('/auth', authRoutes);
 router.use('/topics', topicRoutes);
+router.use('/trash', trashRoutes);
 router.use('/', subTopicRoutes); // Mounted at / to support nested /topics/:topicId/subtopics paths cleanly
 router.use('/', questionRoutes); // Mounted at / to support nested paths
 

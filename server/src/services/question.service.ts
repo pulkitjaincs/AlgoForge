@@ -4,16 +4,20 @@ import { cache } from '../utils/cache.js';
 import { CreateQuestionInput, UpdateNotesInput } from '../schemas/question.schema.js';
 
 export const createQuestion = async (userId: string, topicId: string, subTopicId: string | null, data: CreateQuestionInput) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
+  if (!topicId && !subTopicId) {
+    throw new AppError('Question must belong to a topic or subtopic', 400);
+  }
+
+  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
   if (!topic) throw new AppError('Topic not found', 404);
 
   if (subTopicId) {
-    const subTopic = await prisma.subTopic.findFirst({ where: { id: subTopicId, topicId } });
+    const subTopic = await prisma.subTopic.findFirst({ where: { id: subTopicId, topicId, deletedAt: null } });
     if (!subTopic) throw new AppError('Sub-topic not found', 404);
   }
 
   const count = await prisma.question.count({
-    where: subTopicId ? { subTopicId } : { topicId }
+    where: subTopicId ? { subTopicId, deletedAt: null } : { topicId, deletedAt: null }
   });
 
   const question = await prisma.question.create({
@@ -30,8 +34,8 @@ export const createQuestion = async (userId: string, topicId: string, subTopicId
 };
 
 export const updateQuestion = async (userId: string, questionId: string, data: Partial<CreateQuestionInput> & Partial<UpdateNotesInput>) => {
-  const question = await prisma.question.findUnique({
-    where: { id: questionId },
+  const question = await prisma.question.findFirst({
+    where: { id: questionId, deletedAt: null },
     include: { topic: true, subTopic: { include: { topic: true } } },
   });
 
@@ -49,8 +53,8 @@ export const updateQuestion = async (userId: string, questionId: string, data: P
 };
 
 export const deleteQuestion = async (userId: string, questionId: string) => {
-  const question = await prisma.question.findUnique({
-    where: { id: questionId },
+  const question = await prisma.question.findFirst({
+    where: { id: questionId, deletedAt: null },
     include: { topic: true, subTopic: { include: { topic: true } } },
   });
 
@@ -59,13 +63,16 @@ export const deleteQuestion = async (userId: string, questionId: string) => {
   const ownerId = question.topic?.userId || question.subTopic?.topic.userId;
   if (ownerId !== userId) throw new AppError('Unauthorized', 403);
 
-  await prisma.question.delete({ where: { id: questionId } });
+  await prisma.question.update({
+    where: { id: questionId },
+    data: { deletedAt: new Date() }
+  });
   await cache.invalidateTag(`user:${userId}`);
 };
 
 export const toggleSolved = async (userId: string, questionId: string) => {
-  const question = await prisma.question.findUnique({
-    where: { id: questionId },
+  const question = await prisma.question.findFirst({
+    where: { id: questionId, deletedAt: null },
     include: { topic: true, subTopic: { include: { topic: true } } },
   });
 

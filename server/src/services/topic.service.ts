@@ -10,16 +10,23 @@ export const getAllTopics = async (userId: string) => {
   if (cached) return cached;
 
   const topics = await prisma.topic.findMany({
-    where: { userId },
+    where: { userId, deletedAt: null },
     orderBy: { order: 'asc' },
     include: {
       subTopics: {
+        where: { deletedAt: null },
         orderBy: { order: 'asc' },
         include: {
-          questions: { orderBy: { order: 'asc' } },
+          questions: { 
+            where: { deletedAt: null },
+            orderBy: { order: 'asc' } 
+          },
         },
       },
-      questions: { orderBy: { order: 'asc' } },
+      questions: { 
+        where: { deletedAt: null },
+        orderBy: { order: 'asc' } 
+      },
     },
   });
 
@@ -41,7 +48,7 @@ export const createTopic = async (userId: string, data: CreateTopicInput) => {
 };
 
 export const updateTopic = async (topicId: string, userId: string, data: UpdateTopicInput) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
+  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
   if (!topic) throw new AppError('Topic not found', 404);
 
   const updated = await prisma.topic.update({
@@ -53,17 +60,20 @@ export const updateTopic = async (topicId: string, userId: string, data: UpdateT
 };
 
 export const deleteTopic = async (topicId: string, userId: string) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
+  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
   if (!topic) throw new AppError('Topic not found', 404);
 
-  await prisma.topic.delete({ where: { id: topicId } });
+  await prisma.topic.update({
+    where: { id: topicId },
+    data: { deletedAt: new Date() }
+  });
   await cache.invalidateTag(`user:${userId}`);
 };
 
 export const reorderTopics = async (userId: string, orderedIds: string[]) => {
   const updates = orderedIds.map((id, index) =>
     prisma.topic.updateMany({
-      where: { id, userId },
+      where: { id, userId, deletedAt: null },
       data: { order: index },
     })
   );

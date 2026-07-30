@@ -16,6 +16,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   topics    Topic[]
+  attempts  QuestionAttempt[]
 }
 
 model Topic {
@@ -24,23 +25,29 @@ model Topic {
   description String?    @default("")
   order       Int        @default(0)
   status      String     @default("Pending")
+  deletedAt   DateTime?
   
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
 
   subTopics   SubTopic[]
   questions   Question[]
+
+  @@index([userId, order])
 }
 
 model SubTopic {
   id          String     @id @default(uuid())
   title       String
   order       Int        @default(0)
+  deletedAt   DateTime?
   
   topic       Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
   topicId     String
   
   questions   Question[]
+
+  @@index([topicId, order])
 }
 
 model Question {
@@ -58,10 +65,54 @@ model Question {
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   topic       Topic?     @relation(fields: [topicId], references: [id], onDelete: Cascade)
   topicId     String?
 
   subTopic    SubTopic?  @relation(fields: [subTopicId], references: [id], onDelete: Cascade)
   subTopicId  String?
+
+  lastAttemptedAt DateTime?
+  attemptCount    Int        @default(0)
+  nextReviewAt    DateTime?
+  attempts        QuestionAttempt[]
+  tags            QuestionTag[]
+
+  @@index([topicId, order])
+  @@index([subTopicId, order])
+}
+
+model QuestionAttempt {
+  id          String   @id @default(uuid())
+  solvedAt    DateTime @default(now())
+  duration    Int?     // duration in seconds
+  confidence  Int?     // 1-5 rating
+  
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId  String
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+
+  @@index([questionId])
+  @@index([userId])
+}
+
+model Tag {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  category  String        @default("company") // 'company', 'pattern', 'concept'
+  
+  questions QuestionTag[]
+}
+
+model QuestionTag {
+  questionId String
+  tagId      String
+  
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tagId])
 }

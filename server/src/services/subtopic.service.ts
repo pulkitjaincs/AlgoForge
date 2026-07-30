@@ -4,7 +4,7 @@ import { cache } from '../utils/cache.js';
 import { CreateSubTopicInput, UpdateSubTopicInput } from '../schemas/subtopic.schema.js';
 
 export const createSubTopic = async (userId: string, topicId: string, data: CreateSubTopicInput) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
+  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
   if (!topic) throw new AppError('Topic not found', 404);
 
   const count = await prisma.subTopic.count({ where: { topicId } });
@@ -21,13 +21,13 @@ export const createSubTopic = async (userId: string, topicId: string, data: Crea
 };
 
 export const updateSubTopic = async (userId: string, subTopicId: string, data: UpdateSubTopicInput) => {
-  const subTopic = await prisma.subTopic.findUnique({
-    where: { id: subTopicId },
+  const subTopic = await prisma.subTopic.findFirst({
+    where: { id: subTopicId, deletedAt: null },
     include: { topic: true },
   });
 
   if (!subTopic) throw new AppError('Sub-topic not found', 404);
-  if (subTopic.topic.userId !== userId) throw new AppError('Unauthorized', 403);
+  if (subTopic.topic.userId !== userId || subTopic.topic.deletedAt !== null) throw new AppError('Unauthorized or topic deleted', 403);
 
   const updated = await prisma.subTopic.update({
     where: { id: subTopicId },
@@ -38,25 +38,28 @@ export const updateSubTopic = async (userId: string, subTopicId: string, data: U
 };
 
 export const deleteSubTopic = async (userId: string, subTopicId: string) => {
-  const subTopic = await prisma.subTopic.findUnique({
-    where: { id: subTopicId },
+  const subTopic = await prisma.subTopic.findFirst({
+    where: { id: subTopicId, deletedAt: null },
     include: { topic: true },
   });
 
   if (!subTopic) throw new AppError('Sub-topic not found', 404);
-  if (subTopic.topic.userId !== userId) throw new AppError('Unauthorized', 403);
+  if (subTopic.topic.userId !== userId || subTopic.topic.deletedAt !== null) throw new AppError('Unauthorized or topic deleted', 403);
 
-  await prisma.subTopic.delete({ where: { id: subTopicId } });
+  await prisma.subTopic.update({ 
+    where: { id: subTopicId },
+    data: { deletedAt: new Date() }
+  });
   await cache.invalidateTag(`user:${userId}`);
 };
 
 export const reorderSubTopics = async (userId: string, topicId: string, orderedIds: string[]) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
+  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
   if (!topic) throw new AppError('Topic not found', 404);
 
   const updates = orderedIds.map((id, index) =>
     prisma.subTopic.updateMany({
-      where: { id, topicId },
+      where: { id, topicId, deletedAt: null },
       data: { order: index },
     })
   );

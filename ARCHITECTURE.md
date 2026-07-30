@@ -43,9 +43,12 @@ AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect ag
 
 ## 4. Frontend Architecture
 
-- **State Management:** `Zustand` is used for global state (topics, user session). It is chosen over Redux for its lightweight, boilerplate-free API.
-- **Data Fetching:** Axios is used for API communication, with optimistic UI updates for rapid interactions (like toggling a question's solved status).
-- **Drag-and-Drop:** `@dnd-kit` powers the reordering of topics, subtopics, and questions.
+- **Routing:** `react-router-dom` is used for multi-page routing, featuring `AuthLayout` for public routes and `AppLayout` with `ProtectedRoute` for authenticated sessions.
+- **State Management:**
+  - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates for rapid interactions.
+  - **UI State:** `Zustand` is restricted strictly to global transient UI states (like command palette visibility and navigation targets), chosen for its lightweight API.
+- **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`) prioritizing focused, decomposed components over monoliths.
+- **Drag-and-Drop:** `@dnd-kit` powers the reordering of topics, subtopics, and questions via wrapper components.
 
 ## 5. Caching Strategy
 
@@ -64,6 +67,10 @@ erDiagram
     Topic ||--o{ SubTopic : contains
     Topic ||--o{ Question : contains
     SubTopic ||--o{ Question : contains
+    User ||--o{ QuestionAttempt : makes
+    Question ||--o{ QuestionAttempt : has
+    Question ||--o{ QuestionTag : tagged_with
+    Tag ||--o{ QuestionTag : categorizes
 
     User {
         String id PK
@@ -76,12 +83,14 @@ erDiagram
         String title
         Int order
         String userId FK
+        DateTime deletedAt
     }
     SubTopic {
         String id PK
         String title
         Int order
         String topicId FK
+        DateTime deletedAt
     }
     Question {
         String id PK
@@ -90,6 +99,27 @@ erDiagram
         String difficulty
         String topicId FK
         String subTopicId FK
+        DateTime deletedAt
+        DateTime lastAttemptedAt
+        Int attemptCount
+        DateTime nextReviewAt
+    }
+    QuestionAttempt {
+        String id PK
+        DateTime solvedAt
+        Int duration
+        Int confidence
+        String questionId FK
+        String userId FK
+    }
+    Tag {
+        String id PK
+        String name
+        String category
+    }
+    QuestionTag {
+        String questionId FK
+        String tagId FK
     }
 ```
 
