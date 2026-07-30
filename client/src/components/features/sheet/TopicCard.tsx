@@ -1,172 +1,17 @@
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useMemo } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronRight, BookOpen, GripVertical, Trash2, Plus, FolderOpen, Pencil } from 'lucide-react';
-import { QuestionItem } from './QuestionItem';
-import { useQuestionStore } from '../../store/useQuestionStore';
-import { AddQuestionModal } from '../ui/AddQuestionModal';
-import { Modal } from '../ui/Modal';
-import { Topic, SubTopic, Question } from '../../types';
-
-interface SortableQuestionItemProps {
-  question: Question;
-  topicId: string;
-  subTopicId: string | null;
-  onEdit: (q: Question) => void;
-}
-
-const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }: SortableQuestionItemProps) => {
-  const itemId = question.id || '';
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: itemId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 100ms ease',
-    zIndex: isDragging ? 40 : 1,
-    opacity: isDragging ? 0.7 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="flex items-center group/question">
-      <div {...attributes} {...listeners} className="drag-handle opacity-0 group-hover/question:opacity-100">
-        <GripVertical className="w-3.5 h-3.5" />
-      </div>
-      <div className="flex-1">
-        <QuestionItem
-          question={question}
-          topicId={topicId}
-          subTopicId={subTopicId}
-          onEdit={() => onEdit(question)}
-        />
-      </div>
-    </div>
-  );
-};
-
-interface SortableSubTopicSectionProps {
-  subTopic: SubTopic;
-  topicId: string;
-  onAddQuestion: (stId: string) => void;
-  onEditSubTopic: (st: SubTopic) => void;
-  onEditQuestion: (stId: string, q: Question) => void;
-}
-
-const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTopic, onEditQuestion }: SortableSubTopicSectionProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const deleteSubTopic = useQuestionStore(state => state.deleteSubTopic);
-  const reorderQuestions = useQuestionStore(state => state.reorderQuestions);
-  const navigationTarget = useQuestionStore(state => state.navigationTarget);
-
-  const questions = subTopic.questions || [];
-
-  useEffect(() => {
-    if (navigationTarget) {
-      const isTargetChild = questions.some(q => q.id === navigationTarget);
-      if (isTargetChild || subTopic.id === navigationTarget) {
-        setIsOpen(true);
-      }
-    }
-  }, [navigationTarget, subTopic.id, questions]);
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subTopic.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 100ms ease',
-    zIndex: isDragging ? 30 : 1,
-    opacity: isDragging ? 0.7 : 1,
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleQuestionDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = questions.findIndex(q => q.id === active.id);
-      const newIndex = questions.findIndex(q => q.id === over?.id);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        reorderQuestions(topicId, subTopic.id, oldIndex, newIndex);
-      }
-    }
-  };
-
-  const solvedCount = questions.filter(q => q.isSolved).length;
-  const progress = questions.length > 0 ? (solvedCount / questions.length) * 100 : 0;
-
-  return (
-    <div ref={setNodeRef} style={style} id={subTopic.id} className="glass-subtle overflow-hidden group/subtopic">
-      <div className="flex items-center">
-        <div {...attributes} {...listeners} className="drag-handle opacity-0 group-hover/subtopic:opacity-100">
-          <GripVertical className="w-4 h-4" />
-        </div>
-
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex-1 flex items-center justify-between p-3 pl-1 text-left hover:bg-white/5 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="p-2 bg-brand-secondary/10"
-              style={{ borderRadius: 'var(--radius-md)' }}
-            >
-              <FolderOpen className="w-4 h-4 text-brand-secondary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-text-main">{subTopic.title}</h3>
-              <p className="text-xs text-text-muted">{solvedCount} / {questions.length} solved</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-24 progress-bar hidden sm:block">
-              <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
-            </div>
-            {isOpen ? <ChevronDown className="w-4 h-4 text-text-muted" /> : <ChevronRight className="w-4 h-4 text-text-muted" />}
-          </div>
-        </button>
-
-        <div className="flex gap-1 pr-3 opacity-0 group-hover/subtopic:opacity-100 transition-opacity">
-          <button onClick={() => onAddQuestion(subTopic.id)} className="btn-icon" title="Add Question">
-            <Plus className="w-4 h-4" />
-          </button>
-          <button onClick={() => onEditSubTopic(subTopic)} className="btn-icon" title="Edit Sub-topic">
-            <Pencil className="w-4 h-4" />
-          </button>
-          <button onClick={() => deleteSubTopic(topicId, subTopic.id)} className="btn-danger" title="Delete">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="p-3 pt-0 border-t border-white/5 animate-fade-in">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleQuestionDragEnd}>
-            <SortableContext items={questions.map(q => (q.id || ''))} strategy={verticalListSortingStrategy}>
-              <div className="space-y-1 mt-3">
-                {questions.map(q => (
-                  <SortableQuestionItem
-                    key={q.id}
-                    question={q}
-                    topicId={topicId}
-                    subTopicId={subTopic.id}
-                    onEdit={(question) => onEditQuestion(subTopic.id, question)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-          {questions.length === 0 && (
-            <p className="text-xs text-text-muted italic py-4 text-center">No questions yet</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
+import { ChevronDown, BookOpen, GripVertical, Trash2, Plus, FolderOpen, Pencil } from 'lucide-react';
+import { SortableQuestionItem } from './SortableQuestionItem';
+import { SubTopicSection } from './SubTopicSection';
+import { useQuestionStore } from '../../../store/useQuestionStore';
+import { AddQuestionModal } from '../../shared/AddQuestionModal';
+import { Modal } from '../../shared/Modal';
+import { Topic, SubTopic, Question } from '../../../types';
+import { useDeleteTopic, useUpdateTopic, useReorderTopics } from '../../../hooks/useTopics';
+import { useCreateSubTopic, useUpdateSubTopic, useReorderSubTopics } from '../../../hooks/useSubTopics';
+import { useCreateQuestion, useUpdateQuestion, useReorderQuestions } from '../../../hooks/useQuestions';
 
 interface TopicCardProps {
   topic: Topic;
@@ -174,18 +19,20 @@ interface TopicCardProps {
 
 export const TopicCard = ({ topic }: TopicCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const deleteTopic = useQuestionStore(state => state.deleteTopic);
-  const addSubTopic = useQuestionStore(state => state.addSubTopic);
-  const addQuestion = useQuestionStore(state => state.addQuestion);
-  const editQuestion = useQuestionStore(state => state.editQuestion);
-  const editSubTopic = useQuestionStore(state => state.editSubTopic);
-  const editTopic = useQuestionStore(state => state.editTopic);
-  const reorderSubTopics = useQuestionStore(state => state.reorderSubTopics);
-  const reorderQuestions = useQuestionStore(state => state.reorderQuestions);
-  const navigationTarget = useQuestionStore(state => state.navigationTarget);
+  const { navigationTarget } = useQuestionStore();
 
-  const subTopics = topic.subTopics || [];
-  const questions = topic.questions || [];
+  const deleteTopic = useDeleteTopic();
+  const updateTopic = useUpdateTopic();
+  const createSubTopic = useCreateSubTopic();
+  const updateSubTopic = useUpdateSubTopic();
+  const reorderSubTopics = useReorderSubTopics();
+  
+  const createQuestion = useCreateQuestion();
+  const updateQuestion = useUpdateQuestion();
+  const reorderQuestions = useReorderQuestions();
+
+  const subTopics = useMemo(() => topic.subTopics || [], [topic.subTopics]);
+  const questions = useMemo(() => topic.questions || [], [topic.questions]);
 
   useEffect(() => {
     if (navigationTarget) {
@@ -198,7 +45,6 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
   }, [navigationTarget, topic.id, questions, subTopics]);
 
   // Shared Modals State
-
   const [questionModal, setQuestionModal] = useState<{
     isOpen: boolean;
     subTopicId: string | null;
@@ -233,7 +79,11 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
       const oldIndex = subTopics.findIndex(st => st.id === active.id);
       const newIndex = subTopics.findIndex(st => st.id === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        reorderSubTopics(topic.id, oldIndex, newIndex);
+        const newSubTopics = [...subTopics];
+        const [removed] = newSubTopics.splice(oldIndex, 1);
+        newSubTopics.splice(newIndex, 0, removed);
+        
+        reorderSubTopics.mutate({ topicId: topic.id, data: { subTopicIds: newSubTopics.map(st => st.id) } });
       }
     }
   };
@@ -244,17 +94,21 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
       const oldIndex = questions.findIndex(q => q.id === active.id);
       const newIndex = questions.findIndex(q => q.id === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        reorderQuestions(topic.id, null, oldIndex, newIndex);
+        const newQuestions = [...questions];
+        const [removed] = newQuestions.splice(oldIndex, 1);
+        newQuestions.splice(newIndex, 0, removed);
+        
+        reorderQuestions.mutate({ topicId: topic.id, subTopicId: null, data: { questionIds: newQuestions.map(q => q.id || '') } });
       }
     }
   };
 
   const handleQuestionSubmit = (data: Partial<Question>) => {
     if (questionModal.mode === 'add') {
-      addQuestion(topic.id, questionModal.subTopicId, data);
+      createQuestion.mutate({ topicId: topic.id, subTopicId: questionModal.subTopicId, data });
     } else {
       const qId = questionModal.initialData?.id || '';
-      editQuestion(topic.id, questionModal.subTopicId, qId, data);
+      updateQuestion.mutate({ questionId: qId, data });
     }
     setQuestionModal({ ...questionModal, isOpen: false });
   };
@@ -262,14 +116,14 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
   const handleSubTopicSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (subTopicModal.subTopic) {
-      editSubTopic(topic.id, subTopicModal.subTopic.id, subTopicModal.subTopic.title);
+      updateSubTopic.mutate({ subTopicId: subTopicModal.subTopic.id, data: { title: subTopicModal.subTopic.title } });
     }
     setSubTopicModal({ ...subTopicModal, isOpen: false });
   };
 
   const handleTopicSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    editTopic(topic.id, topicModal.title, topicModal.description);
+    updateTopic.mutate({ id: topic.id, data: { title: topicModal.title, description: topicModal.description } });
     setTopicModal({ ...topicModal, isOpen: false });
   };
 
@@ -318,7 +172,7 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
         </button>
 
         <div className="flex gap-1 pr-4 opacity-0 group-hover/topic:opacity-100 transition-opacity">
-          <button onClick={() => addSubTopic(topic.id, "New Sub-Topic")} className="btn-icon" title="Add Sub-Topic">
+          <button onClick={() => createSubTopic.mutate({ topicId: topic.id, data: { title: "New Sub-Topic" } })} className="btn-icon" title="Add Sub-Topic">
             <FolderOpen className="w-4 h-4" />
           </button>
           <button onClick={() => setQuestionModal({ isOpen: true, subTopicId: null, mode: 'add', initialData: null })} className="btn-icon" title="Add Question">
@@ -327,7 +181,7 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
           <button onClick={() => setTopicModal({ ...topicModal, isOpen: true })} className="btn-icon" title="Edit Topic">
             <Pencil className="w-4 h-4" />
           </button>
-          <button onClick={() => deleteTopic(topic.id)} className="btn-danger" title="Delete Topic">
+          <button onClick={() => deleteTopic.mutate(topic.id)} className="btn-danger" title="Delete Topic">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -340,7 +194,7 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubTopicDragEnd}>
                 <SortableContext items={subTopics.map(st => st.id)} strategy={verticalListSortingStrategy}>
                   {subTopics.map(st => (
-                    <SortableSubTopicSection
+                    <SubTopicSection
                       key={st.id}
                       subTopic={st}
                       topicId={topic.id}

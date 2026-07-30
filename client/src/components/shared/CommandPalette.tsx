@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Hash, FolderOpen, BookOpen, CornerDownLeft } from 'lucide-react';
 import { useQuestionStore } from '../../store/useQuestionStore';
+import { useTopics } from '../../hooks/useTopics';
+import { Topic, SubTopic, Question } from '../../types';
 
 interface CommandPaletteProps {
     isOpen: boolean;
@@ -19,49 +21,54 @@ interface CommandItem {
 export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const topics = useQuestionStore(state => state.topics);
+    const { data: topics = [] } = useTopics();
     const setNavigationTarget = useQuestionStore(state => state.setNavigationTarget);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Flatten data for searching
-    const flattenedItems: CommandItem[] = [];
-    topics.forEach(topic => {
-        flattenedItems.push({ type: 'topic', id: topic.id, title: topic.title, subtitle: 'Topic' });
+    const flattenedItems = useMemo(() => {
+        const items: CommandItem[] = [];
+        topics.forEach((topic: Topic) => {
+            items.push({ type: 'topic', id: topic.id, title: topic.title, subtitle: 'Topic' });
 
-        topic.subTopics?.forEach(st => {
-            flattenedItems.push({ type: 'subtopic', id: st.id, title: st.title, subtitle: `Sub-topic in ${topic.title}` });
+            topic.subTopics?.forEach((st: SubTopic) => {
+                items.push({ type: 'subtopic', id: st.id, title: st.title, subtitle: `Sub-topic in ${topic.title}` });
 
-            st.questions?.forEach(q => {
+                st.questions?.forEach((q: Question) => {
+                    const qId = q.id || '';
+                    items.push({
+                        type: 'question',
+                        id: qId,
+                        title: q.title,
+                        subtitle: `In ${st.title}`,
+                        isSolved: q.isSolved
+                    });
+                });
+            });
+
+            topic.questions?.forEach((q: Question) => {
                 const qId = q.id || '';
-                flattenedItems.push({
+                items.push({
                     type: 'question',
                     id: qId,
                     title: q.title,
-                    subtitle: `In ${st.title}`,
+                    subtitle: `In ${topic.title}`,
                     isSolved: q.isSolved
                 });
             });
         });
+        return items;
+    }, [topics]);
 
-        topic.questions?.forEach(q => {
-            const qId = q.id || '';
-            flattenedItems.push({
-                type: 'question',
-                id: qId,
-                title: q.title,
-                subtitle: `In ${topic.title}`,
-                isSolved: q.isSolved
-            });
-        });
-    });
+    const filteredItems = useMemo(() => {
+        return query.trim() === ''
+            ? []
+            : flattenedItems.filter(item =>
+                item.title.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 7);
+    }, [query, flattenedItems]);
 
-    const filteredItems = query.trim() === ''
-        ? []
-        : flattenedItems.filter(item =>
-            item.title.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 7);
-
-    const handleSelect = (item: CommandItem) => {
+    const handleSelect = useCallback((item: CommandItem) => {
         setNavigationTarget(item.id);
 
         setTimeout(() => {
@@ -77,7 +84,7 @@ export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
         }, 100);
 
         onClose();
-    };
+    }, [setNavigationTarget, onClose]);
 
     useEffect(() => {
         if (isOpen) {
@@ -106,7 +113,7 @@ export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, filteredItems, selectedIndex, onClose]);
+    }, [isOpen, filteredItems, selectedIndex, onClose, handleSelect]);
 
     if (!isOpen) return null;
 

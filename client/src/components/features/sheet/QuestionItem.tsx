@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ExternalLink, Check, Trash2, Pencil, Star, StickyNote, Building2 } from 'lucide-react';
-import { useQuestionStore } from '../../store/useQuestionStore';
+import { useUpdateQuestion, useDeleteQuestion } from '../../../hooks/useQuestions';
 
 interface QuestionItemProps {
     question: any;
@@ -10,10 +10,8 @@ interface QuestionItemProps {
 }
 
 export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: QuestionItemProps) => {
-    const toggleSolved = useQuestionStore(state => state.toggleSolved);
-    const toggleStarred = useQuestionStore(state => state.toggleStarred);
-    const updateNotes = useQuestionStore(state => state.updateNotes);
-    const deleteQuestion = useQuestionStore(state => state.deleteQuestion);
+    const updateQuestion = useUpdateQuestion();
+    const deleteQuestion = useDeleteQuestion();
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [noteText, setNoteText] = useState(question.notes || '');
 
@@ -32,7 +30,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
 
     const handleNotesToggle = () => {
         if (isNotesOpen) {
-            updateNotes(topicId, subTopicId, qId, noteText);
+            updateQuestion.mutate({ questionId: qId, data: { notes: noteText } });
         }
         setIsNotesOpen(!isNotesOpen);
     };
@@ -42,14 +40,14 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => toggleSolved(topicId, subTopicId, qId)}
+                        onClick={() => updateQuestion.mutate({ questionId: qId, data: { isSolved: !question.isSolved } })}
                         className={`checkbox-solved ${question.isSolved ? 'checked' : ''}`}
                     >
                         {question.isSolved && <Check className="w-3 h-3 text-white" />}
                     </button>
 
                     <button
-                        onClick={() => toggleStarred(topicId, subTopicId, qId)}
+                        onClick={() => updateQuestion.mutate({ questionId: qId, data: { isStarred: !question.isStarred } })}
                         className={`transition-colors duration-200 ${question.isStarred ? 'text-warning' : 'text-text-muted hover:text-warning'}`}
                     >
                         <Star className={`w-4 h-4 ${question.isStarred ? 'fill-current' : ''}`} />
@@ -102,7 +100,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
                             <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                            onClick={() => deleteQuestion(topicId, subTopicId, qId)}
+                            onClick={() => deleteQuestion.mutate({ topicId, subTopicId, questionId: qId })}
                             className="btn-danger"
                             title="Delete"
                         >
@@ -120,7 +118,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
                         onChange={(e) => setNoteText(e.target.value)}
                         placeholder="Add your private notes here..."
                         className="input-field min-h-[80px] text-sm py-2"
-                        onBlur={() => updateNotes(topicId, subTopicId, qId, noteText)}
+                        onBlur={() => updateQuestion.mutate({ questionId: qId, data: { notes: noteText } })}
                     />
                     <div className="flex justify-end mt-1">
                         <span className="text-[10px] text-text-muted">Auto-saves on blur</span>
