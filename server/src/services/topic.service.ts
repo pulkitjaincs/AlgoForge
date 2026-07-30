@@ -1,6 +1,7 @@
 import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
 import { cache } from '../utils/cache.js';
+import { CreateTopicInput, UpdateTopicInput } from '../schemas/topic.schema.js';
 
 export const getAllTopics = async (userId: string) => {
   const cacheKey = `topics:${userId}`;
@@ -26,7 +27,7 @@ export const getAllTopics = async (userId: string) => {
   return topics;
 };
 
-export const createTopic = async (userId: string, data: any) => {
+export const createTopic = async (userId: string, data: CreateTopicInput) => {
   const count = await prisma.topic.count({ where: { userId } });
   const topic = await prisma.topic.create({
     data: {
@@ -39,7 +40,7 @@ export const createTopic = async (userId: string, data: any) => {
   return topic;
 };
 
-export const updateTopic = async (topicId: string, userId: string, data: any) => {
+export const updateTopic = async (topicId: string, userId: string, data: UpdateTopicInput) => {
   const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
   if (!topic) throw new AppError('Topic not found', 404);
 

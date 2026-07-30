@@ -23,3 +23,6 @@ export const reorderTopicsSchema = z.object({
     orderedIds: z.array(uuid).min(1),
   }),
 });
+
+export type CreateTopicInput = z.infer<typeof createTopicSchema>['body'];
+export type UpdateTopicInput = z.infer<typeof updateTopicSchema>['body'];

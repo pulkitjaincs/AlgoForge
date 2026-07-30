@@ -26,3 +26,5 @@ yarn-debug.log*
 .claude
 .agents
 coverage
+
+upgrade_plan.md

@@ -1,5 +1,4 @@
 export interface Question {
-  _id?: string;
   id?: string;
   title: string;
   isSolved: boolean;

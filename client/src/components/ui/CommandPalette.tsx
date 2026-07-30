@@ -32,7 +32,7 @@ export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
             flattenedItems.push({ type: 'subtopic', id: st.id, title: st.title, subtitle: `Sub-topic in ${topic.title}` });
 
             st.questions?.forEach(q => {
-                const qId = q._id || q.id || '';
+                const qId = q.id || '';
                 flattenedItems.push({
                     type: 'question',
                     id: qId,
@@ -44,7 +44,7 @@ export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
         });
 
         topic.questions?.forEach(q => {
-            const qId = q._id || q.id || '';
+            const qId = q.id || '';
             flattenedItems.push({
                 type: 'question',
                 id: qId,

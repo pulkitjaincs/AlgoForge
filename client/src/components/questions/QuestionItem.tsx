@@ -17,7 +17,7 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [noteText, setNoteText] = useState(question.notes || '');
 
-    const qId = question._id || question.id || '';
+    const qId = question.id || '';
     const qObj = question.questionId || question;
 
     const difficultyMap: Record<string, string> = {

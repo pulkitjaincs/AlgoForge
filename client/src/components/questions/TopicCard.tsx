@@ -18,7 +18,7 @@ interface SortableQuestionItemProps {
 }
 
 const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }: SortableQuestionItemProps) => {
-  const itemId = question._id || question.id || '';
+  const itemId = question.id || '';
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: itemId });
 
   const style = {
@@ -63,7 +63,7 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
 
   useEffect(() => {
     if (navigationTarget) {
-      const isTargetChild = questions.some(q => (q._id || q.id) === navigationTarget);
+      const isTargetChild = questions.some(q => q.id === navigationTarget);
       if (isTargetChild || subTopic.id === navigationTarget) {
         setIsOpen(true);
       }
@@ -87,8 +87,8 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
   const handleQuestionDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
-      const oldIndex = questions.findIndex(q => (q._id || q.id) === active.id);
-      const newIndex = questions.findIndex(q => (q._id || q.id) === over?.id);
+      const oldIndex = questions.findIndex(q => q.id === active.id);
+      const newIndex = questions.findIndex(q => q.id === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderQuestions(topicId, subTopic.id, oldIndex, newIndex);
       }
@@ -145,11 +145,11 @@ const SortableSubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTo
       {isOpen && (
         <div className="p-3 pt-0 border-t border-white/5 animate-fade-in">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleQuestionDragEnd}>
-            <SortableContext items={questions.map(q => (q._id || q.id || ''))} strategy={verticalListSortingStrategy}>
+            <SortableContext items={questions.map(q => (q.id || ''))} strategy={verticalListSortingStrategy}>
               <div className="space-y-1 mt-3">
                 {questions.map(q => (
                   <SortableQuestionItem
-                    key={q._id || q.id}
+                    key={q.id}
                     question={q}
                     topicId={topicId}
                     subTopicId={subTopic.id}
@@ -189,8 +189,8 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
 
   useEffect(() => {
     if (navigationTarget) {
-      const isTargetChild = questions.some(q => (q._id || q.id) === navigationTarget) ||
-        subTopics.some(st => st.id === navigationTarget || st.questions?.some(q => (q._id || q.id) === navigationTarget));
+      const isTargetChild = questions.some(q => q.id === navigationTarget) ||
+        subTopics.some(st => st.id === navigationTarget || st.questions?.some(q => q.id === navigationTarget));
       if (isTargetChild || topic.id === navigationTarget) {
         setIsOpen(true);
       }
@@ -241,8 +241,8 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
   const handleQuestionDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
-      const oldIndex = questions.findIndex(q => (q._id || q.id) === active.id);
-      const newIndex = questions.findIndex(q => (q._id || q.id) === over?.id);
+      const oldIndex = questions.findIndex(q => q.id === active.id);
+      const newIndex = questions.findIndex(q => q.id === over?.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderQuestions(topic.id, null, oldIndex, newIndex);
       }
@@ -253,7 +253,7 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
     if (questionModal.mode === 'add') {
       addQuestion(topic.id, questionModal.subTopicId, data);
     } else {
-      const qId = questionModal.initialData?._id || questionModal.initialData?.id || '';
+      const qId = questionModal.initialData?.id || '';
       editQuestion(topic.id, questionModal.subTopicId, qId, data);
     }
     setQuestionModal({ ...questionModal, isOpen: false });
@@ -357,10 +357,10 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
           {questions.length > 0 && (
             <div className="space-y-1 pt-2 border-t border-white/5">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleQuestionDragEnd}>
-                <SortableContext items={questions.map(q => (q._id || q.id || ''))} strategy={verticalListSortingStrategy}>
+                <SortableContext items={questions.map(q => (q.id || ''))} strategy={verticalListSortingStrategy}>
                   {questions.map(q => (
                     <SortableQuestionItem
-                      key={q._id || q.id}
+                      key={q.id}
                       question={q}
                       topicId={topic.id}
                       subTopicId={null}

@@ -4,8 +4,9 @@ import { prisma } from '../config/database.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { Response } from 'express';
+import { RegisterInput, LoginInput } from '../schemas/auth.schema.js';
 
-export const register = async (data: any) => {
+export const register = async (data: RegisterInput) => {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
   if (existingUser) {
     throw new AppError('Email already in use', 400);
@@ -24,7 +25,7 @@ export const register = async (data: any) => {
   return user;
 };
 
-export const login = async (data: any) => {
+export const login = async (data: LoginInput) => {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
   if (!user) {
     throw new AppError('Invalid credentials', 401);

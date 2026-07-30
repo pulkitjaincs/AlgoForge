@@ -23,3 +23,6 @@ export const updateNotesSchema = z.object({
     notes: z.string().max(5000),
   }),
 });
+
+export type CreateQuestionInput = z.infer<typeof createQuestionSchema>['body'];
+export type UpdateNotesInput = z.infer<typeof updateNotesSchema>['body'];

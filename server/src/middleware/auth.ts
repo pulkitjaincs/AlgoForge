@@ -13,7 +13,7 @@ export const protect = async (req: Request, _res: Response, next: NextFunction) 
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     if (!user) throw new AppError('User no longer exists', 401);
 
-    (req as any).user = user;
+    req.user = user;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {

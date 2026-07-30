@@ -198,14 +198,14 @@ export const useQuestionStore = create<QuestionState>()(
                                 if (topic.id !== topicId) return topic;
 
                                 if (!subTopicId) {
-                                    return { ...topic, questions: (topic.questions || []).filter(q => (q._id || q.id) !== questionId) };
+                                    return { ...topic, questions: (topic.questions || []).filter(q => q.id !== questionId) };
                                 }
 
                                 return {
                                     ...topic,
                                     subTopics: (topic.subTopics || []).map(st =>
                                         st.id === subTopicId
-                                            ? { ...st, questions: (st.questions || []).filter(q => (q._id || q.id) !== questionId) }
+                                            ? { ...st, questions: (st.questions || []).filter(q => q.id !== questionId) }
                                             : st
                                     )
                                 };
@@ -236,7 +236,7 @@ export const useQuestionStore = create<QuestionState>()(
                                     return {
                                         ...topic,
                                         questions: (topic.questions || []).map(q =>
-                                            (q._id || q.id) === questionId ? { ...q, ...result.data } : q
+                                            q.id === questionId ? { ...q, ...result.data } : q
                                         )
                                     };
                                 }
@@ -245,7 +245,7 @@ export const useQuestionStore = create<QuestionState>()(
                                     ...topic,
                                     subTopics: (topic.subTopics || []).map(st =>
                                         st.id === subTopicId
-                                            ? { ...st, questions: (st.questions || []).map(q => (q._id || q.id) === questionId ? { ...q, ...result.data } : q) }
+                                            ? { ...st, questions: (st.questions || []).map(q => q.id === questionId ? { ...q, ...result.data } : q) }
                                             : st
                                     )
                                 };
@@ -265,7 +265,7 @@ export const useQuestionStore = create<QuestionState>()(
                 set((state) => ({
                     topics: state.topics.map(topic => {
                         if (topic.id !== topicId) return topic;
-                        const updateQ = (q: Question) => (q._id || q.id) === questionId ? { ...q, isSolved: !q.isSolved } : q;
+                        const updateQ = (q: Question) => q.id === questionId ? { ...q, isSolved: !q.isSolved } : q;
 
                         if (!subTopicId) {
                             return { ...topic, questions: (topic.questions || []).map(updateQ) };
@@ -302,7 +302,7 @@ export const useQuestionStore = create<QuestionState>()(
                 set((state) => ({
                     topics: state.topics.map(topic => {
                         if (topic.id !== topicId) return topic;
-                        const updateQ = (q: Question) => (q._id || q.id) === questionId ? { ...q, isStarred: !q.isStarred } : q;
+                        const updateQ = (q: Question) => q.id === questionId ? { ...q, isStarred: !q.isStarred } : q;
 
                         if (!subTopicId) {
                             return { ...topic, questions: (topic.questions || []).map(updateQ) };
@@ -339,7 +339,7 @@ export const useQuestionStore = create<QuestionState>()(
                 set((state) => ({
                     topics: state.topics.map(topic => {
                         if (topic.id !== topicId) return topic;
-                        const updateQ = (q: Question) => (q._id || q.id) === questionId ? { ...q, notes } : q;
+                        const updateQ = (q: Question) => q.id === questionId ? { ...q, notes } : q;
 
                         if (!subTopicId) {
                             return { ...topic, questions: (topic.questions || []).map(updateQ) };

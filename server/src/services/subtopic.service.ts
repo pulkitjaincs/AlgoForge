@@ -1,8 +1,9 @@
 import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
 import { cache } from '../utils/cache.js';
+import { CreateSubTopicInput, UpdateSubTopicInput } from '../schemas/subtopic.schema.js';
 
-export const createSubTopic = async (userId: string, topicId: string, data: any) => {
+export const createSubTopic = async (userId: string, topicId: string, data: CreateSubTopicInput) => {
   const topic = await prisma.topic.findFirst({ where: { id: topicId, userId } });
   if (!topic) throw new AppError('Topic not found', 404);
 
@@ -19,7 +20,7 @@ export const createSubTopic = async (userId: string, topicId: string, data: any)
   return subTopic;
 };
 
-export const updateSubTopic = async (userId: string, subTopicId: string, data: any) => {
+export const updateSubTopic = async (userId: string, subTopicId: string, data: UpdateSubTopicInput) => {
   const subTopic = await prisma.subTopic.findUnique({
     where: { id: subTopicId },
     include: { topic: true },
