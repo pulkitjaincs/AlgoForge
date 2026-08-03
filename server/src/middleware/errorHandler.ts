@@ -18,6 +18,11 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
     return res.status(400).json({ success: false, error: message });
   }
 
+  // CSRF Error
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({ success: false, error: 'Invalid or missing CSRF token' });
+  }
+
   // Prisma Errors (simplified for now as we transition)
   if (err.code === 'P2002') {
     return res.status(409).json({ success: false, error: 'Duplicate value detected' });

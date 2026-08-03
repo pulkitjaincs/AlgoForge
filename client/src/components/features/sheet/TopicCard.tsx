@@ -17,7 +17,7 @@ interface TopicCardProps {
   topic: Topic;
 }
 
-export const TopicCard = ({ topic }: TopicCardProps) => {
+export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { navigationTarget } = useQuestionStore();
 
@@ -294,4 +294,4 @@ export const TopicCard = ({ topic }: TopicCardProps) => {
       </Modal>
     </div>
   );
-};
+});

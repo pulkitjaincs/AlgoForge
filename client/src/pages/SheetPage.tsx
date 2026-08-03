@@ -22,7 +22,48 @@ import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, Refresh
 import { FilterBar } from '../components/features/sheet/FilterBar';
 import { useTopics, useCreateTopic, useReorderTopics } from '../hooks/useTopics';
 import { useResetProgress, useFullReset } from '../hooks/useQuestions';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+
+const VirtualizedTopicList = ({ topics }: { topics: any[] }) => {
+  const parentRef = React.useRef<HTMLDivElement>(null);
+  
+  const virtualizer = useVirtualizer({
+    count: topics.length,
+    getScrollElement: () => document.querySelector('main') as HTMLElement | null,
+    estimateSize: () => 80, // Approximate height of a closed TopicCard
+    overscan: 5,
+  });
+
+  return (
+    <div
+      style={{
+        height: `${virtualizer.getTotalSize()}px`,
+        width: '100%',
+        position: 'relative',
+      }}
+    >
+      {virtualizer.getVirtualItems().map((virtualItem) => (
+        <div
+          key={virtualItem.key}
+          data-index={virtualItem.index}
+          ref={virtualizer.measureElement}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${virtualItem.start}px)`,
+            paddingBottom: '16px', // space-y-4 equivalent
+          }}
+        >
+          <TopicCard topic={topics[virtualItem.index]} />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function SheetPage() {
   const [searchParams] = useSearchParams();
@@ -98,6 +139,9 @@ export default function SheetPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-8 lg:p-12">
+      <Helmet>
+        <title>AlgoForge — DSA Sheet</title>
+      </Helmet>
       <div className="max-w-6xl mx-auto">
         <header className="mb-10">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
@@ -210,11 +254,7 @@ export default function SheetPage() {
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={topics.map(t => t.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-4">
-                {topics.map(topic => (
-                  <TopicCard key={topic.id} topic={topic} />
-                ))}
-              </div>
+              <VirtualizedTopicList topics={topics} />
             </SortableContext>
           </DndContext>
         )}

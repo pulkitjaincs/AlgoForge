@@ -7,7 +7,11 @@ export const registerSchema = z.object({
   body: z.object({
     name: z.string().min(2).max(100),
     email: z.string().email(),
-    password: z.string().min(8).max(128),
+    password: z.string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(128)
+      .regex(/[a-zA-Z]/, 'Password must contain at least one letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
   }),
 });
 

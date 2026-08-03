@@ -105,13 +105,13 @@ Run these from the root directory:
 
 | Command | Description |
 |---|---|
-| `npm run install:all` | Installs dependencies for root, client, and server. |
-| `npm run dev:client` | Starts the Vite frontend in dev mode. |
-| `npm run dev:server` | Starts the Express backend in watch mode. |
-| `npm run build` | Builds both frontend and backend for production. |
-| `npm run lint` | Runs ESLint on both projects. |
-| `npm run test` | Runs the backend unit tests using Vitest. |
-| `npm run docker:up` | Builds and starts all containers. |
+| `pnpm install` | Installs dependencies using pnpm workspaces. |
+| `pnpm run dev` | Starts the Vite frontend and Express backend in dev mode. |
+| `pnpm run build` | Builds both frontend and backend for production. |
+| `pnpm run lint` | Runs ESLint on both projects. |
+| `pnpm run test` | Runs the backend unit tests using Vitest. |
+| `pnpm run test:e2e` | Runs E2E tests using Playwright. |
+| `pnpm run docker:up` | Builds and starts all containers. |
 
 ---
 

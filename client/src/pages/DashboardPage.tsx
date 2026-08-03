@@ -5,6 +5,7 @@ import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { Activity, Target, Zap, Clock } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export default function DashboardPage() {
   const { data: summary } = useAnalyticsSummary();

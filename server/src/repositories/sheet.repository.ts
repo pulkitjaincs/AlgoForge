@@ -6,14 +6,23 @@ export class SheetRepository {
     return prisma.sheet.create({ data });
   }
 
-  async findPublicSheets() {
-    return prisma.sheet.findMany({
-      where: { isPublic: true },
-      include: {
-        author: { select: { name: true, username: true, avatarUrl: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+  async findPublicSheets(page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+    
+    const [data, total] = await Promise.all([
+      prisma.sheet.findMany({
+        where: { isPublic: true },
+        include: {
+          author: { select: { name: true, username: true, avatarUrl: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.sheet.count({ where: { isPublic: true } })
+    ]);
+
+    return { data, total, page, limit };
   }
 
   async findById(id: string) {

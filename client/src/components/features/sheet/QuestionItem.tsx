@@ -12,7 +12,9 @@ interface QuestionItemProps {
     onEdit: () => void;
 }
 
-export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: QuestionItemProps) => {
+import React from 'react';
+
+export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit }: QuestionItemProps) => {
     const updateQuestion = useUpdateQuestion();
     const deleteQuestion = useDeleteQuestion();
     const [isNotesOpen, setIsNotesOpen] = useState(false);
@@ -209,4 +211,4 @@ export const QuestionItem = ({ question, topicId, subTopicId, onEdit }: Question
             </div>
         </div>
     );
-};
+});

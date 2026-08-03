@@ -21,8 +21,8 @@ export const publishSheet = async (userId: string, data: PublishSheetInput) => {
   });
 };
 
-export const getPublicSheets = async () => {
-  return sheetRepository.findPublicSheets();
+export const getPublicSheets = async (page: number = 1, limit: number = 20) => {
+  return sheetRepository.findPublicSheets(page, limit);
 };
 
 export const getSheetById = async (id: string) => {

@@ -17,12 +17,31 @@ import apiRoutes from './routes/index.js';
 const app = express();
 
 // Security & Parsing
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", env.CLIENT_URL || "http://localhost:5173"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(sanitize);
+
+import { doubleCsrfProtection, generateToken } from './config/csrf.js';
+app.use(doubleCsrfProtection);
+
+app.get('/api/v1/csrf-token', (req, res) => {
+  const token = generateToken(req, res);
+  res.json({ token });
+});
 
 // Rate Limiting
 const generalLimiter = rateLimit({

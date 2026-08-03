@@ -6,6 +6,26 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+let csrfToken: string | null = null;
+
+const fetchCsrfToken = async () => {
+  if (!csrfToken) {
+    const response = await axios.get('/api/v1/csrf-token', { withCredentials: true });
+    csrfToken = response.data.token;
+  }
+  return csrfToken;
+};
+
+apiClient.interceptors.request.use(async (config) => {
+  if (config.method && !['get', 'head', 'options'].includes(config.method)) {
+    const token = await fetchCsrfToken();
+    if (token) {
+      config.headers['x-csrf-token'] = token;
+    }
+  }
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => {
     // Return just the data part of the envelope if it matches the success envelope format

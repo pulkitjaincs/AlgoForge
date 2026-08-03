@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': true
+  '@sentry/node-cpu-profiler': set this to true or false
   esbuild: true
   prisma: true
 minimumReleaseAgeExclude:

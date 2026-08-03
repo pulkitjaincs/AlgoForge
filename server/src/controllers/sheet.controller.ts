@@ -7,8 +7,11 @@ export const publishSheet = async (req: Request, res: Response) => {
 };
 
 export const getPublicSheets = async (req: Request, res: Response) => {
-  const sheets = await sheetService.getPublicSheets();
-  res.status(200).json({ success: true, data: sheets });
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  
+  const result = await sheetService.getPublicSheets(page, limit);
+  res.status(200).json({ success: true, ...result });
 };
 
 export const getSheetById = async (req: Request, res: Response) => {

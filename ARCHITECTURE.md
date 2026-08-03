@@ -34,13 +34,14 @@ The backend follows a strict layered architecture to separate concerns, making t
 AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect against XSS attacks.
 
 **Middleware Pipeline Order:**
-1. `helmet()` — Sets secure HTTP headers.
-2. `rateLimit()` — Prevents brute-force and DDoS (100 req / 15 min).
+1. `helmet()` — Sets secure HTTP headers and Content Security Policy (CSP).
+2. `rateLimit()` — Prevents brute-force and DDoS (100 req / 15 min globally, strict on auth).
 3. `sanitize()` — Strips dangerous keys from `req.body`.
 4. `cookieParser()` — Parses `HttpOnly` cookies.
-5. `requestId` / `requestLogger` — Injects traceability UUIDs and logs via Pino.
-6. `protect` (Route-level) — Verifies JWT signature and expiry.
-7. `validate` (Route-level) — Strict Zod schema enforcement.
+5. `doubleCsrfProtection` — Validates CSRF tokens using the Double Submit Cookie pattern.
+6. `requestId` / `requestLogger` — Injects traceability UUIDs and logs via Pino.
+7. `protect` (Route-level) — Verifies JWT signature and expiry.
+8. `validate` (Route-level) — Strict Zod schema enforcement.
 
 ## 4. Frontend Architecture
 
@@ -49,7 +50,7 @@ AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect ag
   - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates for rapid interactions.
   - **UI State:** `Zustand` is restricted strictly to global transient UI states (like command palette visibility and navigation targets), chosen for its lightweight API.
 - **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`) prioritizing focused, decomposed components over monoliths.
-- **Drag-and-Drop:** `@dnd-kit` powers the reordering of topics, subtopics, and questions via wrapper components.
+- **Drag-and-Drop & Virtualization:** `@dnd-kit` powers the reordering of topics, subtopics, and questions. Long lists (like the main sheet) are virtualized using `@tanstack/react-virtual` to optimize DOM node counts and rendering performance for massive curriculums.
 
 ## 5. Caching Strategy
 
@@ -172,9 +173,10 @@ AlgoForge includes networking effects designed to encourage collaborative learni
 
 Express 5 natively catches rejected promises, eliminating the need for `try/catch` in controllers. Errors bubble up to `errorHandler.ts`, which categorizes them:
 - **ZodError:** 400 Bad Request with field-level details.
+- **CSRF Error:** 403 Forbidden on invalid or missing tokens.
 - **Prisma Errors:** e.g., `P2002` maps to 409 Conflict.
 - **AppError:** Custom operational errors (e.g., 404 Not Found, 403 Forbidden).
-- **Unknown Errors:** Logged via Pino and obscured as 500 Internal Server Error to prevent leaking stack traces.
+- **Unknown Errors:** Captured by Sentry (`@sentry/node` & `@sentry/react`), logged via Pino, and obscured as 500 Internal Server Error to prevent leaking stack traces.
 
 ## 9. Testing Infrastructure
 
