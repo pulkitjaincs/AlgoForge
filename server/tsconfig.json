@@ -12,7 +12,10 @@
     "declaration": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    "paths": {
+      "@algoforge/shared": ["../packages/shared/dist/index"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

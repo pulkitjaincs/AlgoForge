@@ -127,7 +127,7 @@ npm run test:coverage
 
 **E2E Testing:** Playwright is configured in the `e2e/` directory for full browser flow testing.
 
-**CI/CD:** Every push to `main` triggers a GitHub Actions pipeline that enforces Type-checking, Linting, and Test coverage.
+**CI:** Every push to `main` triggers a GitHub Actions pipeline that enforces Type-checking, Linting, and Test coverage.
 
 ---
 
