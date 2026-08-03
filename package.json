@@ -14,6 +14,7 @@
   },
   "author": "pulkitjaincs",
   "license": "MIT",
+  "packageManager": "pnpm@9.1.0",
   "devDependencies": {
     "@playwright/test": "^1.62.0",
     "@types/node": "^22.0.0",
