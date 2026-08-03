@@ -1,0 +1,18 @@
+import { Request, Response } from 'express';
+import * as sheetService from '../services/sheet.service.js';
+
+export const publishSheet = async (req: Request, res: Response) => {
+  const sheet = await sheetService.publishSheet(req.user!.id, req.body);
+  res.status(201).json({ success: true, data: sheet });
+};
+
+export const getPublicSheets = async (req: Request, res: Response) => {
+  const sheets = await sheetService.getPublicSheets();
+  res.status(200).json({ success: true, data: sheets });
+};
+
+export const getSheetById = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const sheet = await sheetService.getSheetById(id);
+  res.status(200).json({ success: true, data: sheet });
+};

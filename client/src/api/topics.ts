@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { Topic } from '../types';
+import { Topic } from '@algoforge/shared';
 
 export const topicsApi = {
   getAll: (queryStr: string = ''): Promise<Topic[]> => apiClient.get(`/topics${queryStr ? `?${queryStr}` : ''}`),

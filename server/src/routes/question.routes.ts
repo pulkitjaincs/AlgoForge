@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as questionController from '../controllers/question.controller.js';
 import { validate } from '../middleware/validate.js';
 import { protect } from '../middleware/auth.js';
-import { createQuestionSchema, updateNotesSchema, addAttemptSchema } from '../schemas/question.schema.js';
+import { createQuestionSchema, updateNotesSchema, addAttemptSchema } from '@algoforge/shared';
 
 const router = Router({ mergeParams: true });
 

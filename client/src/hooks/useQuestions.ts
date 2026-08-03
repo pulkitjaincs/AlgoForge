@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { questionsApi } from '../api/questions';
 import { toast } from 'sonner';
-import { Question } from '../types';
+import { Question } from '@algoforge/shared';
 
 export const useCreateQuestion = () => {
   const queryClient = useQueryClient();

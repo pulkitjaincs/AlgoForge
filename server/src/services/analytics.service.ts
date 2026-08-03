@@ -1,15 +1,8 @@
-import { prisma } from '../config/database.js';
+import { topicRepository } from '../repositories/topic.repository.js';
+import { attemptRepository } from '../repositories/attempt.repository.js';
 
 export const getSummary = async (userId: string) => {
-  const topics = await prisma.topic.findMany({
-    where: { userId, deletedAt: null },
-    include: {
-      questions: { where: { deletedAt: null } },
-      subTopics: {
-        include: { questions: { where: { deletedAt: null } } }
-      }
-    }
-  });
+  const topics = await topicRepository.findManyWithAllQuestions(userId);
 
   let totalQuestions = 0;
   let solvedQuestions = 0;
@@ -43,13 +36,7 @@ export const getHeatmap = async (userId: string, year: number) => {
   const startDate = new Date(year, 0, 1);
   const endDate = new Date(year, 11, 31, 23, 59, 59);
 
-  const attempts = await prisma.questionAttempt.findMany({
-    where: {
-      userId,
-      solvedAt: { gte: startDate, lte: endDate }
-    },
-    select: { solvedAt: true }
-  });
+  const attempts = await attemptRepository.findManyByUserIdInDateRange(userId, startDate, endDate);
 
   const heatmap: Record<string, number> = {};
   for (const a of attempts) {
@@ -61,11 +48,7 @@ export const getHeatmap = async (userId: string, year: number) => {
 };
 
 export const getStreaks = async (userId: string) => {
-  const attempts = await prisma.questionAttempt.findMany({
-    where: { userId },
-    orderBy: { solvedAt: 'desc' },
-    select: { solvedAt: true }
-  });
+  const attempts = await attemptRepository.findAllByUserId(userId);
 
   if (attempts.length === 0) return { currentStreak: 0, maxStreak: 0, lastActive: null };
 
@@ -101,13 +84,7 @@ export const getStreaks = async (userId: string) => {
 };
 
 export const getTopicMastery = async (userId: string) => {
-  const topics = await prisma.topic.findMany({
-    where: { userId, deletedAt: null },
-    include: {
-      questions: { where: { deletedAt: null } },
-      subTopics: { include: { questions: { where: { deletedAt: null } } } }
-    }
-  });
+  const topics = await topicRepository.findManyWithAllQuestions(userId);
 
   return topics.map(topic => {
     let total = topic.questions.length;
@@ -138,12 +115,7 @@ export const getVelocity = async (userId: string, period: string = 'weekly') => 
   const weeks = 8;
   const startDate = new Date(today.getTime() - weeks * 7 * 24 * 60 * 60 * 1000);
   
-  const attempts = await prisma.questionAttempt.findMany({
-    where: {
-      userId,
-      solvedAt: { gte: startDate }
-    }
-  });
+  const attempts = await attemptRepository.findManyFromDate(userId, startDate);
 
   const velocityMap: Record<string, number> = {};
   for (const a of attempts) {

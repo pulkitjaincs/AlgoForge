@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { LinkIcon, Youtube, Building2, Globe, Star, Check } from 'lucide-react';
-import { Question } from '../../types';
+import { Question } from '@algoforge/shared';
 
 interface AddQuestionModalProps {
     isOpen: boolean;

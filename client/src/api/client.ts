@@ -14,14 +14,23 @@ apiClient.interceptors.response.use(
     }
     return response.data;
   },
-  (error) => {
-    if (error.response) {
-      if (error.response.status === 401) {
-        // Redirect to login if not already there
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/login' && originalRequest.url !== '/auth/refresh') {
+      originalRequest._retry = true;
+      try {
+        await apiClient.post('/auth/refresh');
+        return apiClient(originalRequest);
+      } catch (refreshError) {
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-      } else {
+        return Promise.reject(refreshError);
+      }
+    }
+
+    if (error.response) {
+      if (error.response.status !== 401) {
         const message = error.response.data?.error || error.message;
         toast.error(message);
       }

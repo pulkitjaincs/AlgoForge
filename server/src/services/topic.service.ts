@@ -1,7 +1,8 @@
-import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
 import { cache } from '../utils/cache.js';
-import { CreateTopicInput, UpdateTopicInput } from '../schemas/topic.schema.js';
+import { CreateTopicInput, UpdateTopicInput } from '@algoforge/shared';
+import { topicRepository } from '../repositories/topic.repository.js';
+import { prisma } from '../config/database.js'; // Needed for transaction in reorder
 
 export interface TopicFilters {
   difficulty?: string;
@@ -12,7 +13,6 @@ export interface TopicFilters {
 }
 
 export const getAllTopics = async (userId: string, filters: TopicFilters = {}) => {
-  // Can't cache effectively with many filter combinations, so we bypass cache if filters are present
   const hasFilters = Object.keys(filters).length > 0;
   const cacheKey = `topics:${userId}`;
   
@@ -33,26 +33,7 @@ export const getAllTopics = async (userId: string, filters: TopicFilters = {}) =
     ];
   }
 
-  const topics = await prisma.topic.findMany({
-    where: { userId, deletedAt: null },
-    orderBy: { order: 'asc' },
-    include: {
-      subTopics: {
-        where: { deletedAt: null },
-        orderBy: { order: 'asc' },
-        include: {
-          questions: { 
-            where: questionFilter,
-            orderBy: { order: 'asc' } 
-          },
-        },
-      },
-      questions: { 
-        where: questionFilter,
-        orderBy: { order: 'asc' } 
-      },
-    },
-  });
+  const topics = await topicRepository.findManyWithFilters(userId, questionFilter);
 
   if (!hasFilters) {
     await cache.setWithTag(cacheKey, `user:${userId}`, topics, 300);
@@ -61,38 +42,30 @@ export const getAllTopics = async (userId: string, filters: TopicFilters = {}) =
 };
 
 export const createTopic = async (userId: string, data: CreateTopicInput) => {
-  const count = await prisma.topic.count({ where: { userId } });
-  const topic = await prisma.topic.create({
-    data: {
-      ...data,
-      order: count,
-      userId,
-    },
+  const count = await topicRepository.countByUserId(userId);
+  const topic = await topicRepository.create({
+    ...data,
+    order: count,
+    userId,
   });
   await cache.invalidateTag(`user:${userId}`);
   return topic;
 };
 
 export const updateTopic = async (topicId: string, userId: string, data: UpdateTopicInput) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
+  const topic = await topicRepository.findFirstByIdAndUserId(topicId, userId);
   if (!topic) throw new AppError('Topic not found', 404);
 
-  const updated = await prisma.topic.update({
-    where: { id: topicId },
-    data,
-  });
+  const updated = await topicRepository.update(topicId, data);
   await cache.invalidateTag(`user:${userId}`);
   return updated;
 };
 
 export const deleteTopic = async (topicId: string, userId: string) => {
-  const topic = await prisma.topic.findFirst({ where: { id: topicId, userId, deletedAt: null } });
+  const topic = await topicRepository.findFirstByIdAndUserId(topicId, userId);
   if (!topic) throw new AppError('Topic not found', 404);
 
-  await prisma.topic.update({
-    where: { id: topicId },
-    data: { deletedAt: new Date() }
-  });
+  await topicRepository.softDelete(topicId);
   await cache.invalidateTag(`user:${userId}`);
 };
 

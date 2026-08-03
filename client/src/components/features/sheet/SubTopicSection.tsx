@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2, Plus, FolderOpen, Pencil } from 'lucide-react';
 import { SortableQuestionItem } from './SortableQuestionItem';
 import { useQuestionStore } from '../../../store/useQuestionStore';
-import { SubTopic, Question } from '../../../types';
+import { SubTopic, Question } from '@algoforge/shared';
 import { useDeleteSubTopic } from '../../../hooks/useSubTopics';
 import { useReorderQuestions } from '../../../hooks/useQuestions';
 

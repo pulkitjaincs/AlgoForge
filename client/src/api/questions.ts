@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { Question } from '../types';
+import { Question } from '@algoforge/shared';
 
 export const questionsApi = {
   create: (topicId: string, subTopicId: string | null, data: Partial<Question>): Promise<Question> => {

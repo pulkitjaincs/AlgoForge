@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { SubTopic } from '../types';
+import { SubTopic } from '@algoforge/shared';
 
 export const subtopicsApi = {
   create: (topicId: string, data: { title: string }): Promise<SubTopic> => apiClient.post(`/topics/${topicId}/subtopics`, data),

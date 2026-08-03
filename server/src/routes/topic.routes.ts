@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as topicController from '../controllers/topic.controller.js';
 import { validate } from '../middleware/validate.js';
 import { protect } from '../middleware/auth.js';
-import { createTopicSchema, updateTopicSchema, reorderTopicsSchema } from '../schemas/topic.schema.js';
+import { createTopicSchema, updateTopicSchema, reorderTopicsSchema } from '@algoforge/shared';
 
 const router = Router();
 

@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { QuestionItem } from './QuestionItem';
-import { Question } from '../../../types';
+import { Question } from '@algoforge/shared';
 
 interface SortableQuestionItemProps {
   question: Question;

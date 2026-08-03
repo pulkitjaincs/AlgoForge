@@ -8,7 +8,7 @@ import { SubTopicSection } from './SubTopicSection';
 import { useQuestionStore } from '../../../store/useQuestionStore';
 import { AddQuestionModal } from '../../shared/AddQuestionModal';
 import { Modal } from '../../shared/Modal';
-import { Topic, SubTopic, Question } from '../../../types';
+import { Topic, SubTopic, Question } from '@algoforge/shared';
 import { useDeleteTopic, useUpdateTopic, useReorderTopics } from '../../../hooks/useTopics';
 import { useCreateSubTopic, useUpdateSubTopic, useReorderSubTopics } from '../../../hooks/useSubTopics';
 import { useCreateQuestion, useUpdateQuestion, useReorderQuestions } from '../../../hooks/useQuestions';

@@ -10,6 +10,7 @@ import { requestId } from './middleware/requestId.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { sanitize } from './middleware/sanitize.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { setupSwagger } from './config/swagger.js';
 
 import apiRoutes from './routes/index.js';
 
@@ -39,6 +40,9 @@ app.use(requestLogger);
 
 // Routes
 app.use('/api/v1', apiRoutes);
+
+// Swagger Docs
+setupSwagger(app);
 
 // 404 + Global error handler
 app.use((_req, res) => {

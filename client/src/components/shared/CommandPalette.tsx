@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Search, Hash, FolderOpen, BookOpen, CornerDownLeft } from 'lucide-react';
 import { useQuestionStore } from '../../store/useQuestionStore';
 import { useTopics } from '../../hooks/useTopics';
-import { Topic, SubTopic, Question } from '../../types';
+import { Topic, SubTopic, Question } from '@algoforge/shared';
 
 interface CommandPaletteProps {
     isOpen: boolean;

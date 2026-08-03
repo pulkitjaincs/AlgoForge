@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as subtopicController from '../controllers/subtopic.controller.js';
 import { validate } from '../middleware/validate.js';
 import { protect } from '../middleware/auth.js';
-import { createSubTopicSchema, updateSubTopicSchema, reorderSubTopicsSchema } from '../schemas/subtopic.schema.js';
+import { createSubTopicSchema, updateSubTopicSchema, reorderSubTopicsSchema } from '@algoforge/shared';
 
 const router = Router({ mergeParams: true });
 

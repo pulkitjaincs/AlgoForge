@@ -18,11 +18,17 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Study Notes & Timers:** Markdown-supported notes and inline timers attached directly to questions.
 - **Drag-and-Drop:** Freely reorder your curriculum to match your study plan.
 
+### Social & Growth
+- **Public Profiles:** Share your progress, activity heatmap, and stats via a public `/u/username` profile.
+- **Sheet Templates:** Publish your curriculum as a public template, and discover/clone sheets created by the community.
+- **Study Groups:** Create groups, invite peers with an invite code, and compete on weekly leaderboards.
+
 ### Engineering Excellence
-- **Strictly Typed:** 100% TypeScript across frontend and backend.
+- **Strictly Typed:** 100% TypeScript across frontend and backend, with a shared `@algoforge/shared` package for schemas.
 - **High Performance:** Redis cache-aside pattern for heavy hierarchical queries.
 - **Secure:** JWT Auth (HttpOnly cookies), Zod validation, Helmet, Rate Limiting, and NoSQL/SQL injection prevention.
-- **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers.
+- **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers. Playwright for E2E.
+- **Monorepo Architecture:** Managed by `pnpm` workspaces and `Turborepo` for blazingly fast CI and local builds.
 - **Containerized:** Multi-stage Docker builds and `docker-compose` ready.
 
 ---
@@ -34,8 +40,8 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 | React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM) |
 | React Router (Routing) | Express 5 | Redis (Caching) |
 | React Query (Server State) | Zod (Validation) | Docker & Docker Compose |
-| Zustand (UI State) | Pino (Structured Logging) | GitHub Actions (CI) |
-| Tailwind CSS & dnd-kit | JWT Authentication | |
+| Zustand (UI State) | Pino (Structured Logging) | Playwright (E2E Testing) |
+| Tailwind CSS & dnd-kit | JWT Authentication | pnpm Workspaces + Turborepo |
 
 ---
 
@@ -117,7 +123,9 @@ AlgoForge treats testing as a first-class citizen.
 npm run test
 npm run test:coverage
 ```
-*Note: Tests run entirely in-memory using `vitest-mock-extended` for Prisma. No database connection is required to run the test suite.*
+*Note: Backend unit tests run entirely in-memory using `vitest-mock-extended` for Prisma. No database connection is required.*
+
+**E2E Testing:** Playwright is configured in the `e2e/` directory for full browser flow testing.
 
 **CI/CD:** Every push to `main` triggers a GitHub Actions pipeline that enforces Type-checking, Linting, and Test coverage.
 

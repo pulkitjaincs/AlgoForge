@@ -22,6 +22,7 @@ The backend follows a strict layered architecture to separate concerns, making t
 
 | Layer | Responsibility | Technologies |
 |---|---|---|
+| **Shared** | Zod schemas and TypeScript types shared across apps. | `@algoforge/shared` |
 | **Routes** | Defines API endpoints and attaches middleware. | Express Router |
 | **Middleware** | Intercepts requests for auth, validation, and security. | Zod, Helmet, JWT |
 | **Controllers** | Thin adapters. Parses `req`, calls Service, sends `res`. | Express 5 |
@@ -71,12 +72,38 @@ erDiagram
     Question ||--o{ QuestionAttempt : has
     Question ||--o{ QuestionTag : tagged_with
     Tag ||--o{ QuestionTag : categorizes
+    User ||--o{ Sheet : publishes
+    User ||--o{ GroupMember : joins
+    Group ||--o{ GroupMember : has
 
     User {
         String id PK
         String name
         String email
         String password
+        String username
+        String bio
+        String avatarUrl
+        Boolean isProfilePublic
+    }
+    Sheet {
+        String id PK
+        String title
+        String description
+        String authorId FK
+        Boolean isPublic
+        Json topics
+    }
+    Group {
+        String id PK
+        String name
+        String inviteCode
+    }
+    GroupMember {
+        String id PK
+        String groupId FK
+        String userId FK
+        String role
     }
     Topic {
         String id PK
@@ -134,7 +161,14 @@ AlgoForge incorporates an intelligent learning system to optimize study efficien
   2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.
   3. **Random Exploration:** A selection of completely unsolved questions to introduce new concepts.
 
-## 8. Error Handling
+## 8. Social & Growth Features
+
+AlgoForge includes networking effects designed to encourage collaborative learning:
+- **Public Profiles**: Users can opt-in to display their statistics, heatmap, and bio on a public `/u/username` page.
+- **Sheet Templates**: Users can publish a snapshot of their current topic tree to the public directory, allowing others to discover and clone curated question lists.
+- **Study Groups**: Users can form study groups by generating an invite code. Group leaderboards track weekly problem-solving velocity among peers.
+
+## 9. Error Handling
 
 Express 5 natively catches rejected promises, eliminating the need for `try/catch` in controllers. Errors bubble up to `errorHandler.ts`, which categorizes them:
 - **ZodError:** 400 Bad Request with field-level details.
@@ -144,9 +178,11 @@ Express 5 natively catches rejected promises, eliminating the need for `try/catc
 
 ## 9. Testing Infrastructure
 
-- **Framework:** Vitest + Supertest.
+- **Backend:** Vitest + Supertest.
+- **Frontend:** Vitest + React Testing Library (`@testing-library/react` and `@testing-library/jest-dom`).
+- **End-to-End (E2E):** Playwright for full browser integration tests.
 - **Mocking:** `vitest-mock-extended` deeply mocks the `PrismaClient` and Redis utility.
-- **Advantage:** Tests run entirely in-memory at lightning speed without requiring a live Docker database container.
+- **Advantage:** Unit tests run entirely in-memory at lightning speed without requiring a live Docker database container, while E2E tests provide confidence in user flows.
 
 ## 10. Containerization
 

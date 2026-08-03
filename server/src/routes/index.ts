@@ -7,6 +7,9 @@ import trashRoutes from './trash.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import practiceRoutes from './practice.routes.js';
 import reviewRoutes from './review.routes.js';
+import userRoutes from './user.routes.js';
+import sheetRoutes from './sheet.routes.js';
+import groupRoutes from './group.routes.js';
 
 const router = Router();
 
@@ -30,5 +33,8 @@ router.use('/', questionRoutes); // Mounted at / to support nested paths
 router.use('/analytics', analyticsRoutes);
 router.use('/practice', practiceRoutes);
 router.use('/review', reviewRoutes);
+router.use('/users', userRoutes);
+router.use('/sheets', sheetRoutes);
+router.use('/groups', groupRoutes);
 
 export default router;
