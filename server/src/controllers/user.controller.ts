@@ -6,6 +6,16 @@ export const updateProfile = async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data: user });
 };
 
+export const checkUsername = async (req: Request, res: Response) => {
+  const username = req.query.username as string;
+  if (!username) {
+    res.status(400).json({ success: false, message: 'Username is required' });
+    return;
+  }
+  const result = await userService.checkUsername(username);
+  res.status(200).json({ success: true, data: result });
+};
+
 export const getPublicProfile = async (req: Request, res: Response) => {
   const username = req.params.username as string;
   const profile = await userService.getPublicProfile(username);

@@ -7,6 +7,7 @@ import { updateProfileSchema } from '@algoforge/shared';
 const router = Router();
 
 router.patch('/me/profile', protect, validate(updateProfileSchema), userController.updateProfile);
+router.get('/check-username', protect, userController.checkUsername);
 router.get('/:username/profile', userController.getPublicProfile);
 
 export default router;

@@ -27,4 +27,4 @@ yarn-debug.log*
 .agents
 coverage
 
-upgrade_plan.md
+implementation_plan.md

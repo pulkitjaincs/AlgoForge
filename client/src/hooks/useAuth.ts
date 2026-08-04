@@ -35,7 +35,7 @@ export const useLogout = () => {
     mutationFn: authApi.logout,
     onSuccess: () => {
       queryClient.clear();
-      window.location.href = '/login';
+      window.location.href = '/';
     },
   });
 };

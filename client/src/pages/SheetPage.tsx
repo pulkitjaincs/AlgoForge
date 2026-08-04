@@ -16,7 +16,7 @@ import {
 import { useQuestionStore } from '../store/useQuestionStore';
 import { TopicCard } from '../components/features/sheet/TopicCard';
 import { Modal } from '../components/shared/Modal';
-import { ThemeToggle } from '../components/shared/ThemeToggle';
+
 import { CommandPalette } from '../components/shared/CommandPalette';
 import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search } from 'lucide-react';
 import { FilterBar } from '../components/features/sheet/FilterBar';
@@ -154,7 +154,7 @@ export default function SheetPage() {
                   <Sparkles className="w-6 h-6 text-brand-primary" />
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-gradient">
-                  AlgoForgeQuestions
+                  Your DSA Sheet
                 </h1>
               </div>
               <p className="text-text-muted text-sm md:text-base">
@@ -162,8 +162,6 @@ export default function SheetPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <div className="h-6 w-px bg-border-dark hidden sm:block" />
               <button
                 onClick={() => setCommandPaletteOpen(true)}
                 className="p-2 glass-subtle text-text-muted hover:text-brand-primary transition-all hover:scale-110 active:scale-95 group relative"

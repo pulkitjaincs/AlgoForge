@@ -16,3 +16,8 @@ export const getGroup = async (req: Request, res: Response) => {
   const group = await groupService.getGroup(req.user!.id, id);
   res.status(200).json({ success: true, data: group });
 };
+
+export const getMyGroups = async (req: Request, res: Response) => {
+  const groups = await groupService.getMyGroups(req.user!.id);
+  res.status(200).json({ success: true, data: groups });
+};

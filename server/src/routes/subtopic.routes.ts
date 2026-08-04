@@ -6,11 +6,9 @@ import { createSubTopicSchema, updateSubTopicSchema, reorderSubTopicsSchema } fr
 
 const router = Router({ mergeParams: true });
 
-router.use(protect);
-
-router.post('/topics/:topicId/subtopics', validate(createSubTopicSchema), subtopicController.create);
-router.put('/topics/:topicId/subtopics/reorder', validate(reorderSubTopicsSchema), subtopicController.reorder);
-router.put('/subtopics/:subTopicId', validate(updateSubTopicSchema), subtopicController.update);
-router.delete('/subtopics/:subTopicId', subtopicController.remove);
+router.post('/topics/:topicId/subtopics', protect, validate(createSubTopicSchema), subtopicController.create);
+router.put('/topics/:topicId/subtopics/reorder', protect, validate(reorderSubTopicsSchema), subtopicController.reorder);
+router.put('/subtopics/:subTopicId', protect, validate(updateSubTopicSchema), subtopicController.update);
+router.delete('/subtopics/:subTopicId', protect, subtopicController.remove);
 
 export default router;

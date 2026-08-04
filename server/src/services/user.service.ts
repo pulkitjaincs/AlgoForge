@@ -1,6 +1,8 @@
 import { userRepository } from '../repositories/user.repository.js';
+import { integrationRepository } from '../repositories/integration.repository.js';
 import { UpdateProfileInput } from '@algoforge/shared';
 import { AppError } from '../utils/AppError.js';
+import * as analyticsService from './analytics.service.js';
 
 export const updateProfile = async (userId: string, data: UpdateProfileInput) => {
   if (data.username) {
@@ -12,12 +14,23 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput) =>
   return userRepository.update(userId, data);
 };
 
+export const checkUsername = async (username: string) => {
+  const existing = await userRepository.findByUsername(username);
+  return { available: !existing };
+};
+
 export const getPublicProfile = async (username: string) => {
   const user = await userRepository.findByUsername(username);
   if (!user || !user.isProfilePublic) {
     throw new AppError('Profile not found or is private', 404);
   }
   
+  const [heatmap, stats, integrations] = await Promise.all([
+    analyticsService.getHeatmap(user.id),
+    analyticsService.getSummary(user.id),
+    integrationRepository.findByUserId(user.id)
+  ]);
+
   return {
     id: user.id,
     name: user.name,
@@ -25,5 +38,18 @@ export const getPublicProfile = async (username: string) => {
     bio: user.bio,
     avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
+    defaultHeatmapRange: user.defaultHeatmapRange,
+    heatmap,
+    stats,
+    integrations: integrations.map(int => ({
+      platform: int.platform,
+      username: int.username,
+      solvedCount: int.solvedCount,
+      rating: int.rating,
+      maxRating: int.maxRating,
+      tier: (int as any).tier,
+      contributions: int.contributions,
+      activityData: int.activityData
+    }))
   };
 };

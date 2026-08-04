@@ -7,23 +7,23 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  username  String?  @unique
-  bio       String?
-  avatarUrl String?
-  isProfilePublic Boolean @default(false)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  topics    Topic[]
-  attempts  QuestionAttempt[]
-  refreshTokens RefreshToken[]
-  sheets    Sheet[]
-  groupMembers GroupMember[]
+  id                   String                @id @default(uuid())
+  name                 String
+  email                String                @unique
+  password             String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  avatarUrl            String?
+  bio                  String?
+  isProfilePublic      Boolean               @default(false)
+  defaultHeatmapRange  String                @default("1year")
+  username             String?               @unique
+  groupMembers         GroupMember[]
+  platformIntegrations PlatformIntegration[]
+  attempts             QuestionAttempt[]
+  refreshTokens        RefreshToken[]
+  sheets               Sheet[]
+  topics               Topic[]
 }
 
 model Topic {
@@ -32,57 +32,49 @@ model Topic {
   description String?    @default("")
   order       Int        @default(0)
   status      String     @default("Pending")
-  deletedAt   DateTime?
-  
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
-
-  subTopics   SubTopic[]
+  deletedAt   DateTime?
   questions   Question[]
+  subTopics   SubTopic[]
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, order])
 }
 
 model SubTopic {
-  id          String     @id @default(uuid())
-  title       String
-  order       Int        @default(0)
-  deletedAt   DateTime?
-  
-  topic       Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  topicId     String
-  
-  questions   Question[]
+  id        String     @id @default(uuid())
+  title     String
+  order     Int        @default(0)
+  topicId   String
+  deletedAt DateTime?
+  questions Question[]
+  topic     Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([topicId, order])
 }
 
 model Question {
-  id          String     @id @default(uuid())
-  title       String
-  isSolved    Boolean    @default(false)
-  difficulty  String     @default("Medium")
-  order       Int        @default(0)
-  problemUrl  String     @default("#")
-  platform    String     @default("leetcode")
-  resource    String     @default("#")
-  companyTags String[]   
-  isStarred   Boolean    @default(false)
-  notes       String     @default("")
-
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
-
-  topic       Topic?     @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  topicId     String?
-
-  subTopic    SubTopic?  @relation(fields: [subTopicId], references: [id], onDelete: Cascade)
-  subTopicId  String?
-
+  id              String            @id @default(uuid())
+  title           String
+  isSolved        Boolean           @default(false)
+  difficulty      String            @default("Medium")
+  order           Int               @default(0)
+  problemUrl      String            @default("#")
+  platform        String            @default("leetcode")
+  resource        String            @default("#")
+  companyTags     String[]
+  isStarred       Boolean           @default(false)
+  notes           String            @default("")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  topicId         String?
+  subTopicId      String?
+  attemptCount    Int               @default(0)
   lastAttemptedAt DateTime?
-  attemptCount    Int        @default(0)
   nextReviewAt    DateTime?
+  deletedAt       DateTime?
+  subTopic        SubTopic?         @relation(fields: [subTopicId], references: [id], onDelete: Cascade)
+  topic           Topic?            @relation(fields: [topicId], references: [id], onDelete: Cascade)
   attempts        QuestionAttempt[]
   tags            QuestionTag[]
 
@@ -91,16 +83,14 @@ model Question {
 }
 
 model QuestionAttempt {
-  id          String   @id @default(uuid())
-  solvedAt    DateTime @default(now())
-  duration    Int?     // duration in seconds
-  confidence  Int?     // 1-5 rating
-  
-  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  questionId  String
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
+  id         String   @id @default(uuid())
+  solvedAt   DateTime @default(now())
+  duration   Int?
+  confidence Int?
+  questionId String
+  userId     String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([questionId])
   @@index([userId])
@@ -109,15 +99,13 @@ model QuestionAttempt {
 model Tag {
   id        String        @id @default(uuid())
   name      String        @unique
-  category  String        @default("company") // 'company', 'pattern', 'concept'
-  
+  category  String        @default("company")
   questions QuestionTag[]
 }
 
 model QuestionTag {
   questionId String
   tagId      String
-  
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
@@ -128,9 +116,9 @@ model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -140,34 +128,51 @@ model Sheet {
   title       String
   description String?  @default("")
   authorId    String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   isPublic    Boolean  @default(true)
   cloneCount  Int      @default(0)
-  topics      Json     // Snapshot of topics, subtopics, and questions
+  topics      Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([authorId])
 }
 
 model Group {
-  id          String   @id @default(uuid())
-  name        String
-  inviteCode  String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  members     GroupMember[]
+  id         String        @id @default(uuid())
+  name       String
+  inviteCode String        @unique
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  members    GroupMember[]
 }
 
 model GroupMember {
-  id        String   @id @default(uuid())
-  groupId   String
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      String   @default("member") // 'admin', 'member'
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  groupId  String
+  userId   String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
+}
+
+model PlatformIntegration {
+  id            String   @id @default(uuid())
+  userId        String
+  platform      String
+  username      String
+  solvedCount   Int      @default(0)
+  rating        Int      @default(0)
+  lastSyncedAt  DateTime @default(now())
+  accessToken   String?
+  contributions Int      @default(0)
+  maxRating     Int      @default(0)
+  tier          String?
+  activityData  Json?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
 }

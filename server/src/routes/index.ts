@@ -10,6 +10,7 @@ import reviewRoutes from './review.routes.js';
 import userRoutes from './user.routes.js';
 import sheetRoutes from './sheet.routes.js';
 import groupRoutes from './group.routes.js';
+import integrationRoutes from './integration.routes.js';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/review', reviewRoutes);
 router.use('/users', userRoutes);
 router.use('/sheets', sheetRoutes);
 router.use('/groups', groupRoutes);
+router.use('/integrations', integrationRoutes);
 
 export default router;

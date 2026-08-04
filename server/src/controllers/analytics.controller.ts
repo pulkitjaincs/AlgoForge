@@ -7,7 +7,7 @@ export const getSummary = async (req: Request, res: Response) => {
 };
 
 export const getHeatmap = async (req: Request, res: Response) => {
-  const year = parseInt(req.query.year as string) || new Date().getFullYear();
+  const year = req.query.year ? parseInt(req.query.year as string) : undefined;
   const data = await analyticsService.getHeatmap(req.user!.id, year);
   res.status(200).json({ success: true, data });
 };

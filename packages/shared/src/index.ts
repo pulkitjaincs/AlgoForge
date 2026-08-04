@@ -152,8 +152,9 @@ export const updateProfileSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),
     bio: z.string().max(500).optional(),
-    avatarUrl: z.string().url().optional(),
+    avatarUrl: z.union([z.string().url(), z.literal('')]).optional(),
     isProfilePublic: z.boolean().optional(),
+    defaultHeatmapRange: z.string().optional(),
   }),
 });
 

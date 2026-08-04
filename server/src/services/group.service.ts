@@ -38,3 +38,7 @@ export const getGroup = async (userId: string, groupId: string) => {
   }
   return group;
 };
+
+export const getMyGroups = async (userId: string) => {
+  return groupRepository.findByUserId(userId);
+};

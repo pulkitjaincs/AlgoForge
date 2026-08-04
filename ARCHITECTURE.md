@@ -86,6 +86,7 @@ erDiagram
         String bio
         String avatarUrl
         Boolean isProfilePublic
+        String defaultHeatmapRange
     }
     Sheet {
         String id PK
@@ -105,6 +106,18 @@ erDiagram
         String groupId FK
         String userId FK
         String role
+    }
+    PlatformIntegration {
+        String id PK
+        String userId FK
+        String platform
+        String username
+        Int solvedCount
+        Int rating
+        Int maxRating
+        Int contributions
+        String tier
+        Json activityData
     }
     Topic {
         String id PK

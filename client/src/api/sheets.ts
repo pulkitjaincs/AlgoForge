@@ -1,8 +1,7 @@
-import { PublishSheetInput } from '@algoforge/shared';
 import { apiClient } from './client';
 
 export const sheetsApi = {
-  getPublicSheets: () => apiClient.get('/sheets'),
-  getSheetById: (id: string) => apiClient.get(`/sheets/${id}`),
-  publishSheet: (data: PublishSheetInput) => apiClient.post('/sheets/publish', data),
+  getPublicSheets: (): Promise<any> => apiClient.get('/sheets'),
+  getSheetById: (id: string): Promise<any> => apiClient.get(`/sheets/${id}`),
+  publishSheet: (data: any): Promise<any> => apiClient.post('/sheets/publish', data)
 };

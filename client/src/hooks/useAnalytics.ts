@@ -8,9 +8,9 @@ export const useAnalyticsSummary = () => {
   });
 };
 
-export const useAnalyticsHeatmap = (year: number) => {
+export const useAnalyticsHeatmap = (year?: number) => {
   return useQuery({
-    queryKey: ['analytics', 'heatmap', year],
+    queryKey: ['analytics', 'heatmap', year || 'all'],
     queryFn: () => analyticsApi.getHeatmap(year),
   });
 };

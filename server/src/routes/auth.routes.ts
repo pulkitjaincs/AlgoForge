@@ -3,24 +3,24 @@ import * as authController from '../controllers/auth.controller.js';
 import { validate } from '../middleware/validate.js';
 import { protect } from '../middleware/auth.js';
 import { registerSchema, loginSchema } from '@algoforge/shared';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 const router = Router();
 
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many login attempts. Account locked for 15 minutes.' },
-  keyGenerator: (req) => req.body.email || req.ip,
+  keyGenerator: (req: any, res: any) => req.body.email || ipKeyGenerator(req, res),
   skipSuccessfulRequests: true,
 });
 

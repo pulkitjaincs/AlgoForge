@@ -144,12 +144,18 @@ All endpoints are versioned under `/api/v1/`. Responses follow a consistent enve
 
 | Domain | Endpoints |
 |---|---|
-| **Auth** | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` |
-| **Topics** | `GET /topics`, `POST /topics`, `PUT /topics/:id`, `PUT /topics/reorder` |
-| **SubTopics**| `POST /topics/:id/subtopics`, `PUT /subtopics/:id` |
-| **Questions**| `POST /topics/:id/subtopics/:id/questions`, `PATCH /questions/:id/solved` |
+| **Auth** | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/refresh`, `GET /auth/me` |
+| **Topics** | `GET /topics`, `POST /topics`, `PUT /topics/:id`, `PUT /topics/reorder`, `DELETE /topics/:id` |
+| **SubTopics**| `POST /topics/:topicId/subtopics`, `PUT /subtopics/:subTopicId`, `PUT /topics/:topicId/subtopics/reorder`, `DELETE /subtopics/:subTopicId` |
+| **Questions**| `POST /topics/:topicId/subtopics/:subTopicId/questions`, `PATCH /questions/:questionId/solved`, `PUT /questions/:questionId/notes`, `DELETE /questions/:questionId`, `POST /questions/:questionId/attempts` |
+| **Integrations**| `GET /integrations`, `POST /integrations`, `DELETE /integrations/:platform`, `POST /integrations/sync`, `GET /integrations/heatmap` |
+| **Analytics**| `GET /analytics/heatmap`, `GET /analytics/summary` |
+| **Users**| `PATCH /users/me/profile`, `GET /users/check-username`, `GET /users/:username/profile` |
+| **Sheets**| `POST /sheets/publish`, `GET /sheets`, `GET /sheets/:id` |
+| **Groups**| `POST /groups`, `POST /groups/join`, `GET /groups`, `GET /groups/:id` |
+| **Practice/Review**| `GET /practice/daily`, `GET /review/due` |
 | **Trash** | `GET /trash`, `PATCH /trash/:id/restore`, `DELETE /trash/:id` |
-| **System** | `GET /health` |
+| **System** | `GET /health`, `GET /csrf-token` |
 
 ---
 

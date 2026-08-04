@@ -42,7 +42,12 @@ apiClient.interceptors.response.use(
         await apiClient.post('/auth/refresh');
         return apiClient(originalRequest);
       } catch (refreshError) {
-        if (window.location.pathname !== '/login') {
+        if (
+          window.location.pathname !== '/' && 
+          window.location.pathname !== '/login' && 
+          window.location.pathname !== '/register' &&
+          !window.location.pathname.startsWith('/u/')
+        ) {
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);

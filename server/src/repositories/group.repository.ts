@@ -44,6 +44,19 @@ export class GroupRepository {
     });
     return !!member;
   }
+
+  async findByUserId(userId: string) {
+    return prisma.group.findMany({
+      where: {
+        members: {
+          some: { userId }
+        }
+      },
+      include: {
+        _count: { select: { members: true } }
+      }
+    });
+  }
 }
 
 export const groupRepository = new GroupRepository();

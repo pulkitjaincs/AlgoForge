@@ -32,11 +32,15 @@ export const getSummary = async (userId: string) => {
   return { totalQuestions, solvedQuestions, difficultyStats, solvedByDifficulty };
 };
 
-export const getHeatmap = async (userId: string, year: number) => {
-  const startDate = new Date(year, 0, 1);
-  const endDate = new Date(year, 11, 31, 23, 59, 59);
-
-  const attempts = await attemptRepository.findManyByUserIdInDateRange(userId, startDate, endDate);
+export const getHeatmap = async (userId: string, year?: number) => {
+  let attempts;
+  if (year) {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31, 23, 59, 59);
+    attempts = await attemptRepository.findManyByUserIdInDateRange(userId, startDate, endDate);
+  } else {
+    attempts = await attemptRepository.findAllByUserId(userId);
+  }
 
   const heatmap: Record<string, number> = {};
   for (const a of attempts) {

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useReviewQueue, useReviewStats } from '../hooks/useReview';
 import { questionsApi } from '../api/questions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Target, Zap, Clock, ExternalLink } from 'lucide-react';
 import { Timer } from '../components/shared/Timer';
 import confetti from 'canvas-confetti';
-
+import { Helmet } from 'react-helmet-async';
 export default function ReviewPage() {
   const { data: queue, isLoading } = useReviewQueue();
   const { data: stats } = useReviewStats();
@@ -24,6 +24,45 @@ export default function ReviewPage() {
           queryClient.invalidateQueries({ queryKey: ['practice'] });
       }
   });
+
+  const currentQuestion = queue?.[currentIndex];
+
+  const submitAttempt = useCallback((confidenceScore: number) => {
+      if (!currentQuestion || !queue) return;
+      addAttemptMutation.mutate({ questionId: currentQuestion.id, duration: duration || undefined, confidence: confidenceScore });
+      setShowConfidence(false);
+      setDuration(null);
+      
+      setCurrentIndex(prev => prev + 1);
+      
+      if (currentIndex === queue.length - 1) {
+          confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+          });
+      }
+  }, [currentQuestion, queue, duration, currentIndex, addAttemptMutation]);
+
+  useEffect(() => {
+    if (!showConfidence) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = parseInt(e.key);
+      if (key >= 1 && key <= 5) {
+        submitAttempt(key);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showConfidence, submitAttempt]);
+
+  const handleTimerStop = (durationSecs: number) => {
+      setIsTimerActive(false);
+      setDuration(durationSecs);
+      setShowConfidence(true);
+  };
 
   if (isLoading || !queue || !stats) {
     return <div className="p-8 text-center text-text-muted">Loading Review Queue...</div>;
@@ -45,32 +84,11 @@ export default function ReviewPage() {
     );
   }
 
-  const currentQuestion = queue[currentIndex];
-
-  const handleTimerStop = (durationSecs: number) => {
-      setIsTimerActive(false);
-      setDuration(durationSecs);
-      setShowConfidence(true);
-  };
-
-  const submitAttempt = (confidenceScore: number) => {
-      addAttemptMutation.mutate({ questionId: currentQuestion.id, duration: duration || undefined, confidence: confidenceScore });
-      setShowConfidence(false);
-      setDuration(null);
-      
-      setCurrentIndex(prev => prev + 1);
-      
-      if (currentIndex === queue.length - 1) {
-          confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
-          });
-      }
-  };
-
   return (
     <div className="min-h-screen p-4 md:p-8 lg:p-12 animate-fade-in">
+      <Helmet>
+        <title>AlgoForge — Review</title>
+      </Helmet>
       <div className="max-w-3xl mx-auto space-y-8">
         
         <header className="flex justify-between items-center pb-4 border-b border-border-dark">
