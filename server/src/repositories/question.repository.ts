@@ -106,7 +106,7 @@ export class QuestionRepository {
   }
 
   async findRandomUnsolved(userId: string, excludeIds: string[], limit: number) {
-    return prisma.question.findMany({
+    const ids = await prisma.question.findMany({
       where: {
         AND: [
           { OR: [{ topic: { userId } }, { subTopic: { topic: { userId } } }] },
@@ -115,9 +115,32 @@ export class QuestionRepository {
           { id: { notIn: excludeIds } }
         ]
       },
-      take: limit,
+      select: { id: true }
+    });
+
+    if (ids.length === 0) return [];
+
+    // Fisher-Yates shuffle
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    const selectedIds = ids.slice(0, limit).map(q => q.id);
+
+    return prisma.question.findMany({
+      where: { id: { in: selectedIds } },
       include: { topic: true, subTopic: { include: { topic: true } } }
     });
+  }
+
+  async reorder(orderedIds: string[]) {
+    const transactions = orderedIds.map((id, index) =>
+      prisma.question.update({
+        where: { id },
+        data: { order: index },
+      })
+    );
+    return prisma.$transaction(transactions);
   }
 }
 

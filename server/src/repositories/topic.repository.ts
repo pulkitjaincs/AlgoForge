@@ -30,11 +30,14 @@ export class TopicRepository {
     });
   }
 
-  async updateOrder(userId: string, id: string, order: number) {
-    return prisma.topic.updateMany({
-      where: { id, userId, deletedAt: null },
-      data: { order },
-    });
+  async reorder(userId: string, orderedIds: string[]) {
+    const updates = orderedIds.map((id, index) =>
+      prisma.topic.updateMany({
+        where: { id, userId, deletedAt: null },
+        data: { order: index },
+      })
+    );
+    return prisma.$transaction(updates);
   }
 
   async findManyWithFilters(userId: string, questionFilter: any) {

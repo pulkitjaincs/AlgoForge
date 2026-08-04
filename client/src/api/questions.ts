@@ -12,14 +12,11 @@ export const questionsApi = {
     return apiClient.put(`/questions/${questionId}`, data);
   },
   delete: (topicId: string, subTopicId: string | null, questionId: string): Promise<void> => {
-    const url = subTopicId
-      ? `/topics/${topicId}/subtopics/${subTopicId}/questions/${questionId}`
-      : `/topics/${topicId}/questions/${questionId}`;
-    return apiClient.delete(url);
+    return apiClient.delete(`/questions/${questionId}`);
   },
-  toggleSolved: (questionId: string): Promise<void> => apiClient.patch(`/questions/${questionId}/toggle`),
+  toggleSolved: (questionId: string): Promise<void> => apiClient.patch(`/questions/${questionId}/solved`),
   toggleStarred: (questionId: string): Promise<void> => apiClient.patch(`/questions/${questionId}/star`),
-  updateNotes: (questionId: string, notes: string): Promise<void> => apiClient.patch(`/questions/${questionId}/notes`, { notes }),
+  updateNotes: (questionId: string, notes: string): Promise<void> => apiClient.put(`/questions/${questionId}/notes`, { notes }),
   addAttempt: (questionId: string, duration?: number, confidence?: number): Promise<Question> => {
     return apiClient.post(`/questions/${questionId}/attempts`, { duration, confidence });
   },

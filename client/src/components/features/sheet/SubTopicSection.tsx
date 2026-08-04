@@ -4,7 +4,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyb
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2, Plus, FolderOpen, Pencil } from 'lucide-react';
 import { SortableQuestionItem } from './SortableQuestionItem';
-import { useQuestionStore } from '../../../store/useQuestionStore';
+import { useUIStore } from '../../../store/useUIStore';
 import { SubTopic, Question } from '@algoforge/shared';
 import { useDeleteSubTopic } from '../../../hooks/useSubTopics';
 import { useReorderQuestions } from '../../../hooks/useQuestions';
@@ -21,7 +21,7 @@ export const SubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTop
   const [isOpen, setIsOpen] = useState(false);
   const deleteSubTopic = useDeleteSubTopic();
   const reorderQuestions = useReorderQuestions();
-  const { navigationTarget } = useQuestionStore();
+  const { navigationTarget } = useUIStore();
 
   const questions = useMemo(() => subTopic.questions || [], [subTopic.questions]);
 

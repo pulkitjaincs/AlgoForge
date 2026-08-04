@@ -1,14 +1,15 @@
+import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useLogout, useUser } from '../hooks/useAuth';
 import { LayoutDashboard, BookOpen, User, LogOut, CheckSquare, List, Users, Search, Trash2, Bell, Link as LinkIcon } from 'lucide-react';
 import { ThemeToggle } from '../components/shared/ThemeToggle';
-import { useQuestionStore } from '../store/useQuestionStore';
+import { useUIStore } from '../store/useUIStore';
 
-export default function AppLayout() {
+export function AppLayout() {
   const { data: user } = useUser();
   const logout = useLogout();
   const location = useLocation();
-  const { setCommandPaletteOpen } = useQuestionStore();
+  const { setCommandPaletteOpen } = useUIStore();
 
   const navItems = [
     { name: 'Sheet', path: '/app/sheet', icon: List },
@@ -155,3 +156,5 @@ export default function AppLayout() {
     </div>
   );
 }
+
+export default AppLayout;

@@ -11,6 +11,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { sanitize } from './middleware/sanitize.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { setupSwagger } from './config/swagger.js';
+import { doubleCsrfProtection, generateToken } from './config/csrf.js';
 
 import apiRoutes from './routes/index.js';
 
@@ -35,7 +36,6 @@ app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(sanitize);
 
-import { doubleCsrfProtection, generateToken } from './config/csrf.js';
 app.use(doubleCsrfProtection);
 
 app.get('/api/v1/csrf-token', (req, res) => {

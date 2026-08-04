@@ -26,5 +26,6 @@ yarn-debug.log*
 .claude
 .agents
 coverage
+sheet.json
 
 implementation_plan.md

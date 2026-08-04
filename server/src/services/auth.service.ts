@@ -35,6 +35,9 @@ export const login = async (data: LoginInput) => {
     throw new AppError('Invalid credentials', 401);
   }
 
+  // Fire and forget cleanup of expired tokens
+  tokenRepository.deleteExpiredTokens().catch(() => {});
+
   return { id: user.id, name: user.name, email: user.email };
 };
 

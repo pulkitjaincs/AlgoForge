@@ -47,7 +47,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 
 ## 🚀 Quick Start (Docker - Recommended)
 
-The easiest way to run the entire stack (Postgres + Redis + API + Web) is using Docker.
+The easiest way to run the API server and Web client via Docker. Note: Database and Redis connections use cloud-managed instances (e.g. Neon PostgreSQL, Upstash Redis) configured via `./server/.env`.
 
 **1. Clone and configure:**
 ```bash
@@ -58,7 +58,7 @@ cp .env.example .env
 
 **2. Start the stack:**
 ```bash
-npm run docker:up
+pnpm run docker:up
 ```
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:3001`
@@ -147,9 +147,9 @@ All endpoints are versioned under `/api/v1/`. Responses follow a consistent enve
 | **Auth** | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/refresh`, `GET /auth/me` |
 | **Topics** | `GET /topics`, `POST /topics`, `PUT /topics/:id`, `PUT /topics/reorder`, `DELETE /topics/:id` |
 | **SubTopics**| `POST /topics/:topicId/subtopics`, `PUT /subtopics/:subTopicId`, `PUT /topics/:topicId/subtopics/reorder`, `DELETE /subtopics/:subTopicId` |
-| **Questions**| `POST /topics/:topicId/subtopics/:subTopicId/questions`, `PATCH /questions/:questionId/solved`, `PUT /questions/:questionId/notes`, `DELETE /questions/:questionId`, `POST /questions/:questionId/attempts` |
+| **Questions**| `POST /topics/:topicId/questions`, `POST /topics/:topicId/subtopics/:subTopicId/questions`, `PUT /questions/:questionId`, `PATCH /questions/:questionId/solved`, `PATCH /questions/:questionId/star`, `PUT /questions/:questionId/notes`, `PUT /questions/reorder`, `DELETE /questions/:questionId`, `POST /questions/:questionId/attempts` |
 | **Integrations**| `GET /integrations`, `POST /integrations`, `DELETE /integrations/:platform`, `POST /integrations/sync`, `GET /integrations/heatmap` |
-| **Analytics**| `GET /analytics/heatmap`, `GET /analytics/summary` |
+| **Analytics**| `GET /analytics/summary`, `GET /analytics/heatmap`, `GET /analytics/streaks`, `GET /analytics/mastery`, `GET /analytics/weak-areas`, `GET /analytics/velocity` |
 | **Users**| `PATCH /users/me/profile`, `GET /users/check-username`, `GET /users/:username/profile` |
 | **Sheets**| `POST /sheets/publish`, `GET /sheets`, `GET /sheets/:id` |
 | **Groups**| `POST /groups`, `POST /groups/join`, `GET /groups`, `GET /groups/:id` |

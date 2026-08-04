@@ -80,6 +80,7 @@ model Question {
 
   @@index([topicId, order])
   @@index([subTopicId, order])
+  @@index([nextReviewAt])
 }
 
 model QuestionAttempt {
@@ -93,7 +94,7 @@ model QuestionAttempt {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([questionId])
-  @@index([userId])
+  @@index([userId, solvedAt])
 }
 
 model Tag {

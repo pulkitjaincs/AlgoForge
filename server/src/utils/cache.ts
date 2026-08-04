@@ -1,4 +1,5 @@
 import { redis } from '../config/redis.js';
+import { logger } from './logger.js';
 
 export const cache = {
   async get<T>(key: string): Promise<T | null> {
@@ -7,6 +8,7 @@ export const cache = {
       const data = await redis.get(key);
       return data ? JSON.parse(data) : null;
     } catch (err) {
+      logger.error({ err, key }, 'Redis GET error');
       return null;
     }
   },
@@ -16,7 +18,7 @@ export const cache = {
     try {
       await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
     } catch (err) {
-      // Ignore cache errors to gracefully degrade
+      logger.error({ err, key }, 'Redis SET error');
     }
   },
 
@@ -25,7 +27,7 @@ export const cache = {
     try {
       await redis.del(...keys);
     } catch (err) {
-      // Ignore
+      logger.error({ err, keys }, 'Redis DEL error');
     }
   },
 
@@ -33,21 +35,26 @@ export const cache = {
     if (!redis) return;
     try {
       await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
-      await redis.sadd(`tag:${tag}`, key);
+      const tagKey = `tag:${tag}`;
+      await redis.sadd(tagKey, key);
+      await redis.expire(tagKey, ttlSeconds);
     } catch (err) {
-      // Ignore cache errors
+      logger.error({ err, key, tag }, 'Redis setWithTag error');
     }
   },
 
   async invalidateTag(tag: string): Promise<void> {
     if (!redis) return;
     try {
-      const keys = await redis.smembers(`tag:${tag}`);
+      const tagKey = `tag:${tag}`;
+      const keys = await redis.smembers(tagKey);
       if (keys.length > 0) {
-        await redis.del(...keys, `tag:${tag}`);
+        await redis.del(...keys, tagKey);
+      } else {
+        await redis.del(tagKey);
       }
     } catch (err) {
-      // Ignore cache errors
+      logger.error({ err, tag }, 'Redis invalidateTag error');
     }
   },
 };

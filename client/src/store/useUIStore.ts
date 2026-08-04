@@ -7,7 +7,7 @@ export interface UIState {
     setCommandPaletteOpen: (isOpen: boolean) => void;
 }
 
-export const useQuestionStore = create<UIState>()((set) => ({
+export const useUIStore = create<UIState>()((set) => ({
     navigationTarget: null,
     isCommandPaletteOpen: false,
     setNavigationTarget: (id: string | null) => set({ navigationTarget: id }),

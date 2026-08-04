@@ -100,6 +100,19 @@ export const updateNotesSchema = z.object({
   }),
 });
 
+export const updateQuestionSchema = z.object({
+  params: z.object({ questionId: uuid }),
+  body: z.object({
+    title: z.string().min(1).max(500).optional(),
+    difficulty: z.enum(['Basic', 'Easy', 'Medium', 'Hard']).optional(),
+    problemUrl: z.string().url().optional(),
+    platform: z.enum(['leetcode', 'geeksforgeeks', 'codestudio', 'hackerrank', 'codechef', 'interviewbit', 'ninjas', 'other']).optional(),
+    resource: z.string().url().optional(),
+    companyTags: z.array(z.string().max(50)).max(20).optional(),
+    notes: z.string().max(5000).optional(),
+  }),
+});
+
 export const addAttemptSchema = z.object({
   params: z.object({ questionId: uuid }),
   body: z.object({
@@ -108,9 +121,17 @@ export const addAttemptSchema = z.object({
   }),
 });
 
+export const reorderQuestionsSchema = z.object({
+  body: z.object({
+    orderedIds: z.array(uuid).min(1),
+  }),
+});
+
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>['body'];
 export type UpdateNotesInput = z.infer<typeof updateNotesSchema>['body'];
+export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>['body'];
 export type AddAttemptInput = z.infer<typeof addAttemptSchema>['body'];
+export type ReorderQuestionsInput = z.infer<typeof reorderQuestionsSchema>['body'];
 
 // Shared Types
 export interface Question {
@@ -186,3 +207,23 @@ export const joinGroupSchema = z.object({
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>['body'];
 export type JoinGroupInput = z.infer<typeof joinGroupSchema>['body'];
+
+// Integration Schemas
+export const linkIntegrationSchema = z.object({
+  body: z.object({
+    platform: z.enum(['leetcode', 'codeforces', 'codechef', 'gfg', 'atcoder', 'github']),
+    username: z.string().min(1),
+    accessToken: z.string().optional(),
+  }),
+});
+
+export type LinkIntegrationInput = z.infer<typeof linkIntegrationSchema>['body'];
+
+// Trash Schemas
+export const trashActionSchema = z.object({
+  body: z.object({
+    type: z.enum(['topic', 'subtopic', 'question']),
+  }),
+});
+
+export type TrashActionInput = z.infer<typeof trashActionSchema>['body'];

@@ -3,6 +3,7 @@ import { integrationRepository } from '../repositories/integration.repository.js
 import { UpdateProfileInput } from '@algoforge/shared';
 import { AppError } from '../utils/AppError.js';
 import * as analyticsService from './analytics.service.js';
+import { cache } from '../utils/cache.js';
 
 export const updateProfile = async (userId: string, data: UpdateProfileInput) => {
   if (data.username) {
@@ -11,7 +12,9 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput) =>
       throw new AppError('Username already taken', 400);
     }
   }
-  return userRepository.update(userId, data);
+  const updated = await userRepository.update(userId, data);
+  await cache.invalidateTag(`user:${userId}`);
+  return updated;
 };
 
 export const checkUsername = async (username: string) => {
@@ -20,6 +23,10 @@ export const checkUsername = async (username: string) => {
 };
 
 export const getPublicProfile = async (username: string) => {
+  const cacheKey = `public_profile:${username}`;
+  const cached = await cache.get(cacheKey);
+  if (cached) return cached as any;
+
   const user = await userRepository.findByUsername(username);
   if (!user || !user.isProfilePublic) {
     throw new AppError('Profile not found or is private', 404);
@@ -31,7 +38,7 @@ export const getPublicProfile = async (username: string) => {
     integrationRepository.findByUserId(user.id)
   ]);
 
-  return {
+  const result = {
     id: user.id,
     name: user.name,
     username: user.username,
@@ -52,4 +59,7 @@ export const getPublicProfile = async (username: string) => {
       activityData: int.activityData
     }))
   };
+
+  await cache.setWithTag(cacheKey, `user:${user.id}`, result, 300);
+  return result;
 };

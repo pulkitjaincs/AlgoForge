@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
+import { env } from '../config/env.js';
 
 export const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction) => {
   // AppError — known, operational
@@ -11,7 +12,7 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
 
   // Zod validation failure
   if (err instanceof ZodError) {
-    if (process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'test') {
       console.error('ERROR:', err);
     }
     const message = err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
@@ -41,7 +42,7 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
 
   // Unknown — NEVER leak error.message in production
   logger.error({ err, requestId: (req as any).id }, 'Unhandled error');
-  if (process.env.NODE_ENV === 'test') {
+  if (env.NODE_ENV === 'test') {
     console.error('UNHANDLED ERROR:', err);
   }
   return res.status(500).json({ success: false, error: 'Internal server error' });

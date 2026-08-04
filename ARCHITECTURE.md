@@ -23,11 +23,11 @@ The backend follows a strict layered architecture to separate concerns, making t
 | Layer | Responsibility | Technologies |
 |---|---|---|
 | **Shared** | Zod schemas and TypeScript types shared across apps. | `@algoforge/shared` |
-| **Routes** | Defines API endpoints and attaches middleware. | Express Router |
-| **Middleware** | Intercepts requests for auth, validation, and security. | Zod, Helmet, JWT |
+| **Routes** | Defines API endpoints and attaches middleware & rate limiters. | Express Router |
+| **Middleware** | Intercepts requests for auth, validation, and rate limiting. | Zod, Helmet, JWT, Rate Limit |
 | **Controllers** | Thin adapters. Parses `req`, calls Service, sends `res`. | Express 5 |
 | **Services** | Core business logic. No HTTP knowledge. | TypeScript |
-| **Data Access** | Queries the database and cache. | Prisma, ioredis |
+| **Repositories** | Dedicated Data Access Layer (Class-based singletons). | Prisma ORM, ioredis |
 
 ## 3. Authentication & Security Pipeline
 
@@ -35,31 +35,33 @@ AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect ag
 
 **Middleware Pipeline Order:**
 1. `helmet()` — Sets secure HTTP headers and Content Security Policy (CSP).
-2. `rateLimit()` — Prevents brute-force and DDoS (100 req / 15 min globally, strict on auth).
+2. `rateLimit()` — Prevents brute-force and DDoS (global limiter + route-specific limiters for auth, sync, publish, analytics).
 3. `sanitize()` — Strips dangerous keys from `req.body`.
 4. `cookieParser()` — Parses `HttpOnly` cookies.
 5. `doubleCsrfProtection` — Validates CSRF tokens using the Double Submit Cookie pattern.
 6. `requestId` / `requestLogger` — Injects traceability UUIDs and logs via Pino.
-7. `protect` (Route-level) — Verifies JWT signature and expiry.
-8. `validate` (Route-level) — Strict Zod schema enforcement.
+7. `protect` (Route-level) — Verifies JWT signature and expiry (user object cached in Redis).
+8. `validate` (Route-level) — Strict Zod schema enforcement using `@algoforge/shared` schemas.
 
 ## 4. Frontend Architecture
 
 - **Routing:** `react-router-dom` is used for multi-page routing, featuring `AuthLayout` for public routes and `AppLayout` with `ProtectedRoute` for authenticated sessions.
 - **State Management:**
   - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates for rapid interactions.
-  - **UI State:** `Zustand` is restricted strictly to global transient UI states (like command palette visibility and navigation targets), chosen for its lightweight API.
+  - **UI State:** `Zustand` (`useUIStore`) is restricted strictly to global transient UI states (like command palette visibility and navigation targets).
 - **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`) prioritizing focused, decomposed components over monoliths.
-- **Drag-and-Drop & Virtualization:** `@dnd-kit` powers the reordering of topics, subtopics, and questions. Long lists (like the main sheet) are virtualized using `@tanstack/react-virtual` to optimize DOM node counts and rendering performance for massive curriculums.
+- **Drag-and-Drop:** `@dnd-kit` powers the smooth interactive reordering of topics, subtopics, and questions with custom sortable list strategies.
 
 ## 5. Caching Strategy
 
-The most expensive operation in the system is fetching a user's full topic tree (Topics → SubTopics → Questions). This is optimized using a **Cache-Aside** pattern with Redis.
+AlgoForge applies a **Cache-Aside** pattern backed by Redis (`ioredis`) to optimize heavy database operations across multiple modules:
 
-- **Key Format:** `topics:{userId}`
-- **TTL:** 5 minutes
-- **Invalidation:** Tag-based. The cache is tagged with `user:{userId}`. Any write operation (create, update, delete, reorder) in any service immediately invalidates the tag, ensuring absolute consistency.
-- **Graceful Degradation:** If Redis is down or `REDIS_URL` is omitted, the `cache` utility silently falls back to direct Postgres queries without crashing the app.
+- **Cached Domains:**
+  - **Analytics:** Summary, heatmaps, streaks, topic mastery, weak areas, and weekly velocity.
+  - **Spaced Repetition:** Daily review queues and review stats.
+  - **Integrations & Profiles:** Platform stats and public user profiles.
+- **TTL & Tag-Based Invalidation:** Cache entries use a 5-minute TTL with explicit `setWithTag(key, tag, data, ttl)` tagging under `user:{userId}`. Mutating operations (create, update, delete, reorder) trigger `invalidateTag(tag)` for instant cache consistency.
+- **Graceful Shutdown & Degradation:** Graceful termination safely closes Redis connections via `redis.quit()`. If Redis is offline or unconfigured, operations seamlessly fallback to PostgreSQL without application failure.
 
 ## 6. Data Model (PostgreSQL)
 
@@ -169,11 +171,11 @@ erDiagram
 AlgoForge incorporates an intelligent learning system to optimize study efficiency:
 
 - **Spaced Repetition (SM-2 Variant):** Questions are scheduled for review based on a modified SM-2 algorithm. When a user submits an attempt, they provide a self-evaluated confidence score (1-5). The system calculates the next optimal review date (`nextReviewAt`) to maximize retention.
-- **Analytics Engine:** The `analytics.service.ts` heavily leverages Prisma aggregation queries over the `QuestionAttempt` table to compute streaks, weekly velocity, and topic-specific mastery percentages.
+- **Analytics Engine:** The `analytics.service.ts` uses optimized database query projections (selecting `solvedAt` columns with composite indexes `(userId, solvedAt)`) and calculates streaks, weekly velocity, and topic mastery percentages without full-table memory scans.
 - **Daily Practice Plans:** The `practice.service.ts` dynamically generates a daily practice session by pulling from three strategic queues:
   1. **Review Queue:** Questions due for spaced repetition today.
   2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.
-  3. **Random Exploration:** A selection of completely unsolved questions to introduce new concepts.
+  3. **Random Exploration:** A selection of completely unsolved questions picked using a Fisher-Yates random shuffle on unsolved IDs.
 
 ## 8. Social & Growth Features
 
@@ -204,3 +206,4 @@ Express 5 natively catches rejected promises, eliminating the need for `try/catc
 The project uses multi-stage Docker builds to minimize image sizes.
 - **Builder Stage:** Installs all `devDependencies` and compiles TypeScript / Vite.
 - **Runner Stage:** Copies only the compiled `dist/` folders and installs production dependencies, reducing attack surface and container size.
+- **Cloud Database Configuration:** Containers connect to cloud-managed database/cache services (e.g. Neon PostgreSQL, Upstash Redis) provided via environment variables in `./server/.env`, eliminating containerized DB overhead.

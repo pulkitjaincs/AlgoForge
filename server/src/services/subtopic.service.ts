@@ -3,7 +3,6 @@ import { cache } from '../utils/cache.js';
 import { CreateSubTopicInput, UpdateSubTopicInput } from '@algoforge/shared';
 import { subTopicRepository } from '../repositories/subtopic.repository.js';
 import { topicRepository } from '../repositories/topic.repository.js';
-import { prisma } from '../config/database.js'; // Needed for transaction in reorder
 
 export const createSubTopic = async (userId: string, topicId: string, data: CreateSubTopicInput) => {
   const topic = await topicRepository.findFirstByIdAndUserId(topicId, userId);
@@ -45,13 +44,7 @@ export const reorderSubTopics = async (userId: string, topicId: string, orderedI
   const topic = await topicRepository.findFirstByIdAndUserId(topicId, userId);
   if (!topic) throw new AppError('Topic not found', 404);
 
-  const updates = orderedIds.map((id, index) =>
-    prisma.subTopic.updateMany({
-      where: { id, topicId, deletedAt: null },
-      data: { order: index },
-    })
-  );
-  await prisma.$transaction(updates);
+  await subTopicRepository.reorder(topicId, orderedIds);
   await cache.invalidateTag(`user:${userId}`);
 };
 

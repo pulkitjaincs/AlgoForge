@@ -13,7 +13,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useQuestionStore } from '../store/useQuestionStore';
+import { useUIStore } from '../store/useUIStore';
 import { TopicCard } from '../components/features/sheet/TopicCard';
 import { Modal } from '../components/shared/Modal';
 
@@ -22,52 +22,13 @@ import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, Refresh
 import { FilterBar } from '../components/features/sheet/FilterBar';
 import { useTopics, useCreateTopic, useReorderTopics } from '../hooks/useTopics';
 import { useResetProgress, useFullReset } from '../hooks/useQuestions';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
-const VirtualizedTopicList = ({ topics }: { topics: any[] }) => {
-  const parentRef = React.useRef<HTMLDivElement>(null);
-  
-  const virtualizer = useVirtualizer({
-    count: topics.length,
-    getScrollElement: () => document.querySelector('main') as HTMLElement | null,
-    estimateSize: () => 80, // Approximate height of a closed TopicCard
-    overscan: 5,
-  });
-
-  return (
-    <div
-      style={{
-        height: `${virtualizer.getTotalSize()}px`,
-        width: '100%',
-        position: 'relative',
-      }}
-    >
-      {virtualizer.getVirtualItems().map((virtualItem) => (
-        <div
-          key={virtualItem.key}
-          data-index={virtualItem.index}
-          ref={virtualizer.measureElement}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            transform: `translateY(${virtualItem.start}px)`,
-            paddingBottom: '16px', // space-y-4 equivalent
-          }}
-        >
-          <TopicCard topic={topics[virtualItem.index]} />
-        </div>
-      ))}
-    </div>
-  );
-};
 
 export default function SheetPage() {
   const [searchParams] = useSearchParams();
-  const { isCommandPaletteOpen, setCommandPaletteOpen } = useQuestionStore();
+  const { isCommandPaletteOpen, setCommandPaletteOpen } = useUIStore();
   
   const { data: topics = [], isLoading, refetch } = useTopics(searchParams.toString());
   const createTopic = useCreateTopic();
@@ -132,7 +93,7 @@ export default function SheetPage() {
         const [removed] = newTopics.splice(oldIndex, 1);
         newTopics.splice(newIndex, 0, removed);
         
-        reorderTopics.mutate({ topicIds: newTopics.map(t => t.id) });
+        reorderTopics.mutate({ orderedIds: newTopics.map(t => t.id) });
       }
     }
   };
@@ -252,7 +213,11 @@ export default function SheetPage() {
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={topics.map(t => t.id)} strategy={verticalListSortingStrategy}>
-              <VirtualizedTopicList topics={topics} />
+              <div className="space-y-4">
+                {topics.map(topic => (
+                  <TopicCard key={topic.id} topic={topic} />
+                ))}
+              </div>
             </SortableContext>
           </DndContext>
         )}

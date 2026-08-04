@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, BookOpen, GripVertical, Trash2, Plus, FolderOpen, Pencil } from 'lucide-react';
 import { SortableQuestionItem } from './SortableQuestionItem';
 import { SubTopicSection } from './SubTopicSection';
-import { useQuestionStore } from '../../../store/useQuestionStore';
+import { useUIStore } from '../../../store/useUIStore';
 import { AddQuestionModal } from '../../shared/AddQuestionModal';
 import { Modal } from '../../shared/Modal';
 import { Topic, SubTopic, Question } from '@algoforge/shared';
@@ -19,7 +19,7 @@ interface TopicCardProps {
 
 export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { navigationTarget } = useQuestionStore();
+  const { navigationTarget } = useUIStore();
 
   const deleteTopic = useDeleteTopic();
   const updateTopic = useUpdateTopic();

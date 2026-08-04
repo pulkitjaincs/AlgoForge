@@ -6,7 +6,7 @@ export const {
   generateCsrfToken: generateToken,
   doubleCsrfProtection,
 } = doubleCsrf({
-  getSecret: () => env.JWT_SECRET || 'fallback_secret',
+  getSecret: () => env.JWT_SECRET,
   getSessionIdentifier: (req: Request) => req.cookies?.['accessToken'] || 'default',
   cookieName: 'x-csrf-token',
   cookieOptions: {

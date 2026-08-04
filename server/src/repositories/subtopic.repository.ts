@@ -31,11 +31,14 @@ export class SubTopicRepository {
     });
   }
 
-  async updateOrder(topicId: string, id: string, order: number) {
-    return prisma.subTopic.updateMany({
-      where: { id, topicId, deletedAt: null },
-      data: { order },
-    });
+  async reorder(topicId: string, orderedIds: string[]) {
+    const updates = orderedIds.map((id, index) =>
+      prisma.subTopic.updateMany({
+        where: { id, topicId, deletedAt: null },
+        data: { order: index },
+      })
+    );
+    return prisma.$transaction(updates);
   }
 }
 

@@ -5,6 +5,16 @@ import { questionRepository } from '../repositories/question.repository.js';
 import { topicRepository } from '../repositories/topic.repository.js';
 import { subTopicRepository } from '../repositories/subtopic.repository.js';
 
+const assertQuestionOwnership = async (userId: string, questionId: string) => {
+  const question = await questionRepository.findFirstWithRelations(questionId);
+  if (!question) throw new AppError('Question not found', 404);
+
+  const ownerId = question.topic?.userId || question.subTopic?.topic.userId;
+  if (ownerId !== userId) throw new AppError('Unauthorized', 403);
+  
+  return question;
+};
+
 export const createQuestion = async (userId: string, topicId: string, subTopicId: string | null, data: CreateQuestionInput) => {
   if (!topicId && !subTopicId) {
     throw new AppError('Question must belong to a topic or subtopic', 400);
@@ -32,51 +42,35 @@ export const createQuestion = async (userId: string, topicId: string, subTopicId
 };
 
 export const updateQuestion = async (userId: string, questionId: string, data: Partial<CreateQuestionInput> & Partial<UpdateNotesInput>) => {
-  const question = await questionRepository.findFirstWithRelations(questionId);
-
-  if (!question) throw new AppError('Question not found', 404);
-
-  const ownerId = question.topic?.userId || question.subTopic?.topic.userId;
-  if (ownerId !== userId) throw new AppError('Unauthorized', 403);
-
+  await assertQuestionOwnership(userId, questionId);
   const updated = await questionRepository.update(questionId, data);
   await cache.invalidateTag(`user:${userId}`);
   return updated;
 };
 
 export const deleteQuestion = async (userId: string, questionId: string) => {
-  const question = await questionRepository.findFirstWithRelations(questionId);
-
-  if (!question) throw new AppError('Question not found', 404);
-  
-  const ownerId = question.topic?.userId || question.subTopic?.topic.userId;
-  if (ownerId !== userId) throw new AppError('Unauthorized', 403);
-
+  await assertQuestionOwnership(userId, questionId);
   await questionRepository.softDelete(questionId);
   await cache.invalidateTag(`user:${userId}`);
 };
 
 export const toggleSolved = async (userId: string, questionId: string) => {
-  const question = await questionRepository.findFirstWithRelations(questionId);
-
-  if (!question) throw new AppError('Question not found', 404);
-
-  const ownerId = question.topic?.userId || question.subTopic?.topic.userId;
-  if (ownerId !== userId) throw new AppError('Unauthorized', 403);
-
+  const question = await assertQuestionOwnership(userId, questionId);
   const updated = await questionRepository.update(questionId, { isSolved: !question.isSolved });
+  await cache.invalidateTag(`user:${userId}`);
+  return updated;
+};
+
+export const toggleStarred = async (userId: string, questionId: string) => {
+  const question = await assertQuestionOwnership(userId, questionId);
+  const updated = await questionRepository.update(questionId, { isStarred: !question.isStarred });
   await cache.invalidateTag(`user:${userId}`);
   return updated;
 };
 
 
 export const addAttempt = async (userId: string, questionId: string, data: AddAttemptInput) => {
-  const question = await questionRepository.findFirstWithRelations(questionId);
-
-  if (!question) throw new AppError('Question not found', 404);
-
-  const ownerId = question.topic?.userId || question.subTopic?.topic.userId;
-  if (ownerId !== userId) throw new AppError('Unauthorized', 403);
+  await assertQuestionOwnership(userId, questionId);
 
   // Spaced Repetition calculation
   const nextReviewAt = new Date();
@@ -104,4 +98,12 @@ export const addAttempt = async (userId: string, questionId: string, data: AddAt
 
   await cache.invalidateTag(`user:${userId}`);
   return updatedQuestion;
+};
+
+export const reorderQuestions = async (userId: string, orderedIds: string[]) => {
+  if (orderedIds.length === 0) return;
+  // Verify ownership of the first question, assume rest are same topic/subtopic
+  await assertQuestionOwnership(userId, orderedIds[0]);
+  await questionRepository.reorder(orderedIds);
+  await cache.invalidateTag(`user:${userId}`);
 };

@@ -8,6 +8,11 @@ export const create = async (req: Request, res: Response) => {
   res.status(201).json({ success: true, data: question });
 };
 
+export const update = async (req: Request, res: Response) => {
+  const question = await questionService.updateQuestion(req.user!.id, req.params.questionId as string, req.body);
+  res.status(200).json({ success: true, data: question });
+};
+
 export const updateNotes = async (req: Request, res: Response) => {
   const question = await questionService.updateQuestion(req.user!.id, req.params.questionId as string, { notes: req.body.notes });
   res.status(200).json({ success: true, data: question });
@@ -15,6 +20,11 @@ export const updateNotes = async (req: Request, res: Response) => {
 
 export const toggleSolved = async (req: Request, res: Response) => {
   const question = await questionService.toggleSolved(req.user!.id, req.params.questionId as string);
+  res.status(200).json({ success: true, data: question });
+};
+
+export const toggleStarred = async (req: Request, res: Response) => {
+  const question = await questionService.toggleStarred(req.user!.id, req.params.questionId as string);
   res.status(200).json({ success: true, data: question });
 };
 
@@ -26,5 +36,10 @@ export const remove = async (req: Request, res: Response) => {
 export const addAttempt = async (req: Request, res: Response) => {
   const question = await questionService.addAttempt(req.user!.id, req.params.questionId as string, req.body);
   res.status(201).json({ success: true, data: question });
+};
+
+export const reorder = async (req: Request, res: Response) => {
+  await questionService.reorderQuestions(req.user!.id, req.body.orderedIds);
+  res.status(200).json({ success: true, data: { message: 'Questions reordered' } });
 };
 

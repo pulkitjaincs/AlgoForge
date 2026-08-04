@@ -13,12 +13,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
     container_name: algoforge-web
-    depends_on: [server]
+    depends_on:
+      server:
+        condition: service_healthy
     ports: ["5173:5173"]

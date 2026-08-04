@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Hash, FolderOpen, BookOpen, CornerDownLeft } from 'lucide-react';
-import { useQuestionStore } from '../../store/useQuestionStore';
+import { useUIStore } from '../../store/useUIStore';
 import { useTopics } from '../../hooks/useTopics';
 import { Topic, SubTopic, Question } from '@algoforge/shared';
 
@@ -22,7 +22,7 @@ export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const { data: topics = [] } = useTopics();
-    const setNavigationTarget = useQuestionStore(state => state.setNavigationTarget);
+    const setNavigationTarget = useUIStore(state => state.setNavigationTarget);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Flatten data for searching

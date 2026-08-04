@@ -25,6 +25,12 @@ export class TokenRepository {
       where: { token: hashedToken },
     });
   }
+
+  async deleteExpiredTokens() {
+    return prisma.refreshToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+  }
 }
 
 export const tokenRepository = new TokenRepository();

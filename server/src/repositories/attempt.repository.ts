@@ -1,38 +1,20 @@
 import { prisma } from '../config/database.js';
 
 export class AttemptRepository {
-  async findManyByUserIdInDateRange(userId: string, startDate: Date, endDate?: Date) {
+  async findAttempts(userId: string, options?: { startDate?: Date; endDate?: Date; limit?: number }) {
     return prisma.questionAttempt.findMany({
       where: {
         userId,
-        solvedAt: { gte: startDate, ...(endDate ? { lte: endDate } : {}) }
+        ...(options?.startDate || options?.endDate ? {
+          solvedAt: {
+            ...(options.startDate ? { gte: options.startDate } : {}),
+            ...(options.endDate ? { lte: options.endDate } : {})
+          }
+        } : {})
       },
-      select: { solvedAt: true }
-    });
-  }
-
-  async findRecentAttempts(userId: string) {
-    return prisma.questionAttempt.findMany({
-      where: { userId },
       orderBy: { solvedAt: 'desc' },
+      ...(options?.limit ? { take: options.limit } : {}),
       select: { solvedAt: true }
-    });
-  }
-
-  async findAllByUserId(userId: string) {
-    return prisma.questionAttempt.findMany({
-      where: { userId },
-      orderBy: { solvedAt: 'desc' },
-      select: { solvedAt: true }
-    });
-  }
-
-  async findManyFromDate(userId: string, startDate: Date) {
-    return prisma.questionAttempt.findMany({
-      where: {
-        userId,
-        solvedAt: { gte: startDate }
-      }
     });
   }
 }

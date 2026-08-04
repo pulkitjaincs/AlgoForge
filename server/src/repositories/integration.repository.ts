@@ -1,46 +1,55 @@
 import { prisma } from '../config/database.js';
+import { Prisma } from '@prisma/client';
 
-export const integrationRepository = {
-  findByUserId: (userId: string) => {
+export class IntegrationRepository {
+  async findByUserId(userId: string) {
     return prisma.platformIntegration.findMany({
       where: { userId },
     });
-  },
+  }
 
-  findByUserIdAndPlatform: (userId: string, platform: string) => {
+  async findByUserIdAndPlatform(userId: string, platform: string) {
     return prisma.platformIntegration.findUnique({
       where: {
         userId_platform: { userId, platform }
       }
     });
-  },
+  }
 
-  createOrUpdate: (userId: string, platform: string, username: string, solvedCount: number, rating: number) => {
+  async createOrUpdate(userId: string, platform: string, data: Omit<Prisma.PlatformIntegrationCreateInput, 'user' | 'userId' | 'platform'>) {
     return prisma.platformIntegration.upsert({
       where: {
         userId_platform: { userId, platform }
       },
       update: {
-        username,
-        solvedCount,
-        rating,
+        ...data,
         lastSyncedAt: new Date()
       },
       create: {
         userId,
         platform,
-        username,
-        solvedCount,
-        rating
+        ...data
       }
     });
-  },
+  }
 
-  delete: (userId: string, platform: string) => {
+  async update(id: string, data: Prisma.PlatformIntegrationUpdateInput) {
+    return prisma.platformIntegration.update({
+      where: { id },
+      data: {
+        ...data,
+        lastSyncedAt: new Date()
+      }
+    });
+  }
+
+  async delete(userId: string, platform: string) {
     return prisma.platformIntegration.delete({
       where: {
         userId_platform: { userId, platform }
       }
     });
   }
-};
+}
+
+export const integrationRepository = new IntegrationRepository();

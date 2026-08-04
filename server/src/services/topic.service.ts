@@ -2,7 +2,6 @@ import { AppError } from '../utils/AppError.js';
 import { cache } from '../utils/cache.js';
 import { CreateTopicInput, UpdateTopicInput } from '@algoforge/shared';
 import { topicRepository } from '../repositories/topic.repository.js';
-import { prisma } from '../config/database.js'; // Needed for transaction in reorder
 
 export interface TopicFilters {
   difficulty?: string;
@@ -70,13 +69,7 @@ export const deleteTopic = async (topicId: string, userId: string) => {
 };
 
 export const reorderTopics = async (userId: string, orderedIds: string[]) => {
-  const updates = orderedIds.map((id, index) =>
-    prisma.topic.updateMany({
-      where: { id, userId, deletedAt: null },
-      data: { order: index },
-    })
-  );
-  await prisma.$transaction(updates);
+  await topicRepository.reorder(userId, orderedIds);
   await cache.invalidateTag(`user:${userId}`);
 };
 
