@@ -6,6 +6,16 @@ export const updateProfile = async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data: user });
 };
 
+export const updateEmail = async (req: Request, res: Response) => {
+  const user = await userService.updateEmail(req.user!.id, req.body);
+  res.status(200).json({ success: true, data: user });
+};
+
+export const updatePassword = async (req: Request, res: Response) => {
+  const user = await userService.updatePassword(req.user!.id, req.body);
+  res.status(200).json({ success: true, message: 'Password updated successfully' });
+};
+
 export const checkUsername = async (req: Request, res: Response) => {
   const username = req.query.username as string;
   if (!username) {

@@ -1,6 +1,7 @@
+import bcrypt from 'bcryptjs';
 import { userRepository } from '../repositories/user.repository.js';
 import { integrationRepository } from '../repositories/integration.repository.js';
-import { UpdateProfileInput } from '@algoforge/shared';
+import { UpdateProfileInput, UpdateEmailInput, UpdatePasswordInput } from '@algoforge/shared';
 import { AppError } from '../utils/AppError.js';
 import * as analyticsService from './analytics.service.js';
 import { cache } from '../utils/cache.js';
@@ -14,6 +15,32 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput) =>
   }
   const updated = await userRepository.update(userId, data);
   await cache.invalidateTag(`user:${userId}`);
+  return updated;
+};
+
+export const updateEmail = async (userId: string, data: UpdateEmailInput) => {
+  const existing = await userRepository.findByEmail(data.email);
+  if (existing && existing.id !== userId) {
+    throw new AppError('Email already in use', 400);
+  }
+  const updated = await userRepository.update(userId, { email: data.email });
+  await cache.invalidateTag(`user:${userId}`);
+  return updated;
+};
+
+export const updatePassword = async (userId: string, data: UpdatePasswordInput) => {
+  const user = await userRepository.findById(userId);
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+  if (!isMatch) {
+    throw new AppError('Incorrect current password', 400);
+  }
+
+  const hashedPassword = await bcrypt.hash(data.newPassword, 12);
+  const updated = await userRepository.update(userId, { password: hashedPassword });
   return updated;
 };
 

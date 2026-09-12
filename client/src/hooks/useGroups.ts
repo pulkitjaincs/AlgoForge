@@ -30,3 +30,11 @@ export const useJoinGroup = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] })
   });
 };
+
+export const useLeaveGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => groupsApi.leaveGroup(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] })
+  });
+};

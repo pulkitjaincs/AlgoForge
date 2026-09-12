@@ -8,15 +8,15 @@ export default function TrashPage() {
   const restoreTrash = useRestoreTrash();
   const deleteTrash = useDeleteTrash();
 
-  const handleRestore = (id: string) => {
-    restoreTrash.mutate(id, {
+  const handleRestore = (id: string, type: string) => {
+    restoreTrash.mutate({ id, type }, {
       onSuccess: () => toast.success('Item restored successfully')
     });
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, type: string) => {
     if (window.confirm('Are you sure you want to permanently delete this item?')) {
-      deleteTrash.mutate(id, {
+      deleteTrash.mutate({ id, type }, {
         onSuccess: () => toast.success('Item permanently deleted')
       });
     }
@@ -70,14 +70,14 @@ export default function TrashPage() {
               
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handleRestore(item.id)}
+                  onClick={() => handleRestore(item.id, item.type)}
                   disabled={restoreTrash.isPending}
                   className="btn-secondary flex items-center gap-2"
                 >
                   <RefreshCcw className="w-4 h-4" /> Restore
                 </button>
                 <button
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => handleDelete(item.id, item.type)}
                   disabled={deleteTrash.isPending}
                   className="btn-secondary-danger p-2"
                 >

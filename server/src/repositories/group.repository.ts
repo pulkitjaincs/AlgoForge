@@ -57,6 +57,24 @@ export class GroupRepository {
       }
     });
   }
+
+  async removeMember(groupId: string, userId: string) {
+    return prisma.groupMember.delete({
+      where: { groupId_userId: { groupId, userId } }
+    });
+  }
+
+  async countMembers(groupId: string) {
+    return prisma.groupMember.count({
+      where: { groupId }
+    });
+  }
+
+  async delete(id: string) {
+    return prisma.group.delete({
+      where: { id }
+    });
+  }
 }
 
 export const groupRepository = new GroupRepository();

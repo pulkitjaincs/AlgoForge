@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useMyGroups, useCreateGroup, useJoinGroup } from '../hooks/useGroups';
-import { Users, Plus, Hash, Copy, Check } from 'lucide-react';
+import { useMyGroups, useCreateGroup, useJoinGroup, useGroupDetail, useLeaveGroup } from '../hooks/useGroups';
+import { Users, Plus, Hash, Copy, Check, LogOut, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Modal } from '../components/shared/Modal';
 import { toast } from 'sonner';
@@ -12,9 +12,13 @@ export default function GroupsPage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const leaveGroup = useLeaveGroup();
+  const { data: groupDetail, isLoading: isLoadingDetail } = useGroupDetail(selectedGroupId || '');
 
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +43,20 @@ export default function GroupsPage() {
         toast.error(err.response?.data?.error || 'Failed to join group');
       }
     });
+  };
+
+  const handleLeaveGroup = () => {
+    if (selectedGroupId && window.confirm('Are you sure you want to leave this group?')) {
+      leaveGroup.mutate(selectedGroupId, {
+        onSuccess: () => {
+          setSelectedGroupId(null);
+          toast.success('Left group successfully');
+        },
+        onError: (err: any) => {
+          toast.error(err.response?.data?.error || 'Failed to leave group');
+        }
+      });
+    }
   };
 
   const copyInviteCode = (code: string) => {
@@ -86,7 +104,7 @@ export default function GroupsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {groups?.map((group: any) => (
-            <div key={group.id} className="card p-6 flex flex-col hover:border-brand-primary/30 transition-all group/card">
+            <div key={group.id} onClick={() => setSelectedGroupId(group.id)} className="card p-6 flex flex-col hover:border-brand-primary/30 transition-all group/card cursor-pointer">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-secondary/20 flex items-center justify-center border border-brand-primary/20 text-brand-primary font-bold text-xl">
                   {group.name.charAt(0).toUpperCase()}
@@ -103,7 +121,7 @@ export default function GroupsPage() {
                     Code: {group.inviteCode}
                   </span>
                   <button 
-                    onClick={() => copyInviteCode(group.inviteCode)}
+                    onClick={(e) => { e.stopPropagation(); copyInviteCode(group.inviteCode); }}
                     className="p-1.5 text-text-muted hover:text-text-main hover:bg-border-dark rounded transition-colors"
                     title="Copy invite code"
                   >
@@ -154,6 +172,64 @@ export default function GroupsPage() {
             {joinGroup.isPending ? 'Joining...' : 'Join Group'}
           </button>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!selectedGroupId} onClose={() => setSelectedGroupId(null)} title={groupDetail?.name || 'Group Details'}>
+        {isLoadingDetail || !groupDetail ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-bg-elevated rounded-lg border border-border-dark">
+              <div>
+                <p className="text-xs text-text-muted mb-1">Invite Code</p>
+                <p className="font-mono text-text-main font-bold tracking-wider">{groupDetail.inviteCode}</p>
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); copyInviteCode(groupDetail.inviteCode); }}
+                className="btn-secondary"
+              >
+                {copiedCode === groupDetail.inviteCode ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-semibold text-text-main mb-3 flex items-center justify-between">
+                Members <span className="bg-bg-elevated text-xs px-2 py-0.5 rounded-full">{groupDetail.members?.length || 0}</span>
+              </h4>
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                {groupDetail.members?.map((member: any) => (
+                  <div key={member.id} className="flex items-center gap-3 p-2 rounded hover:bg-bg-elevated transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary font-bold text-sm">
+                      {member.user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-text-main">{member.user.name}</p>
+                      <p className="text-xs text-text-muted">@{member.user.username}</p>
+                    </div>
+                    {member.role === 'admin' && (
+                      <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold text-brand-secondary bg-brand-secondary/10 px-2 py-1 rounded">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border-dark">
+              <button 
+                onClick={handleLeaveGroup}
+                disabled={leaveGroup.isPending}
+                className="btn-secondary-danger w-full flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                {leaveGroup.isPending ? 'Leaving...' : 'Leave Group'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -81,6 +81,13 @@ export const unlinkIntegration = async (userId: string, platform: string) => {
 
 export const syncAllIntegrations = async (userId: string) => {
   const integrations = await getIntegrations(userId);
+  
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const hasRecentSync = integrations.some((i: any) => new Date(i.lastSyncedAt) > oneHourAgo);
+  if (hasRecentSync && integrations.length > 0) {
+    throw new AppError('You can only sync integrations once every 1 hour.', 429);
+  }
+
   const results = [];
 
   for (const integration of integrations) {
@@ -106,6 +113,7 @@ export const syncAllIntegrations = async (userId: string) => {
         tier: stats.tier || null,
         contributions: stats.contributions || 0,
         activityData: stats.activityData as any,
+        lastSyncedAt: new Date(),
       });
       
       results.push(updated);

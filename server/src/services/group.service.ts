@@ -42,3 +42,17 @@ export const getGroup = async (userId: string, groupId: string) => {
 export const getMyGroups = async (userId: string) => {
   return groupRepository.findByUserId(userId);
 };
+
+export const leaveGroup = async (userId: string, groupId: string) => {
+  const isMember = await groupRepository.isMember(groupId, userId);
+  if (!isMember) {
+    throw new AppError('You are not a member of this group', 400);
+  }
+
+  await groupRepository.removeMember(groupId, userId);
+
+  const memberCount = await groupRepository.countMembers(groupId);
+  if (memberCount === 0) {
+    await groupRepository.delete(groupId);
+  }
+};

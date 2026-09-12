@@ -25,6 +25,11 @@ export default function LoginPage() {
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-5">
+        {login.isError && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-sm p-3 rounded-md">
+            Username or password was incorrect.
+          </div>
+        )}
         <div>
           <label className="input-label">Email address</label>
           <input 

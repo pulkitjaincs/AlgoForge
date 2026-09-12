@@ -227,3 +227,24 @@ export const trashActionSchema = z.object({
 });
 
 export type TrashActionInput = z.infer<typeof trashActionSchema>['body'];
+
+// Settings Schemas
+export const updateEmailSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address'),
+  }),
+});
+
+export const updatePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(128)
+      .regex(/[a-zA-Z]/, 'Password must contain at least one letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
+  }),
+});
+
+export type UpdateEmailInput = z.infer<typeof updateEmailSchema>['body'];
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>['body'];

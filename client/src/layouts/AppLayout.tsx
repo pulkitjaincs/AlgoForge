@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useLogout, useUser } from '../hooks/useAuth';
-import { LayoutDashboard, BookOpen, User, LogOut, CheckSquare, List, Users, Search, Trash2, Bell, Link as LinkIcon } from 'lucide-react';
+import { LayoutDashboard, BookOpen, User, LogOut, CheckSquare, List, Users, Search, Trash2, Bell, Link as LinkIcon, Settings as SettingsIcon } from 'lucide-react';
 import { ThemeToggle } from '../components/shared/ThemeToggle';
 import { useUIStore } from '../store/useUIStore';
 
@@ -23,6 +23,7 @@ export function AppLayout() {
     { name: 'Integrations', path: '/app/integrations', icon: LinkIcon },
     { name: 'Profile', path: '/app/profile', icon: User },
     { name: 'Trash', path: '/app/trash', icon: Trash2 },
+    { name: 'Settings', path: '/app/settings', icon: SettingsIcon },
   ];
 
   return (

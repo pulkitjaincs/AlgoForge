@@ -19,6 +19,7 @@ const GroupsPage = React.lazy(() => import('./pages/GroupsPage'));
 const PublicProfilePage = React.lazy(() => import('./pages/PublicProfilePage'));
 const TrashPage = React.lazy(() => import('./pages/TrashPage'));
 const IntegrationsPage = React.lazy(() => import('./pages/IntegrationsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const LandingLayout = React.lazy(() => import('./layouts/LandingLayout'));
 
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="discover" element={<DiscoverSheetsPage />} />
               <Route path="groups" element={<GroupsPage />} />
               <Route path="trash" element={<TrashPage />} />
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="integrations" element={<IntegrationsPage />} />
             </Route>
           </Route>

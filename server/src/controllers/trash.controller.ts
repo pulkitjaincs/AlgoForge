@@ -6,9 +6,15 @@ export const getTrash = async (req: Request, res: Response) => {
   
   const trashItems = await getTrashItems(userId);
 
+  const formattedItems = [
+    ...trashItems.topics.map((t: any) => ({ ...t, type: 'topic' })),
+    ...trashItems.subTopics.map((s: any) => ({ ...s, type: 'subtopic' })),
+    ...trashItems.questions.map((q: any) => ({ ...q, type: 'question' })),
+  ].sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
+
   res.status(200).json({
     success: true,
-    data: trashItems,
+    data: formattedItems,
   });
 };
 

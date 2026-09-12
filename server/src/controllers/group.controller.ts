@@ -21,3 +21,9 @@ export const getMyGroups = async (req: Request, res: Response) => {
   const groups = await groupService.getMyGroups(req.user!.id);
   res.status(200).json({ success: true, data: groups });
 };
+
+export const leaveGroup = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  await groupService.leaveGroup(req.user!.id, id);
+  res.status(200).json({ success: true, message: 'Successfully left the group' });
+};
