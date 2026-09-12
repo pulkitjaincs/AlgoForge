@@ -17,6 +17,9 @@ import apiRoutes from './routes/index.js';
 
 const app = express();
 
+// Trust reverse proxy headers (required on Render, Railway, Heroku)
+app.set('trust proxy', 1);
+
 // Security & Parsing
 app.use(helmet({
   contentSecurityPolicy: {
