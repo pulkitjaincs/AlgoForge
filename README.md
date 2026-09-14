@@ -39,8 +39,8 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 |---|---|---|
 | React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM) |
 | React Router (Routing) | Express 5 | Redis (Caching) |
-| React Query (Server State) | Zod (Validation) | Docker & Docker Compose |
-| Zustand (UI State) | Pino (Structured Logging) | Playwright (E2E Testing) |
+| React Query (Server State) | Zod (Validation) | BullMQ (Background Jobs) |
+| Zustand (UI State) | Pino (Structured Logging) | Docker & Playwright |
 | Tailwind CSS & dnd-kit | JWT Authentication | pnpm Workspaces + Turborepo |
 
 ---

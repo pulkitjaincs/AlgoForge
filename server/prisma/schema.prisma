@@ -81,6 +81,8 @@ model Question {
   @@index([topicId, order])
   @@index([subTopicId, order])
   @@index([nextReviewAt])
+  @@index([topicId, isSolved])
+  @@index([subTopicId, isSolved])
 }
 
 model QuestionAttempt {
@@ -137,6 +139,7 @@ model Sheet {
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([authorId])
+  @@index([isPublic, createdAt])
 }
 
 model Group {
@@ -176,4 +179,5 @@ model PlatformIntegration {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, platform])
+  @@index([userId])
 }

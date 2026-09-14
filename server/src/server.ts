@@ -4,6 +4,7 @@ import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { prisma } from './config/database.js';
 import { redis } from './config/redis.js';
+import './workers/syncWorker.js';
 
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';

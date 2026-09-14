@@ -14,6 +14,10 @@ graph TD
     Client <-->|JSON over HTTPS| API
     API <-->|Prisma ORM| DB
     API <-->|ioredis| Cache
+    API -->|enqueue job| BullMQ[(BullMQ)]
+    BullMQ -->|process| Worker[Background Worker]
+    Worker <-->|Prisma ORM| DB
+    Worker <-->|ioredis| Cache
 ```
 
 ## 2. Backend Architecture (Layered)
@@ -62,6 +66,13 @@ AlgoForge applies a **Cache-Aside** pattern backed by Redis (`ioredis`) to optim
   - **Integrations & Profiles:** Platform stats and public user profiles.
 - **TTL & Tag-Based Invalidation:** Cache entries use a 5-minute TTL with explicit `setWithTag(key, tag, data, ttl)` tagging under `user:{userId}`. Mutating operations (create, update, delete, reorder) trigger `invalidateTag(tag)` for instant cache consistency.
 - **Graceful Shutdown & Degradation:** Graceful termination safely closes Redis connections via `redis.quit()`. If Redis is offline or unconfigured, operations seamlessly fallback to PostgreSQL without application failure.
+
+## 6. Background Processing (BullMQ)
+
+To keep the API snappy and avoid blocking HTTP requests with long-running operations (like syncing third-party platforms e.g., LeetCode/Codeforces APIs), AlgoForge delegates heavy tasks to a background worker:
+- **Queue Engine**: `bullmq` running on the Redis cache instance.
+- **Workers**: Dedicated Node workers (e.g. `syncWorker.ts`) poll the `platform-sync` queue, handle network calls securely, and update database records.
+- **Cache Invalidation**: Upon job completion, workers independently trigger `invalidateTag()` so the frontend automatically receives fresh data on its next poll or navigation.
 
 ## 6. Data Model (PostgreSQL)
 

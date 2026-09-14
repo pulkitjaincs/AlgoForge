@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import AuthLayout from './layouts/AuthLayout';
 import AppLayout from './layouts/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
@@ -27,42 +28,44 @@ export default function App() {
   return (
     <>
       <Toaster position="top-right" />
-      <Suspense fallback={<div className="flex h-screen items-center justify-center text-brand-primary">Loading...</div>}>
-        <Routes>
-          {/* Public Landing */}
-          <Route element={<LandingLayout />}>
-             <Route path="/" element={<LandingPage />} />
-          </Route>
-
-          {/* Public Routes */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-          </Route>
-
-          {/* Public Profiles */}
-          <Route path="/u/:username" element={<PublicProfilePage />} />
-
-          {/* Protected App Routes */}
-          <Route path="/app" element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route index element={<Navigate to="/app/dashboard" replace />} />
-              <Route path="sheet" element={<SheetPage />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="review" element={<ReviewPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="discover" element={<DiscoverSheetsPage />} />
-              <Route path="groups" element={<GroupsPage />} />
-              <Route path="trash" element={<TrashPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="integrations" element={<IntegrationsPage />} />
+      <ErrorBoundary>
+        <Suspense fallback={<div className="flex h-screen items-center justify-center text-brand-primary">Loading...</div>}>
+          <Routes>
+            {/* Public Landing */}
+            <Route element={<LandingLayout />}>
+               <Route path="/" element={<LandingPage />} />
             </Route>
-          </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
+            {/* Public Routes */}
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Route>
+
+            {/* Public Profiles */}
+            <Route path="/u/:username" element={<PublicProfilePage />} />
+
+            {/* Protected App Routes */}
+            <Route path="/app" element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route index element={<Navigate to="/app/dashboard" replace />} />
+                <Route path="sheet" element={<SheetPage />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="review" element={<ReviewPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="discover" element={<DiscoverSheetsPage />} />
+                <Route path="groups" element={<GroupsPage />} />
+                <Route path="trash" element={<TrashPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+              </Route>
+            </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 }

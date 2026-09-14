@@ -9,6 +9,7 @@ import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { cache } from '../utils/cache.js';
 import { Prisma } from '@prisma/client';
+import { syncQueue } from '../workers/syncWorker.js';
 
 interface PlatformStats {
   solvedCount?: number;
@@ -88,41 +89,32 @@ export const syncAllIntegrations = async (userId: string) => {
     throw new AppError('You can only sync integrations once every 1 hour.', 429);
   }
 
-  const results = [];
+  // If BullMQ queue is available, enqueue; otherwise fall back to inline sync
+  if (syncQueue) {
+    await syncQueue.add('sync-user', { userId, integrations });
+    return { success: true, message: 'Sync job queued successfully' };
+  }
 
+  // Inline fallback when Redis/BullMQ is not available
+  logger.warn('BullMQ unavailable — running platform sync inline');
+  const results = [];
   for (const integration of integrations) {
     try {
-      let stats: PlatformStats = { 
-        solvedCount: integration.solvedCount, 
-        rating: integration.rating, 
-        maxRating: integration.maxRating, 
-        contributions: integration.contributions,
-        tier: integration.tier,
-        activityData: integration.activityData as any
-      };
-      
+      let stats: PlatformStats = { solvedCount: integration.solvedCount, rating: integration.rating, maxRating: integration.maxRating, contributions: integration.contributions, tier: integration.tier, activityData: integration.activityData as any };
       const platformStats = await syncPlatform(integration.platform, integration.username);
-      if (platformStats) {
-        stats = { ...stats, ...platformStats };
-      }
-
+      if (platformStats) stats = { ...stats, ...platformStats };
       const updated = await integrationRepository.update(integration.id, {
-        solvedCount: stats.solvedCount,
-        rating: stats.rating || 0,
+        solvedCount: stats.solvedCount || 0, rating: stats.rating || 0,
         maxRating: Math.max(integration.maxRating, stats.maxRating || stats.rating || 0),
-        tier: stats.tier || null,
-        contributions: stats.contributions || 0,
-        activityData: stats.activityData as any,
-        lastSyncedAt: new Date(),
+        tier: stats.tier || null, contributions: stats.contributions || 0,
+        activityData: stats.activityData as any, lastSyncedAt: new Date(),
       });
-      
       results.push(updated);
-    } catch (err) {
-      logger.error({ err, platform: integration.platform }, `Sync failed for ${integration.platform}`);
+    } catch (err: any) {
+      logger.error({ err, platform: integration.platform }, `Inline sync failed for ${integration.platform}`);
       results.push(integration);
     }
   }
-
   await cache.invalidateTag(`user:${userId}`);
   return results;
 };

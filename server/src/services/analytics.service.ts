@@ -2,10 +2,40 @@ import { topicRepository } from '../repositories/topic.repository.js';
 import { attemptRepository } from '../repositories/attempt.repository.js';
 import { cache } from '../utils/cache.js';
 
-export const getSummary = async (userId: string) => {
+export interface AnalyticsSummary {
+  totalQuestions: number;
+  solvedQuestions: number;
+  difficultyStats: { Easy: number; Medium: number; Hard: number; Basic: number };
+  solvedByDifficulty: { Easy: number; Medium: number; Hard: number; Basic: number };
+}
+
+export interface HeatmapEntry {
+  date: string;
+  count: number;
+}
+
+export interface StreaksSummary {
+  currentStreak: number;
+  maxStreak: number;
+  lastActive: Date | null;
+}
+
+export interface TopicMastery {
+  topicId: string;
+  title: string;
+  total: number;
+  solved: number;
+  percentage: number;
+}
+
+export interface VelocityEntry {
+  period: string;
+  count: number;
+}
+export const getSummary = async (userId: string): Promise<AnalyticsSummary> => {
   const cacheKey = `analytics_summary:${userId}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<AnalyticsSummary>(cacheKey);
+  if (cached) return cached;
 
   const topics = await topicRepository.findManyWithAllQuestions(userId);
 
@@ -39,10 +69,10 @@ export const getSummary = async (userId: string) => {
   return result;
 };
 
-export const getHeatmap = async (userId: string, year?: number) => {
+export const getHeatmap = async (userId: string, year?: number): Promise<HeatmapEntry[]> => {
   const cacheKey = `analytics_heatmap:${userId}:${year || 'all'}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<HeatmapEntry[]>(cacheKey);
+  if (cached) return cached;
 
   let attempts;
   if (year) {
@@ -64,10 +94,10 @@ export const getHeatmap = async (userId: string, year?: number) => {
   return result;
 };
 
-export const getStreaks = async (userId: string) => {
+export const getStreaks = async (userId: string): Promise<StreaksSummary> => {
   const cacheKey = `analytics_streaks:${userId}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<StreaksSummary>(cacheKey);
+  if (cached) return cached;
 
   const attempts = await attemptRepository.findAttempts(userId);
 
@@ -77,25 +107,16 @@ export const getStreaks = async (userId: string) => {
     return result;
   }
 
-  const uniqueDates = Array.from(new Set(attempts.map(a => a.solvedAt.toISOString().split('T')[0])));
+  const sortedDates = Array.from(new Set(attempts.map(a => a.solvedAt.toISOString().split('T')[0])))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   
   let maxStreak = 1;
   let currentStreak = 1;
 
-  for (let i = 0; i < uniqueDates.length - 1; i++) {
-    const d1 = new Date(uniqueDates[i]);
-    const d2 = new Date(uniqueDates[i+1]);
-    const diffDays = Math.round(Math.abs(d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24)); 
-    
-    if (diffDays === 1 && i + 1 === currentStreak) {
-      currentStreak++;
-    }
-  }
-
   let tempStreak = 1;
-  for (let i = 0; i < uniqueDates.length - 1; i++) {
-    const d1 = new Date(uniqueDates[i]);
-    const d2 = new Date(uniqueDates[i+1]);
+  for (let i = 0; i < sortedDates.length - 1; i++) {
+    const d1 = new Date(sortedDates[i]);
+    const d2 = new Date(sortedDates[i+1]);
     const diffDays = Math.round(Math.abs(d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24)); 
     if (diffDays === 1) {
       tempStreak++;
@@ -110,23 +131,36 @@ export const getStreaks = async (userId: string) => {
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
 
-  if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
+  if (sortedDates[0] === todayStr || sortedDates[0] === yesterdayStr) {
+    currentStreak = 1;
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const d1 = new Date(sortedDates[i]);
+      const d2 = new Date(sortedDates[i+1]);
+      const diffDays = Math.round(Math.abs(d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24)); 
+      
+      if (diffDays === 1) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+  } else {
     currentStreak = 0;
   }
 
   const result = { 
     currentStreak, 
-    maxStreak, 
+    maxStreak: Math.max(maxStreak, currentStreak), 
     lastActive: attempts[0].solvedAt 
   };
   await cache.setWithTag(cacheKey, `user:${userId}`, result, 300);
   return result;
 };
 
-export const getTopicMastery = async (userId: string) => {
+export const getTopicMastery = async (userId: string): Promise<TopicMastery[]> => {
   const cacheKey = `analytics_topic_mastery:${userId}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<TopicMastery[]>(cacheKey);
+  if (cached) return cached;
 
   const topics = await topicRepository.findManyWithAllQuestions(userId);
 
@@ -152,10 +186,10 @@ export const getTopicMastery = async (userId: string) => {
   return result;
 };
 
-export const getWeakAreas = async (userId: string) => {
+export const getWeakAreas = async (userId: string): Promise<TopicMastery[]> => {
   const cacheKey = `analytics_weak_areas:${userId}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<TopicMastery[]>(cacheKey);
+  if (cached) return cached;
 
   const mastery = await getTopicMastery(userId);
   type MasteryEntry = { topicId: string; title: string; total: number; solved: number; percentage: number };
@@ -165,10 +199,10 @@ export const getWeakAreas = async (userId: string) => {
   return result;
 };
 
-export const getVelocity = async (userId: string, period: string = 'weekly') => {
+export const getVelocity = async (userId: string, period: string = 'weekly'): Promise<VelocityEntry[]> => {
   const cacheKey = `analytics_velocity:${userId}:${period}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<VelocityEntry[]>(cacheKey);
+  if (cached) return cached;
 
   const today = new Date();
   const weeks = 8;
