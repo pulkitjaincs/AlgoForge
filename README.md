@@ -9,7 +9,8 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 ## 🎯 Key Features
 
 ### For Students
-- **Personalized Accounts:** Secure sign-up, login, and user profile management.
+- **Personalized Accounts:** Secure sign-up, login, and an integrated user profile with streamlined settings management.
+- **Responsive Layout:** Viewport-bounded fixed sidebar ensuring smooth and stable navigation without layout shifts.
 - **Hierarchical Tracking:** Organize questions into Topics and Subtopics.
 - **Multi-page Dashboard:** Dedicated views for your main sheet, analytics dashboard, and spaced-repetition review.
 - **Progress Metrics & Analytics:** Visual indicators of solved questions, streaks, weekly velocity, activity heatmaps, and topic mastery radar charts.
@@ -17,6 +18,11 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
 - **Study Notes & Timers:** Markdown-supported notes and inline timers attached directly to questions.
 - **Drag-and-Drop:** Freely reorder your curriculum to match your study plan.
+
+### Contest Tracker
+- **Multi-Platform Aggregation:** Real-time contest tracking for LeetCode, Codeforces, CodeChef, and AtCoder.
+- **Live Countdowns & Reminders:** Add upcoming competitions directly to Google Calendar and view active live countdown timers.
+- **Linked Standings:** View your current ratings across all connected platforms in one place.
 
 ### Social & Growth
 - **Public Profiles:** Share your progress, activity heatmap, and stats via a public `/u/username` profile.
@@ -26,7 +32,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 ### Engineering Excellence
 - **Strictly Typed:** 100% TypeScript across frontend and backend, with a shared `@algoforge/shared` package for schemas.
 - **High Performance:** Redis cache-aside pattern for heavy hierarchical queries.
-- **Secure:** JWT Auth (HttpOnly cookies), Zod validation, Helmet, Rate Limiting, and NoSQL/SQL injection prevention.
+- **Advanced Security:** JWT Auth (HttpOnly cookies), Token Family Lineage (replay attack protection), granular Rate Limiting, prototype pollution protection, and strict Zod payload validation.
 - **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers. Playwright for E2E.
 - **Monorepo Architecture:** Managed by `pnpm` workspaces and `Turborepo` for blazingly fast CI and local builds.
 - **Containerized:** Multi-stage Docker builds and `docker-compose` ready.
@@ -154,6 +160,7 @@ All endpoints are versioned under `/api/v1/`. Responses follow a consistent enve
 | **Sheets**| `POST /sheets/publish`, `GET /sheets`, `GET /sheets/:id` |
 | **Groups**| `POST /groups`, `POST /groups/join`, `GET /groups`, `GET /groups/:id` |
 | **Practice/Review**| `GET /practice/daily`, `GET /review/due` |
+| **Contests** | `GET /contests` |
 | **Trash** | `GET /trash`, `PATCH /trash/:id/restore`, `DELETE /trash/:id` |
 | **System** | `GET /health`, `GET /csrf-token` |
 

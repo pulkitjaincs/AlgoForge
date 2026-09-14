@@ -116,14 +116,19 @@ model QuestionTag {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  token      String   @unique
+  family     String?
+  isRevoked  Boolean  @default(false)
+  deviceInfo String?
+  ipAddress  String?
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, family])
 }
 
 model Sheet {

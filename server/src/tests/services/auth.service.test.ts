@@ -9,6 +9,10 @@ vi.mock('../../repositories/token.repository.js', () => ({
     createRefreshToken: vi.fn(),
     findByToken: vi.fn(),
     delete: vi.fn(),
+    markTokenRevoked: vi.fn().mockResolvedValue(undefined),
+    revokeFamily: vi.fn().mockResolvedValue(undefined),
+    revokeAllUserTokens: vi.fn().mockResolvedValue(undefined),
+    enforceMaxActiveSessions: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -41,7 +45,10 @@ describe('Auth Service', () => {
       expect(tokenRepository.createRefreshToken).toHaveBeenCalledWith(
         'user-1',
         expect.any(String),
-        7
+        7,
+        expect.any(String),
+        undefined,
+        undefined
       );
     });
   });
@@ -53,11 +60,12 @@ describe('Auth Service', () => {
     });
 
     it('should rotate token successfully', async () => {
-      
       (tokenRepository.findByToken as any).mockResolvedValue({
         id: 'rt-id',
         userId: 'user-1',
         token: 'hashed-valid-token',
+        family: 'fam-1',
+        isRevoked: false,
         expiresAt: new Date(Date.now() + 100000)
       });
 
@@ -67,8 +75,15 @@ describe('Auth Service', () => {
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
-      expect(tokenRepository.delete).toHaveBeenCalledWith(expect.any(String));
-      expect(tokenRepository.createRefreshToken).toHaveBeenCalledWith('user-1', expect.any(String), 7);
+      expect(tokenRepository.markTokenRevoked).toHaveBeenCalledWith(expect.any(String));
+      expect(tokenRepository.createRefreshToken).toHaveBeenCalledWith(
+        'user-1',
+        expect.any(String),
+        7,
+        'fam-1',
+        undefined,
+        undefined
+      );
     });
   });
 });

@@ -57,4 +57,12 @@ export const cache = {
       logger.error({ err, tag }, 'Redis invalidateTag error');
     }
   },
+
+  async getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttlSeconds: number = 300): Promise<T> {
+    const cached = await this.get<T>(key);
+    if (cached !== null) return cached;
+    const fresh = await fetchFn();
+    await this.set(key, fresh, ttlSeconds);
+    return fresh;
+  },
 };

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useUser } from '../hooks/useAuth';
 import { useUpdateEmail, useUpdatePassword } from '../hooks/useSettings';
-import { Settings as SettingsIcon, Mail, Lock } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Lock, ArrowLeft } from 'lucide-react';
 
 export default function SettingsPage() {
   const { data: user } = useUser();
@@ -60,14 +61,23 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-lg">
-          <SettingsIcon className="w-6 h-6" />
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-lg">
+            <SettingsIcon className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-text-main">Account Settings</h1>
+            <p className="text-text-muted">Manage your security and account credentials</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text-main">Settings</h1>
-          <p className="text-text-muted">Manage your account preferences</p>
-        </div>
+        <Link
+          to="/app/profile"
+          className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Profile</span>
+        </Link>
       </div>
 
       <div className="bg-bg-card border border-border-main rounded-xl p-6">

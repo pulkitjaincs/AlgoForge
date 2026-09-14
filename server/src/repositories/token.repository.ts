@@ -1,7 +1,14 @@
 import { prisma } from '../config/database.js';
 
 export class TokenRepository {
-  async createRefreshToken(userId: string, hashedToken: string, expiresInDays: number) {
+  async createRefreshToken(
+    userId: string,
+    hashedToken: string,
+    expiresInDays: number,
+    family?: string,
+    deviceInfo?: string,
+    ipAddress?: string
+  ) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
@@ -10,6 +17,10 @@ export class TokenRepository {
         userId,
         token: hashedToken,
         expiresAt,
+        family,
+        deviceInfo,
+        ipAddress,
+        isRevoked: false,
       },
     });
   }
@@ -20,8 +31,52 @@ export class TokenRepository {
     });
   }
 
+  async markTokenRevoked(hashedToken: string) {
+    return prisma.refreshToken.updateMany({
+      where: { token: hashedToken },
+      data: { isRevoked: true },
+    });
+  }
+
+  async revokeFamily(family: string) {
+    return prisma.refreshToken.deleteMany({
+      where: { family },
+    });
+  }
+
+  async revokeAllUserTokens(userId: string) {
+    return prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
+  }
+
+  async enforceMaxActiveSessions(userId: string, maxSessions: number = 5) {
+    const tokens = await prisma.refreshToken.findMany({
+      where: { userId, isRevoked: false },
+      orderBy: { createdAt: 'desc' },
+      select: { family: true, createdAt: true },
+    });
+
+    const uniqueFamilies: string[] = [];
+    for (const t of tokens) {
+      if (t.family && !uniqueFamilies.includes(t.family)) {
+        uniqueFamilies.push(t.family);
+      }
+    }
+
+    if (uniqueFamilies.length > maxSessions) {
+      const familiesToEvict = uniqueFamilies.slice(maxSessions);
+      await prisma.refreshToken.deleteMany({
+        where: {
+          userId,
+          family: { in: familiesToEvict },
+        },
+      });
+    }
+  }
+
   async delete(hashedToken: string) {
-    return prisma.refreshToken.delete({
+    return prisma.refreshToken.deleteMany({
       where: { token: hashedToken },
     });
   }

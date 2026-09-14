@@ -12,6 +12,7 @@ vi.mock('../utils/cache.js', () => ({
     invalidate: vi.fn(),
     setWithTag: vi.fn(),
     invalidateTag: vi.fn(),
+    getOrSet: vi.fn(async (_key: string, fetchFn: () => any) => fetchFn()),
   },
 }));
 

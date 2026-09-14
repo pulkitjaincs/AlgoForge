@@ -11,6 +11,7 @@ import userRoutes from './user.routes.js';
 import sheetRoutes from './sheet.routes.js';
 import groupRoutes from './group.routes.js';
 import integrationRoutes from './integration.routes.js';
+import contestRoutes from './contest.routes.js';
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use('/users', userRoutes);
 router.use('/sheets', sheetRoutes);
 router.use('/groups', groupRoutes);
 router.use('/integrations', integrationRoutes);
+router.use('/contests', contestRoutes);
 
 export default router;

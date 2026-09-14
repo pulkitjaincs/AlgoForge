@@ -41,18 +41,36 @@ export const login = async (data: LoginInput) => {
   return { id: user.id, name: user.name, email: user.email };
 };
 
-export const generateTokens = async (userId: string) => {
+export const generateTokens = async (
+  userId: string,
+  familyId?: string,
+  meta?: { deviceInfo?: string; ipAddress?: string }
+) => {
   const accessToken = jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: '15m' });
   
   const refreshTokenString = crypto.randomBytes(40).toString('hex');
   const hashedToken = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
+  const family = familyId || crypto.randomUUID();
   
-  await tokenRepository.createRefreshToken(userId, hashedToken, 7); // 7 days expiry
+  await tokenRepository.createRefreshToken(
+    userId,
+    hashedToken,
+    7, // 7 days expiry
+    family,
+    meta?.deviceInfo,
+    meta?.ipAddress
+  );
+
+  // Enforce maximum active session families per user
+  tokenRepository.enforceMaxActiveSessions(userId, 5).catch(() => {});
 
   return { accessToken, refreshToken: refreshTokenString };
 };
 
-export const refreshAccess = async (refreshToken: string) => {
+export const refreshAccess = async (
+  refreshToken: string,
+  meta?: { deviceInfo?: string; ipAddress?: string }
+) => {
   const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
   const tokenRecord = await tokenRepository.findByToken(hashedToken);
   
@@ -60,14 +78,29 @@ export const refreshAccess = async (refreshToken: string) => {
     throw new AppError('Invalid refresh token', 401);
   }
 
+  // Replay attack detection: if token is already revoked, revoke the whole family
+  if (tokenRecord.isRevoked) {
+    if (tokenRecord.family) {
+      await tokenRepository.revokeFamily(tokenRecord.family);
+    } else {
+      await tokenRepository.revokeAllUserTokens(tokenRecord.userId);
+    }
+    throw new AppError(
+      'Security alert: Refresh token reuse detected. All sessions in this chain have been terminated. Please log in again.',
+      401
+    );
+  }
+
   if (tokenRecord.expiresAt < new Date()) {
     await tokenRepository.delete(hashedToken);
     throw new AppError('Refresh token expired', 401);
   }
 
-  // Rotate token
-  await tokenRepository.delete(hashedToken);
-  return generateTokens(tokenRecord.userId);
+  // Mark current token as revoked so any reuse triggers replay attack detection
+  await tokenRepository.markTokenRevoked(hashedToken);
+
+  // Rotate token: issue new token in the same lineage
+  return generateTokens(tokenRecord.userId, tokenRecord.family || undefined, meta);
 };
 
 export const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {

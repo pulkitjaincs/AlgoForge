@@ -37,23 +37,26 @@ The backend follows a strict layered architecture to separate concerns, making t
 
 AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect against XSS attacks.
 
-**Middleware Pipeline Order:**
+**Middleware & Token Pipeline Order:**
 1. `helmet()` — Sets secure HTTP headers and Content Security Policy (CSP).
-2. `rateLimit()` — Prevents brute-force and DDoS (global limiter + route-specific limiters for auth, sync, publish, analytics).
-3. `sanitize()` — Strips dangerous keys from `req.body`.
+2. `rateLimit()` — Granular limiters (global + strict limits for login/register/refresh/sync).
+3. `sanitize()` — Strips dangerous keys to prevent NoSQL injection and Prototype Pollution.
 4. `cookieParser()` — Parses `HttpOnly` cookies.
 5. `doubleCsrfProtection` — Validates CSRF tokens using the Double Submit Cookie pattern.
 6. `requestId` / `requestLogger` — Injects traceability UUIDs and logs via Pino.
-7. `protect` (Route-level) — Verifies JWT signature and expiry (user object cached in Redis).
-8. `validate` (Route-level) — Strict Zod schema enforcement using `@algoforge/shared` schemas.
+7. `protect` (Route-level) — Verifies JWT signature and expiry.
+8. `validate` (Route-level) — Strict Zod schema enforcement using `@algoforge/shared`.
+
+**Session Management & Replay Protection:**
+Refresh tokens use a **Token Family Lineage** architecture. Every session has a unique `family` ID. If an already-used (revoked) refresh token is presented again (indicating a potential replay attack or stolen token), the system instantly invalidates the entire token family, terminating all active sessions for that device.
 
 ## 4. Frontend Architecture
 
-- **Routing:** `react-router-dom` is used for multi-page routing, featuring `AuthLayout` for public routes and `AppLayout` with `ProtectedRoute` for authenticated sessions.
+- **Routing & Layout:** `react-router-dom` is used for multi-page routing, featuring `AuthLayout` for public routes and `AppLayout` with `ProtectedRoute` for authenticated sessions. The `AppLayout` features a resilient, viewport-bounded fixed sidebar (`100dvh`) that ensures stable UI transitions without layout shifts.
 - **State Management:**
   - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates for rapid interactions.
   - **UI State:** `Zustand` (`useUIStore`) is restricted strictly to global transient UI states (like command palette visibility and navigation targets).
-- **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`) prioritizing focused, decomposed components over monoliths.
+- **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`, `features/profile`) prioritizing focused, decomposed components over monoliths. The Settings and Profile flow are deeply integrated to offer streamlined account management.
 - **Drag-and-Drop:** `@dnd-kit` powers the smooth interactive reordering of topics, subtopics, and questions with custom sortable list strategies.
 
 ## 5. Caching Strategy
@@ -61,6 +64,7 @@ AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect ag
 AlgoForge applies a **Cache-Aside** pattern backed by Redis (`ioredis`) to optimize heavy database operations across multiple modules:
 
 - **Cached Domains:**
+  - **Contests:** Cross-platform contest aggregation results (LeetCode, Codeforces, CodeChef, AtCoder).
   - **Analytics:** Summary, heatmaps, streaks, topic mastery, weak areas, and weekly velocity.
   - **Spaced Repetition:** Daily review queues and review stats.
   - **Integrations & Profiles:** Platform stats and public user profiles.
@@ -89,6 +93,7 @@ erDiagram
     User ||--o{ Sheet : publishes
     User ||--o{ GroupMember : joins
     Group ||--o{ GroupMember : has
+    User ||--o{ RefreshToken : authenticates
 
     User {
         String id PK
@@ -100,6 +105,14 @@ erDiagram
         String avatarUrl
         Boolean isProfilePublic
         String defaultHeatmapRange
+    }
+    RefreshToken {
+        String id PK
+        String token
+        String userId FK
+        String family
+        Boolean isRevoked
+        DateTime expiresAt
     }
     Sheet {
         String id PK

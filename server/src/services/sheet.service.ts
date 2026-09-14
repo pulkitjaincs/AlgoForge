@@ -10,7 +10,30 @@ export const publishSheet = async (userId: string, data: PublishSheetInput) => {
     throw new AppError('Cannot publish an empty sheet', 400);
   }
 
-  const snapshot = JSON.parse(JSON.stringify(topics));
+  if (topics.length > 100) {
+    throw new AppError('Sheet exceeds maximum allowed topics (100)', 400);
+  }
+
+  let totalQuestions = 0;
+  for (const topic of topics) {
+    totalQuestions += (topic.questions?.length || 0);
+    if (topic.subTopics) {
+      for (const sub of topic.subTopics) {
+        totalQuestions += (sub.questions?.length || 0);
+      }
+    }
+  }
+
+  if (totalQuestions > 1000) {
+    throw new AppError('Sheet exceeds maximum allowed questions (1000)', 400);
+  }
+
+  const serialized = JSON.stringify(topics);
+  if (Buffer.byteLength(serialized, 'utf8') > 2 * 1024 * 1024) {
+    throw new AppError('Sheet data payload exceeds 2MB limit', 400);
+  }
+
+  const snapshot = JSON.parse(serialized);
   
   return sheetRepository.create({
     title: data.title,

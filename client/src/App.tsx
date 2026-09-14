@@ -21,6 +21,7 @@ const PublicProfilePage = React.lazy(() => import('./pages/PublicProfilePage'));
 const TrashPage = React.lazy(() => import('./pages/TrashPage'));
 const IntegrationsPage = React.lazy(() => import('./pages/IntegrationsPage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const ContestsPage = React.lazy(() => import('./pages/ContestsPage'));
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const LandingLayout = React.lazy(() => import('./layouts/LandingLayout'));
 
@@ -51,6 +52,7 @@ export default function App() {
                 <Route index element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="sheet" element={<SheetPage />} />
                 <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="contests" element={<ContestsPage />} />
                 <Route path="review" element={<ReviewPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="discover" element={<DiscoverSheetsPage />} />

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useUser } from '../hooks/useAuth';
 import { usersApi } from '../api/users';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Mail, Link as LinkIcon, Camera, Save, Globe, Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { User, Mail, Link as LinkIcon, Camera, Save, Globe, Lock, Settings as SettingsIcon, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -58,9 +59,9 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
+    <div className="max-w-3xl mx-auto space-y-8 animate-fade-in pb-16">
       <div>
-        <h1 className="text-3xl font-bold text-text-main">Profile Settings</h1>
+        <h1 className="text-3xl font-bold text-text-main">Profile</h1>
         <p className="text-text-muted mt-1">Manage your account and public presence.</p>
       </div>
       
@@ -78,10 +79,17 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
-              <h2 className="text-xl font-bold text-text-main">{user.name}</h2>
-              <p className="text-text-muted mb-3">{user.email}</p>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1">
+                <h2 className="text-2xl font-bold text-text-main">{user.name}</h2>
+                {user.username && (
+                  <span className="text-xs font-semibold text-brand-primary bg-brand-primary/10 px-2.5 py-0.5 rounded-full border border-brand-primary/20">
+                    @{user.username}
+                  </span>
+                )}
+              </div>
+              <p className="text-text-muted text-sm mb-3">{user.email}</p>
               <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-text-muted">
-                <div className="px-2 py-1 rounded bg-bg-elevated border border-border-dark">
+                <div className="px-2.5 py-1 rounded-md bg-bg-elevated border border-border-dark">
                   Member since {new Date(user.createdAt).toLocaleDateString()}
                 </div>
               </div>
@@ -181,6 +189,26 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Account & Security Settings Card */}
+      <div className="card p-6 bg-card-dark border border-border-dark flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 rounded-xl bg-brand-primary/10 text-brand-primary border border-brand-primary/20 shrink-0">
+            <SettingsIcon className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-text-main text-sm">Security & Password Settings</h3>
+            <p className="text-xs text-text-muted mt-0.5">Manage your email address, update password, and security credentials</p>
+          </div>
+        </div>
+        <Link
+          to="/app/settings"
+          className="btn-secondary text-xs px-3.5 py-2 flex items-center gap-1.5 shrink-0 self-end sm:self-auto"
+        >
+          <span>Manage Settings</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
     </div>
   );
