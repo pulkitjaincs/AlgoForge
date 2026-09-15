@@ -1,7 +1,12 @@
 import { AppError } from '../utils/AppError.js';
+import { Prisma } from '@prisma/client';
 import { cache } from '../utils/cache.js';
 import { CreateTopicInput, UpdateTopicInput } from '@algoforge/shared';
 import { topicRepository } from '../repositories/topic.repository.js';
+
+const invalidateTopicsCache = async (userId: string) => {
+  await cache.invalidatePattern(`topics:${userId}*`);
+};
 
 export interface TopicFilters {
   difficulty?: string;
@@ -20,7 +25,7 @@ export const getAllTopics = async (userId: string, filters: TopicFilters = {}) =
     if (cached) return cached;
   }
 
-  const questionFilter: any = { deletedAt: null };
+  const questionFilter: Prisma.QuestionWhereInput = { deletedAt: null };
   if (filters.difficulty) questionFilter.difficulty = filters.difficulty;
   if (filters.platform) questionFilter.platform = filters.platform;
   if (filters.isSolved !== undefined) questionFilter.isSolved = filters.isSolved === 'true';
@@ -47,7 +52,7 @@ export const createTopic = async (userId: string, data: CreateTopicInput) => {
     order: count,
     userId,
   });
-  await cache.invalidateTag(`user:${userId}`);
+  await invalidateTopicsCache(userId);
   return topic;
 };
 
@@ -56,7 +61,7 @@ export const updateTopic = async (topicId: string, userId: string, data: UpdateT
   if (!topic) throw new AppError('Topic not found', 404);
 
   const updated = await topicRepository.update(topicId, data);
-  await cache.invalidateTag(`user:${userId}`);
+  await invalidateTopicsCache(userId);
   return updated;
 };
 
@@ -65,11 +70,11 @@ export const deleteTopic = async (topicId: string, userId: string) => {
   if (!topic) throw new AppError('Topic not found', 404);
 
   await topicRepository.softDelete(topicId);
-  await cache.invalidateTag(`user:${userId}`);
+  await invalidateTopicsCache(userId);
 };
 
 export const reorderTopics = async (userId: string, orderedIds: string[]) => {
   await topicRepository.reorder(userId, orderedIds);
-  await cache.invalidateTag(`user:${userId}`);
+  await invalidateTopicsCache(userId);
 };
 

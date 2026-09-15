@@ -58,6 +58,27 @@ export const cache = {
     }
   },
 
+  async invalidatePattern(pattern: string): Promise<void> {
+    if (!redis) return;
+    try {
+      let cursor = '0';
+      const keysToDelete: string[] = [];
+      do {
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        if (keys.length > 0) {
+          keysToDelete.push(...keys);
+        }
+      } while (cursor !== '0');
+      
+      if (keysToDelete.length > 0) {
+        await redis.del(...keysToDelete);
+      }
+    } catch (err) {
+      logger.error({ err, pattern }, 'Redis invalidatePattern error');
+    }
+  },
+
   async getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttlSeconds: number = 300): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) return cached;

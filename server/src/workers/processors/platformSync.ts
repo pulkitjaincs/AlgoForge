@@ -36,7 +36,7 @@ export const processPlatformSync = async (job: Job) => {
         maxRating: integration.maxRating, 
         contributions: integration.contributions,
         tier: integration.tier,
-        activityData: integration.activityData as any
+        activityData: integration.activityData as { date: string; count: number }[] | null
       };
       
       const platformStats = await syncPlatform(integration.platform, integration.username);
@@ -50,7 +50,7 @@ export const processPlatformSync = async (job: Job) => {
         maxRating: Math.max(integration.maxRating, stats.maxRating || stats.rating || 0),
         tier: stats.tier || null,
         contributions: stats.contributions || 0,
-        activityData: stats.activityData as any,
+        activityData: stats.activityData as any, // Prisma JsonValue cast is fine here
         lastSyncedAt: new Date(),
       });
       

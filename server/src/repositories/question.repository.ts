@@ -132,13 +132,29 @@ export class QuestionRepository {
   }
 
   async reorder(orderedIds: string[]) {
-    const transactions = orderedIds.map((id, index) =>
-      prisma.question.update({
-        where: { id },
-        data: { order: index },
-      })
-    );
-    return prisma.$transaction(transactions);
+    if (orderedIds.length === 0) return;
+    const params: any[] = [];
+    const caseParts: string[] = [];
+    const inParts: string[] = [];
+
+    orderedIds.forEach((id, index) => {
+      params.push(id);
+      const idParam = `$${params.length}`;
+      params.push(index);
+      const indexParam = `$${params.length}`;
+      
+      caseParts.push(`WHEN ${idParam} THEN ${indexParam}::integer`);
+      inParts.push(idParam);
+    });
+
+    const query = `
+      UPDATE "Question"
+      SET "order" = CASE id
+        ${caseParts.join(' ')}
+      END
+      WHERE id IN (${inParts.join(', ')});
+    `;
+    return prisma.$executeRawUnsafe(query, ...params);
   }
 }
 

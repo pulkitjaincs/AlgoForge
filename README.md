@@ -17,7 +17,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Spaced Repetition & Practice Plans:** SM-2 based spaced repetition system that generates daily review queues and custom practice plans targeting weak areas.
 - **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
 - **Study Notes:** Markdown-supported notes attached directly to questions.
-- **Drag-and-Drop:** Freely reorder your curriculum to match your study plan.
+- **Drag-and-Drop:** Freely reorder your curriculum to match your study plan with zero-latency optimistic UI updates.
 
 ### Contest Tracker
 - **Multi-Platform Aggregation:** Real-time contest tracking for LeetCode, Codeforces, CodeChef, and AtCoder.
@@ -32,8 +32,9 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 ### Engineering Excellence
 - **Strictly Typed:** 100% TypeScript across frontend and backend, with a shared `@algoforge/shared` package for schemas.
 - **Distributed Background Processing:** BullMQ & Redis worker pipeline offloading heavy third-party platform syncs and scheduled maintenance jobs (automated trash purges and token cleanups).
-- **ACID Data Integrity:** Multi-query database operations (token rotation, attempts, group lifecycle, reordering) encapsulated inside atomic Prisma `$transaction` pipelines.
-- **High Performance:** Redis cache-aside pattern with tag-based invalidation (`user:{userId}`) for instant consistency.
+- **ACID Data Integrity:** Multi-query database operations (token rotation, attempts, group lifecycle, reordering) encapsulated inside atomic Prisma `$transaction` pipelines. Highly optimized raw SQL `$executeRawUnsafe` statements used for complex batch operations.
+- **High Performance:** Redis cache-aside pattern with granular pattern-based invalidation (e.g. `topics:${userId}*`) via `SCAN` for instant consistency without unnecessarily purging unrelated user caches.
+- **SQL-Native Analytics:** Advanced PostgreSQL features (`GROUP BY`, `CTE`s, conditional aggregations) push heavy analytics computations directly to the database layer for maximum scalability.
 - **Advanced Security:** JWT Auth (HttpOnly cookies), Token Family Lineage (replay attack protection with automatic session chain revocation), granular Rate Limiting, prototype pollution protection, and strict Zod payload validation.
 - **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers. Playwright for E2E.
 - **Monorepo Architecture:** Managed by `pnpm` workspaces and `Turborepo` for blazingly fast CI and local builds.

@@ -31,13 +31,29 @@ export class TopicRepository {
   }
 
   async reorder(userId: string, orderedIds: string[]) {
-    const updates = orderedIds.map((id, index) =>
-      prisma.topic.updateMany({
-        where: { id, userId, deletedAt: null },
-        data: { order: index },
-      })
-    );
-    return prisma.$transaction(updates);
+    if (orderedIds.length === 0) return;
+    const params: any[] = [userId];
+    const caseParts: string[] = [];
+    const inParts: string[] = [];
+
+    orderedIds.forEach((id, index) => {
+      params.push(id);
+      const idParam = `$${params.length}`;
+      params.push(index);
+      const indexParam = `$${params.length}`;
+      
+      caseParts.push(`WHEN ${idParam} THEN ${indexParam}::integer`);
+      inParts.push(idParam);
+    });
+
+    const query = `
+      UPDATE "Topic"
+      SET "order" = CASE id
+        ${caseParts.join(' ')}
+      END
+      WHERE id IN (${inParts.join(', ')}) AND "userId" = $1 AND "deletedAt" IS NULL;
+    `;
+    return prisma.$executeRawUnsafe(query, ...params);
   }
 
   async findManyWithFilters(userId: string, questionFilter: any) {

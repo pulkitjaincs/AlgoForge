@@ -43,8 +43,37 @@ export const useToggleSolved = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (questionId: string) => questionsApi.toggleSolved(questionId),
-    onSuccess: () => {
+    onMutate: async (questionId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['topics'] });
+      const previousTopics = queryClient.getQueryData(['topics']);
+      
+      queryClient.setQueryData(['topics'], (old: any) => {
+        if (!old) return old;
+        return old.map((topic: any) => ({
+          ...topic,
+          questions: topic.questions.map((q: any) => 
+            q.id === questionId ? { ...q, isSolved: !q.isSolved } : q
+          ),
+          subTopics: topic.subTopics.map((st: any) => ({
+            ...st,
+            questions: st.questions.map((q: any) => 
+              q.id === questionId ? { ...q, isSolved: !q.isSolved } : q
+            )
+          }))
+        }));
+      });
+      
+      return { previousTopics };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTopics) {
+        queryClient.setQueryData(['topics'], context.previousTopics);
+      }
+    },
+    onSettled: () => {
+      // Silent background refetch
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 };
@@ -53,7 +82,35 @@ export const useToggleStarred = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (questionId: string) => questionsApi.toggleStarred(questionId),
-    onSuccess: () => {
+    onMutate: async (questionId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['topics'] });
+      const previousTopics = queryClient.getQueryData(['topics']);
+      
+      queryClient.setQueryData(['topics'], (old: any) => {
+        if (!old) return old;
+        return old.map((topic: any) => ({
+          ...topic,
+          questions: topic.questions.map((q: any) => 
+            q.id === questionId ? { ...q, isStarred: !q.isStarred } : q
+          ),
+          subTopics: topic.subTopics.map((st: any) => ({
+            ...st,
+            questions: st.questions.map((q: any) => 
+              q.id === questionId ? { ...q, isStarred: !q.isStarred } : q
+            )
+          }))
+        }));
+      });
+      
+      return { previousTopics };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTopics) {
+        queryClient.setQueryData(['topics'], context.previousTopics);
+      }
+    },
+    onSettled: () => {
+      // Silent background refetch
       queryClient.invalidateQueries({ queryKey: ['topics'] });
     },
   });
@@ -86,8 +143,43 @@ export const useReorderQuestions = () => {
   return useMutation({
     mutationFn: ({ topicId, subTopicId, data }: { topicId: string; subTopicId: string | null; data: { questionIds: string[] } }) => 
       questionsApi.reorder(topicId, subTopicId, data.questionIds),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
+    onMutate: async ({ topicId, subTopicId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['topics'] });
+      const previousTopics = queryClient.getQueryData(['topics']);
+      
+      queryClient.setQueryData(['topics'], (old: any) => {
+        if (!old) return old;
+        return old.map((topic: any) => {
+          if (topic.id === topicId) {
+            if (!subTopicId) {
+              const newQs = [...topic.questions].sort((a: any, b: any) => 
+                data.questionIds.indexOf(a.id) - data.questionIds.indexOf(b.id)
+              );
+              return { ...topic, questions: newQs };
+            } else {
+              return {
+                ...topic,
+                subTopics: topic.subTopics.map((st: any) => {
+                  if (st.id === subTopicId) {
+                    const newQs = [...st.questions].sort((a: any, b: any) => 
+                      data.questionIds.indexOf(a.id) - data.questionIds.indexOf(b.id)
+                    );
+                    return { ...st, questions: newQs };
+                  }
+                  return st;
+                })
+              };
+            }
+          }
+          return topic;
+        });
+      });
+      return { previousTopics };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTopics) {
+        queryClient.setQueryData(['topics'], context.previousTopics);
+      }
     },
   });
 };

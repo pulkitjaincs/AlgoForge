@@ -32,13 +32,29 @@ export class SubTopicRepository {
   }
 
   async reorder(topicId: string, orderedIds: string[]) {
-    const updates = orderedIds.map((id, index) =>
-      prisma.subTopic.updateMany({
-        where: { id, topicId, deletedAt: null },
-        data: { order: index },
-      })
-    );
-    return prisma.$transaction(updates);
+    if (orderedIds.length === 0) return;
+    const params: any[] = [topicId];
+    const caseParts: string[] = [];
+    const inParts: string[] = [];
+
+    orderedIds.forEach((id, index) => {
+      params.push(id);
+      const idParam = `$${params.length}`;
+      params.push(index);
+      const indexParam = `$${params.length}`;
+      
+      caseParts.push(`WHEN ${idParam} THEN ${indexParam}::integer`);
+      inParts.push(idParam);
+    });
+
+    const query = `
+      UPDATE "SubTopic"
+      SET "order" = CASE id
+        ${caseParts.join(' ')}
+      END
+      WHERE id IN (${inParts.join(', ')}) AND "topicId" = $1 AND "deletedAt" IS NULL;
+    `;
+    return prisma.$executeRawUnsafe(query, ...params);
   }
 }
 

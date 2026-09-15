@@ -1,4 +1,5 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { Request, Response } from 'express';
 
 // Strict login limiter: max 10 failed attempts per 15 min per IP/email
 export const loginLimiter = rateLimit({
@@ -7,7 +8,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many failed login attempts. Please try again after 15 minutes.' },
-  keyGenerator: (req: any, res: any) => (req.body?.email ? `login:${req.body.email.toLowerCase()}` : ipKeyGenerator(req, res)),
+  keyGenerator: (req: Request, _res: Response) => (req.body?.email ? `login:${req.body.email.toLowerCase()}` : ipKeyGenerator(req.ip || 'unknown')),
   skipSuccessfulRequests: true,
 });
 
@@ -45,7 +46,7 @@ export const syncLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Integration sync rate limit exceeded (max 1 per hour)' },
-  keyGenerator: (req: any, res: any) => (req.user?.id ? `user-sync:${req.user.id}` : ipKeyGenerator(req, res)),
+  keyGenerator: (req: Request, _res: Response) => (req.user?.id ? `user-sync:${req.user.id}` : ipKeyGenerator(req.ip || 'unknown')),
 });
 
 // Public profile anti-scraping limiter: max 60 requests per 15 min per IP

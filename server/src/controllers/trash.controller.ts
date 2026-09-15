@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getTrashItems, restoreItem, permanentlyDeleteItem } from '../services/trash.service.js';
+import { Topic, SubTopic, Question } from '@prisma/client';
 
 export const getTrash = async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -7,9 +8,9 @@ export const getTrash = async (req: Request, res: Response) => {
   const trashItems = await getTrashItems(userId);
 
   const formattedItems = [
-    ...trashItems.topics.map((t: any) => ({ ...t, type: 'topic' })),
-    ...trashItems.subTopics.map((s: any) => ({ ...s, type: 'subtopic' })),
-    ...trashItems.questions.map((q: any) => ({ ...q, type: 'question' })),
+    ...trashItems.topics.map((t: Topic) => ({ ...t, type: 'topic' })),
+    ...trashItems.subTopics.map((s: SubTopic) => ({ ...s, type: 'subtopic' })),
+    ...trashItems.questions.map((q: Question) => ({ ...q, type: 'question' })),
   ].sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
 
   res.status(200).json({

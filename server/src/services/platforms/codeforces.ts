@@ -1,3 +1,23 @@
+interface CodeforcesUserInfo {
+  status: string;
+  result?: {
+    handle: string;
+    rating?: number;
+    maxRating?: number;
+  }[];
+}
+
+interface CodeforcesStatus {
+  status: string;
+  result?: {
+    creationTimeSeconds: number;
+    verdict: string;
+    problem: {
+      name: string;
+    };
+  }[];
+}
+
 export const syncCodeforces = async (username: string) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -12,7 +32,7 @@ export const syncCodeforces = async (username: string) => {
       throw new Error(`Codeforces API responded with ${res.status}`);
     }
 
-    const data = await res.json() as any;
+    const data = await res.json() as CodeforcesUserInfo;
     if (data.status !== 'OK' || !data.result || data.result.length === 0) {
       throw new Error('Codeforces user not found');
     }
@@ -28,7 +48,7 @@ export const syncCodeforces = async (username: string) => {
     const activityData: { date: string, count: number }[] = [];
 
     if (statusRes.ok) {
-      const statusData = await statusRes.json() as any;
+      const statusData = await statusRes.json() as CodeforcesStatus;
       if (statusData.status === 'OK' && statusData.result) {
          // Unique solved problems
          const solvedSet = new Set();

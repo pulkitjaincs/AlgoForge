@@ -1,3 +1,7 @@
+interface AtCoderRatingHistory {
+  NewRating: number;
+}
+
 export const syncAtcoder = async (username: string) => {
   try {
     const controller = new AbortController();
@@ -23,16 +27,6 @@ export const syncAtcoder = async (username: string) => {
     }
     
     let solvedCount = 0;
-    if (res.ok) {
-      const data = await res.json() as any;
-      // Depending on the API, it might just return an integer or an object, wait, ac_count usually returns an array or object?
-      // Wait, let's just fetch from AtCoder Problems
-      // Oh, ac_count api actually returns { user_id, problem_count } 
-      // or if it fails, maybe we just parse from the user page instead?
-      // For simplicity, let's just try to parse the JSON.
-      // But actually, the rating history JSON from atcoder.jp is very reliable for ratings!
-    }
-
     // Let's scrape the official profile for solved count instead to be safe if kenkoooo is acting up
     // Actually, kenkoooo is needed for solved count since AtCoder doesn't show it natively easily on profile sometimes?
     // Let's just use the official AtCoder profile to get Rating!
@@ -40,7 +34,7 @@ export const syncAtcoder = async (username: string) => {
     let maxRating = 0;
     
     if (ratingRes.ok) {
-       const history = await ratingRes.json() as any[];
+       const history = await ratingRes.json() as AtCoderRatingHistory[];
        if (history && history.length > 0) {
           rating = history[history.length - 1].NewRating;
           maxRating = Math.max(...history.map(h => h.NewRating));

@@ -1,7 +1,7 @@
 import { integrationRepository } from '../repositories/integration.repository.js';
 import { cache } from '../utils/cache.js';
 import { AppError } from '../utils/AppError.js';
-import { Prisma } from '@prisma/client';
+import { Prisma, PlatformIntegration } from '@prisma/client';
 import { backgroundQueue } from '../workers/queues.js';
 
 interface PlatformStats {
@@ -16,7 +16,7 @@ interface PlatformStats {
 export const getIntegrations = async (userId: string) => {
   const cacheKey = `integrations:${userId}`;
   const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  if (cached) return cached as PlatformIntegration[];
   const result = await integrationRepository.findByUserId(userId);
   await cache.setWithTag(cacheKey, `user:${userId}`, result, 300);
   return result;
@@ -57,7 +57,7 @@ export const syncAllIntegrations = async (userId: string) => {
   const integrations = await getIntegrations(userId);
   
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const hasRecentSync = integrations.some((i: any) => new Date(i.lastSyncedAt) > oneHourAgo);
+  const hasRecentSync = integrations.some((i: PlatformIntegration) => new Date(i.lastSyncedAt) > oneHourAgo);
   if (hasRecentSync && integrations.length > 0) {
     throw new AppError('You can only sync integrations once every 1 hour.', 429);
   }

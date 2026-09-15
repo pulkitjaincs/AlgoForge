@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { prisma } from '../config/database.js';
 import { cache } from '../utils/cache.js';
+import { User } from '@prisma/client';
 
 export const protect = async (req: Request, _res: Response, next: NextFunction) => {
   const token = req.cookies?.token;
@@ -23,7 +24,7 @@ export const protect = async (req: Request, _res: Response, next: NextFunction) 
       await cache.setWithTag(cacheKey, `user:${decoded.userId}`, user, 60);
     }
 
-    req.user = user as any; // Cast because Date types from Redis might not match exactly, or Prisma models
+    req.user = user as User;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {

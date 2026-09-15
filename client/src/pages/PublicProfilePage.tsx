@@ -7,7 +7,7 @@ import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { SiLeetcode, SiCodeforces, SiCodechef, SiGeeksforgeeks } from 'react-icons/si';
 
-const PLATFORM_CONFIG: Record<string, { name: string, icon: any, color: string, bg: string, url: string }> = {
+const PLATFORM_CONFIG: Record<string, { name: string, icon: React.ReactNode, color: string, bg: string, url: string }> = {
   leetcode: { name: 'LeetCode', icon: <SiLeetcode className="w-5 h-5 text-[#FFA116]" />, color: '#FFA116', bg: 'bg-[#FFA116]/10', url: 'https://leetcode.com/u/' },
   codeforces: { name: 'Codeforces', icon: <SiCodeforces className="w-5 h-5 text-[#1F8ACB]" />, color: '#1F8ACB', bg: 'bg-[#1F8ACB]/10', url: 'https://codeforces.com/profile/' },
   codechef: { name: 'CodeChef', icon: <SiCodechef className="w-5 h-5 text-[#5B4638]" />, color: '#5B4638', bg: 'bg-[#5B4638]/10', url: 'https://www.codechef.com/users/' },
@@ -60,7 +60,7 @@ export default function PublicProfilePage() {
     let peakPlatform = '';
     let githubContributions = 0;
 
-    profile?.integrations?.forEach((int: any) => {
+    profile?.integrations?.forEach((int) => {
       if (int.platform === 'github') {
         githubContributions += int.contributions || 0;
       } else {
@@ -79,20 +79,20 @@ export default function PublicProfilePage() {
     if (!profile) return [];
     const map = new Map<string, { count: number, platforms: Record<string, number> }>();
     
-    profile.heatmap?.forEach((h: any) => {
+    profile.heatmap?.forEach((h) => {
       const existing = map.get(h.date) || { count: 0, platforms: {} };
       existing.count += h.count;
       existing.platforms['local'] = (existing.platforms['local'] || 0) + h.count;
       map.set(h.date, existing);
     });
 
-    profile.integrations?.forEach((int: any) => {
+    profile.integrations?.forEach((int) => {
       let data = int.activityData;
       if (typeof data === 'string') {
         try { data = JSON.parse(data); } catch(e) { data = []; }
       }
       if (Array.isArray(data)) {
-        data.forEach((h: any) => {
+        data.forEach((h: { date: string, count: number }) => {
           const existing = map.get(h.date) || { count: 0, platforms: {} };
           existing.count += h.count;
           existing.platforms[int.platform] = (existing.platforms[int.platform] || 0) + h.count;
@@ -253,7 +253,7 @@ export default function PublicProfilePage() {
             </div>
           </div>
           {(() => {
-            const githubUsername = profile?.integrations?.find((i: any) => i.platform === 'github')?.username;
+            const githubUsername = profile?.integrations?.find((i) => i.platform === 'github')?.username;
             const CardWrapper = githubUsername ? 'a' : 'div';
             const cardProps = githubUsername ? { href: `https://github.com/${githubUsername}`, target: "_blank", rel: "noopener noreferrer" } : {};
             return (
@@ -309,9 +309,9 @@ export default function PublicProfilePage() {
         {/* Platform Cards */}
         {profile.integrations && profile.integrations.length > 0 && (
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
-            {profile.integrations.filter((i: any) => i.platform !== 'github').map((integration: any) => {
+            {profile.integrations.filter((i) => i.platform !== 'github').map((integration) => {
               const config = PLATFORM_CONFIG[integration.platform] || { name: integration.platform, icon: <Activity className="w-5 h-5 text-text-muted" />, color: '#888', bg: 'bg-white/10', url: '#' };
-              const rankInfo = getPlatformLabel(integration.platform, integration.rating, integration.tier);
+              const rankInfo = getPlatformLabel(integration.platform, integration.rating, integration.tier || undefined);
               return (
                 <a key={integration.platform} href={`${config.url}${integration.username}`} target="_blank" rel="noopener noreferrer" className="glass p-5 rounded-xl border border-border-dark min-w-[280px] shrink-0 snap-start relative overflow-hidden group hover:border-brand-primary/50 transition-colors block cursor-pointer">
                   <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: rankInfo?.color || config.color }}></div>

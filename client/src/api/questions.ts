@@ -24,7 +24,7 @@ export const questionsApi = {
     const url = subTopicId
       ? `/topics/${topicId}/subtopics/${subTopicId}/questions/reorder`
       : `/topics/${topicId}/questions/reorder`;
-    return apiClient.put(url, { questionIds });
+    return apiClient.put(url, { orderedIds: questionIds });
   },
   
   // System actions related to questions

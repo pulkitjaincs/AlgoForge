@@ -1,3 +1,28 @@
+interface LeetCodeGraphQLResponse {
+  data?: {
+    matchedUser?: {
+      userCalendar?: {
+        submissionCalendar?: string;
+      };
+      submitStats?: {
+        acSubmissionNum?: {
+          difficulty: string;
+          count: number;
+        }[];
+      };
+    };
+    userContestRanking?: {
+      rating: number;
+      topPercentage: number;
+      badge?: { name: string };
+    };
+    userContestRankingHistory?: {
+      rating: number;
+    }[];
+  };
+  errors?: { message: string }[];
+}
+
 export const syncLeetcode = async (username: string) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -44,7 +69,7 @@ export const syncLeetcode = async (username: string) => {
       throw new Error(`LeetCode GraphQL responded with ${res.status}`);
     }
 
-    const data = await res.json() as any;
+    const data = await res.json() as LeetCodeGraphQLResponse;
     
     if (data.errors) {
       if (data.errors[0]?.message?.includes('not found') || data.errors[0]?.message?.includes('does not exist')) {
@@ -59,7 +84,7 @@ export const syncLeetcode = async (username: string) => {
     }
 
     const stats = matchedUser.submitStats?.acSubmissionNum || [];
-    const allStat = stats.find((s: any) => s.difficulty === 'All');
+    const allStat = stats.find(s => s.difficulty === 'All');
     const solvedCount = allStat ? allStat.count : 0;
     
     const ranking = data?.data?.userContestRanking;
@@ -69,7 +94,7 @@ export const syncLeetcode = async (username: string) => {
     let maxRating = rating;
     const history = data?.data?.userContestRankingHistory;
     if (history && Array.isArray(history)) {
-      history.forEach((h: any) => {
+      history.forEach(h => {
         if (h.rating) {
            const r = Math.round(h.rating);
            if (r > maxRating) maxRating = r;

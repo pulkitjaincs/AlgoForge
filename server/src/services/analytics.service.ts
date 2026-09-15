@@ -1,5 +1,6 @@
 import { topicRepository } from '../repositories/topic.repository.js';
 import { attemptRepository } from '../repositories/attempt.repository.js';
+import { analyticsRepository } from '../repositories/analytics.repository.js';
 import { cache } from '../utils/cache.js';
 
 export interface AnalyticsSummary {
@@ -37,30 +38,20 @@ export const getSummary = async (userId: string): Promise<AnalyticsSummary> => {
   const cached = await cache.get<AnalyticsSummary>(cacheKey);
   if (cached) return cached;
 
-  const topics = await topicRepository.findManyWithAllQuestions(userId);
+  const stats = await analyticsRepository.getSummaryStats(userId);
 
   let totalQuestions = 0;
   let solvedQuestions = 0;
   const difficultyStats = { Easy: 0, Medium: 0, Hard: 0, Basic: 0 };
   const solvedByDifficulty = { Easy: 0, Medium: 0, Hard: 0, Basic: 0 };
 
-  for (const topic of topics) {
-    const allQuestions = [...topic.questions];
-    for (const st of topic.subTopics) {
-      allQuestions.push(...st.questions);
-    }
-    
-    totalQuestions += allQuestions.length;
-    for (const q of allQuestions) {
-      if (q.isSolved) solvedQuestions++;
-      
-      const diff = q.difficulty || 'Medium';
-      if (diff in difficultyStats) {
-        difficultyStats[diff as keyof typeof difficultyStats]++;
-        if (q.isSolved) {
-          solvedByDifficulty[diff as keyof typeof solvedByDifficulty]++;
-        }
-      }
+  for (const stat of stats) {
+    totalQuestions += stat.total;
+    solvedQuestions += stat.solved;
+    const diff = stat.difficulty;
+    if (diff in difficultyStats) {
+      difficultyStats[diff as keyof typeof difficultyStats] = stat.total;
+      solvedByDifficulty[diff as keyof typeof solvedByDifficulty] = stat.solved;
     }
   }
 
@@ -99,59 +90,11 @@ export const getStreaks = async (userId: string): Promise<StreaksSummary> => {
   const cached = await cache.get<StreaksSummary>(cacheKey);
   if (cached) return cached;
 
-  const attempts = await attemptRepository.findAttempts(userId);
-
-  if (attempts.length === 0) {
-    const result = { currentStreak: 0, maxStreak: 0, lastActive: null };
-    await cache.setWithTag(cacheKey, `user:${userId}`, result, 300);
-    return result;
-  }
-
-  const sortedDates = Array.from(new Set(attempts.map(a => a.solvedAt.toISOString().split('T')[0])))
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-  
-  let maxStreak = 1;
-  let currentStreak = 1;
-
-  let tempStreak = 1;
-  for (let i = 0; i < sortedDates.length - 1; i++) {
-    const d1 = new Date(sortedDates[i]);
-    const d2 = new Date(sortedDates[i+1]);
-    const diffDays = Math.round(Math.abs(d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24)); 
-    if (diffDays === 1) {
-      tempStreak++;
-      maxStreak = Math.max(maxStreak, tempStreak);
-    } else {
-      tempStreak = 1;
-    }
-  }
-
-  const todayStr = new Date().toISOString().split('T')[0];
-  const yesterdayDate = new Date();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
-
-  if (sortedDates[0] === todayStr || sortedDates[0] === yesterdayStr) {
-    currentStreak = 1;
-    for (let i = 0; i < sortedDates.length - 1; i++) {
-      const d1 = new Date(sortedDates[i]);
-      const d2 = new Date(sortedDates[i+1]);
-      const diffDays = Math.round(Math.abs(d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24)); 
-      
-      if (diffDays === 1) {
-        currentStreak++;
-      } else {
-        break;
-      }
-    }
-  } else {
-    currentStreak = 0;
-  }
-
-  const result = { 
-    currentStreak, 
-    maxStreak: Math.max(maxStreak, currentStreak), 
-    lastActive: attempts[0].solvedAt 
+  const rawStreaks = await analyticsRepository.getStreaks(userId);
+  const result = {
+    currentStreak: rawStreaks.current_streak,
+    maxStreak: rawStreaks.max_streak,
+    lastActive: rawStreaks.last_active
   };
   await cache.setWithTag(cacheKey, `user:${userId}`, result, 300);
   return result;
@@ -162,25 +105,7 @@ export const getTopicMastery = async (userId: string): Promise<TopicMastery[]> =
   const cached = await cache.get<TopicMastery[]>(cacheKey);
   if (cached) return cached;
 
-  const topics = await topicRepository.findManyWithAllQuestions(userId);
-
-  const result = topics.map(topic => {
-    let total = topic.questions.length;
-    let solved = topic.questions.filter(q => q.isSolved).length;
-    
-    for (const st of topic.subTopics) {
-      total += st.questions.length;
-      solved += st.questions.filter(q => q.isSolved).length;
-    }
-
-    return {
-      topicId: topic.id,
-      title: topic.title,
-      total,
-      solved,
-      percentage: total === 0 ? 0 : Math.round((solved / total) * 100)
-    };
-  });
+  const result = await analyticsRepository.getTopicMastery(userId);
 
   await cache.setWithTag(cacheKey, `user:${userId}`, result, 300);
   return result;

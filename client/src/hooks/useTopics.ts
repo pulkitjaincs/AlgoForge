@@ -46,8 +46,22 @@ export const useReorderTopics = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: topicsApi.reorder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
+    onMutate: async (data: { orderedIds: string[] }) => {
+      await queryClient.cancelQueries({ queryKey: ['topics'] });
+      const previousTopics = queryClient.getQueryData(['topics']);
+      
+      queryClient.setQueryData(['topics'], (old: any) => {
+        if (!old) return old;
+        return [...old].sort((a: any, b: any) => 
+          data.orderedIds.indexOf(a.id) - data.orderedIds.indexOf(b.id)
+        );
+      });
+      return { previousTopics };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTopics) {
+        queryClient.setQueryData(['topics'], context.previousTopics);
+      }
     },
   });
 };

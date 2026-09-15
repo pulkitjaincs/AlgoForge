@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { User, Mail, Link as LinkIcon, Camera, Save, Globe, Lock, Settings as SettingsIcon, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { UpdateProfileInput } from '@algoforge/shared';
 
 export default function ProfilePage() {
   const { data: user } = useUser();
@@ -25,7 +26,7 @@ export default function ProfilePage() {
     }
     setUsernameStatus('checking');
     try {
-      const res = await usersApi.checkUsername(formData.username) as any;
+      const res = await usersApi.checkUsername(formData.username) as unknown as { available: boolean };
       setUsernameStatus(res.available ? 'available' : 'unavailable');
     } catch (e) {
       setUsernameStatus('error');
@@ -44,7 +45,7 @@ export default function ProfilePage() {
   }, [user]);
 
   const updateProfile = useMutation({
-    mutationFn: (data: any) => usersApi.updateProfile(data),
+    mutationFn: (data: UpdateProfileInput) => usersApi.updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success('Profile updated successfully');

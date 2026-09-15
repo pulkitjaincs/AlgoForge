@@ -3,14 +3,14 @@ import { Request, Response, NextFunction } from 'express';
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 // Strips prototype pollution attempts and risky $ operators from request payloads
-const sanitizeObject = (obj: any): any => {
+const sanitizeObject = (obj: unknown): unknown => {
   if (typeof obj !== 'object' || obj === null) return obj;
   if (Array.isArray(obj)) return obj.map(sanitizeObject);
 
-  const cleaned: any = {};
-  for (const key of Object.keys(obj)) {
+  const cleaned: Record<string, unknown> = {};
+  for (const key of Object.keys(obj as Record<string, unknown>)) {
     if (key.startsWith('$') || FORBIDDEN_KEYS.has(key)) continue;
-    cleaned[key] = sanitizeObject(obj[key]);
+    cleaned[key] = sanitizeObject((obj as Record<string, unknown>)[key]);
   }
   return cleaned;
 };

@@ -20,6 +20,36 @@ export interface UserContestRating {
   lastSyncedAt: Date;
 }
 
+interface LeetCodeContest {
+  title: string;
+  titleSlug: string;
+  startTime: number;
+  duration: number;
+  cardImg: string;
+}
+
+interface LeetCodeResponse {
+  data?: {
+    topTwoContests?: LeetCodeContest[];
+  };
+}
+
+interface CodeforcesContest {
+  id: number;
+  name: string;
+  type: string;
+  phase: string;
+  frozen: boolean;
+  durationSeconds: number;
+  startTimeSeconds: number;
+  relativeTimeSeconds: number;
+}
+
+interface CodeforcesResponse {
+  status: string;
+  result?: CodeforcesContest[];
+}
+
 const fetchLeetcodeContests = async (): Promise<Contest[]> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -38,12 +68,13 @@ const fetchLeetcodeContests = async (): Promise<Contest[]> => {
     });
 
     if (!res.ok) return [];
-    const data = (await res.json()) as any;
+    if (!res.ok) return [];
+    const data = (await res.json()) as LeetCodeResponse;
     const contests = data?.data?.topTwoContests;
     if (!Array.isArray(contests)) return [];
 
     const now = Date.now();
-    return contests.map((c: any) => {
+    return contests.map((c: LeetCodeContest) => {
       const startMs = c.startTime * 1000;
       const endMs = startMs + c.duration * 1000;
       let status: 'UPCOMING' | 'LIVE' | 'COMPLETED' = 'UPCOMING';
@@ -80,14 +111,14 @@ const fetchCodeforcesContests = async (): Promise<Contest[]> => {
     });
 
     if (!res.ok) return [];
-    const data = (await res.json()) as any;
+    const data = (await res.json()) as CodeforcesResponse;
     if (data.status !== 'OK' || !Array.isArray(data.result)) return [];
 
     const upcoming = data.result
-      .filter((c: any) => c.phase === 'BEFORE' || c.phase === 'CODING')
+      .filter((c: CodeforcesContest) => c.phase === 'BEFORE' || c.phase === 'CODING')
       .slice(0, 8);
 
-    return upcoming.map((c: any) => {
+    return upcoming.map((c: CodeforcesContest) => {
       const status: 'UPCOMING' | 'LIVE' = c.phase === 'CODING' ? 'LIVE' : 'UPCOMING';
       return {
         id: `codeforces-${c.id}`,

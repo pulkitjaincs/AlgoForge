@@ -57,7 +57,7 @@ Refresh tokens use a **Token Family Lineage** architecture. Every session has a 
   - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates for rapid interactions.
   - **UI State:** `Zustand` (`useUIStore`) is restricted strictly to global transient UI states (like command palette visibility and navigation targets).
 - **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`, `features/profile`) prioritizing focused, decomposed components over monoliths. The Settings and Profile flow are deeply integrated to offer streamlined account management.
-- **Drag-and-Drop:** `@dnd-kit` powers the smooth interactive reordering of topics, subtopics, and questions with custom sortable list strategies.
+- **Drag-and-Drop:** `@dnd-kit` powers the smooth interactive reordering of topics, subtopics, and questions with custom sortable list strategies. All reorder mutations utilize React Query `onMutate` optimistic updates to completely eliminate perceived network lag.
 
 ## 5. Caching Strategy
 
@@ -68,7 +68,7 @@ AlgoForge applies a **Cache-Aside** pattern backed by Redis (`ioredis`) to optim
   - **Analytics:** Summary, heatmaps, streaks, topic mastery, weak areas, and weekly velocity.
   - **Spaced Repetition:** Daily review queues and review stats.
   - **Integrations & Profiles:** Platform stats and public user profiles.
-- **TTL & Tag-Based Invalidation:** Cache entries use a 5-minute TTL with explicit `setWithTag(key, tag, data, ttl)` tagging under `user:{userId}`. Mutating operations (create, update, delete, reorder) trigger `invalidateTag(tag)` for instant cache consistency.
+- **TTL & Granular Invalidation:** Cache entries use a 5-minute TTL. Granular cache invalidation leverages Redis `SCAN` (`invalidatePattern`) to accurately invalidate specific groups of keys (e.g. `topics:${userId}*`) without unnecessarily purging the entire user cache (like analytics or profiles) across the platform.
 - **Graceful Shutdown & Degradation:** Graceful termination safely closes Redis connections via `redis.quit()`. If Redis is offline or unconfigured, operations seamlessly fallback to PostgreSQL without application failure.
 
 ## 6. Background Processing & Distributed Workers (BullMQ)
@@ -99,7 +99,7 @@ To prevent orphaned records and concurrency race conditions, all multi-step data
 - **Question Attempts (`addAttemptTransaction`):** Creates the attempt record and increments question attempt counters/status atomically in a single pipeline.
 - **Refresh Token Rotation (`rotateToken`):** Atomically revokes the old refresh token and creates the new child token in the same session family.
 - **Group Exit (`leaveGroupTransaction`):** Atomically removes the group member, checks remaining member counts, and deletes the orphaned group if no members remain.
-- **Hierarchical Reordering (`reorder`):** Updates the display orders across multiple topics, subtopics, or questions within a single transactional batch.
+- **Hierarchical Reordering (`reorder`):** Updates the display orders across multiple topics, subtopics, or questions. Reordering leverages highly-efficient single `$executeRawUnsafe` queries (using `UPDATE ... SET order = CASE id ...`) to collapse N queries into 1 atomic operation.
 - **Background Maintenance:** Batch deletions during trash purging and token cleanups run inside atomic transactions.
 
 ## 8. Data Model (PostgreSQL)
@@ -218,7 +218,7 @@ erDiagram
 AlgoForge incorporates an intelligent learning system to optimize study efficiency:
 
 - **Spaced Repetition (SM-2 Variant):** Questions are scheduled for review based on a modified SM-2 algorithm. When a user submits an attempt, they provide a self-evaluated confidence score (1-5). The system calculates the next optimal review date (`nextReviewAt`) to maximize retention.
-- **Analytics Engine:** The `analytics.service.ts` uses optimized database query projections (selecting `solvedAt` columns with composite indexes `(userId, solvedAt)`) and calculates streaks, weekly velocity, and topic mastery percentages without full-table memory scans.
+- **Analytics Engine:** The analytics service leverages raw PostgreSQL SQL queries (`GROUP BY`, `CTE`, and conditional aggregations) instead of performing in-memory map-reduce operations. This guarantees fast performance even as the user scales to thousands of questions and attempts.
 - **Daily Practice Plans:** The `practice.service.ts` dynamically generates a daily practice session by pulling from three strategic queues:
   1. **Review Queue:** Questions due for spaced repetition today.
   2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.

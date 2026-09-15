@@ -4,7 +4,7 @@ import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
 
-export const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction) => {
+export const errorHandler = (err: Error & { code?: string; statusCode?: number }, req: Request, res: Response, _next: NextFunction) => {
   // AppError — known, operational
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({ success: false, error: err.message });
@@ -41,7 +41,7 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
   }
 
   // Unknown — NEVER leak error.message in production
-  logger.error({ err, requestId: (req as any).id }, 'Unhandled error');
+  logger.error({ err, requestId: req.id }, 'Unhandled error');
   if (env.NODE_ENV === 'test') {
     console.error('UNHANDLED ERROR:', err);
   }

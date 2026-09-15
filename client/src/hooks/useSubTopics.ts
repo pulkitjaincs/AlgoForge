@@ -38,9 +38,29 @@ export const useDeleteSubTopic = () => {
 export const useReorderSubTopics = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ topicId, data }: { topicId: string; data: { subTopicIds: string[] } }) => subtopicsApi.reorder(topicId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
+    mutationFn: ({ topicId, data }: { topicId: string; data: { orderedIds: string[] } }) => subtopicsApi.reorder(topicId, data),
+    onMutate: async ({ topicId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['topics'] });
+      const previousTopics = queryClient.getQueryData(['topics']);
+      
+      queryClient.setQueryData(['topics'], (old: any) => {
+        if (!old) return old;
+        return old.map((topic: any) => {
+          if (topic.id === topicId) {
+            const newSubTopics = [...topic.subTopics].sort((a: any, b: any) => 
+              data.orderedIds.indexOf(a.id) - data.orderedIds.indexOf(b.id)
+            );
+            return { ...topic, subTopics: newSubTopics };
+          }
+          return topic;
+        });
+      });
+      return { previousTopics };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTopics) {
+        queryClient.setQueryData(['topics'], context.previousTopics);
+      }
     },
   });
 };

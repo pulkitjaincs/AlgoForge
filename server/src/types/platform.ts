@@ -4,7 +4,7 @@ export interface PlatformStats {
   solvedCount: number;
   rating?: number;
   maxRating?: number;
-  tier?: string;
+  tier?: string | null;
   contributions?: number;
-  activityData?: any;
+  activityData?: { date: string; count: number }[] | null;
 }

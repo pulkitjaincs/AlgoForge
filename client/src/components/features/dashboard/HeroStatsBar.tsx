@@ -43,7 +43,7 @@ export function HeroStatsBar({ aggregateStats, computedStreaks, githubUsername }
         </div>
       </div>
 
-      <CardWrapper {...(cardProps as any)} className={`glass p-4 rounded-xl flex items-center gap-4 border border-border-dark bg-gradient-to-br from-bg-elevated to-text-main/5 ${githubUsername ? 'hover:border-text-main/30 cursor-pointer transition-colors' : ''}`}>
+      <CardWrapper {...(cardProps as React.AnchorHTMLAttributes<HTMLAnchorElement> & React.HTMLAttributes<HTMLDivElement>)} className={`glass p-4 rounded-xl flex items-center gap-4 border border-border-dark bg-gradient-to-br from-bg-elevated to-text-main/5 ${githubUsername ? 'hover:border-text-main/30 cursor-pointer transition-colors' : ''}`}>
         <div className="p-3 bg-text-main/10 rounded-xl border border-text-main/20"><Github className="text-text-main w-6 h-6" /></div>
         <div>
           <p className="text-2xl font-bold text-text-main">{aggregateStats.githubContributions}</p>

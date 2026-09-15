@@ -5,6 +5,29 @@ import { UpdateProfileInput, UpdateEmailInput, UpdatePasswordInput } from '@algo
 import { AppError } from '../utils/AppError.js';
 import * as analyticsService from './analytics.service.js';
 import { cache } from '../utils/cache.js';
+import { Prisma } from '@prisma/client';
+
+export interface PublicProfile {
+  id: string;
+  name: string;
+  username: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  createdAt: Date;
+  defaultHeatmapRange: string;
+  heatmap: Array<{ date: string; count: number }>;
+  stats: any; // We can improve this type if analytics service exports a SummaryStats interface
+  integrations: Array<{
+    platform: string;
+    username: string;
+    solvedCount: number;
+    rating: number;
+    maxRating: number;
+    tier: string | null;
+    contributions: number;
+    activityData: Prisma.JsonValue;
+  }>;
+}
 
 export const updateProfile = async (userId: string, data: UpdateProfileInput) => {
   if (data.username) {
@@ -51,8 +74,8 @@ export const checkUsername = async (username: string) => {
 
 export const getPublicProfile = async (username: string) => {
   const cacheKey = `public_profile:${username}`;
-  const cached = await cache.get(cacheKey);
-  if (cached) return cached as any;
+  const cached = await cache.get<PublicProfile>(cacheKey);
+  if (cached) return cached;
 
   const user = await userRepository.findByUsername(username);
   if (!user || !user.isProfilePublic) {
@@ -81,7 +104,7 @@ export const getPublicProfile = async (username: string) => {
       solvedCount: int.solvedCount,
       rating: int.rating,
       maxRating: int.maxRating,
-      tier: (int as any).tier,
+      tier: int.tier,
       contributions: int.contributions,
       activityData: int.activityData
     }))
