@@ -1,15 +1,8 @@
 import { integrationRepository } from '../repositories/integration.repository.js';
-import { syncCodeforces } from './platforms/codeforces.js';
-import { syncLeetcode } from './platforms/leetcode.js';
-import { syncCodechef } from './platforms/codechef.js';
-import { syncGfg } from './platforms/gfg.js';
-import { syncAtcoder } from './platforms/atcoder.js';
-import { syncGithub } from './platforms/github.js';
-import { AppError } from '../utils/AppError.js';
-import { logger } from '../utils/logger.js';
 import { cache } from '../utils/cache.js';
+import { AppError } from '../utils/AppError.js';
 import { Prisma } from '@prisma/client';
-import { syncQueue } from '../workers/syncWorker.js';
+import { backgroundQueue } from '../workers/queues.js';
 
 interface PlatformStats {
   solvedCount?: number;
@@ -29,16 +22,7 @@ export const getIntegrations = async (userId: string) => {
   return result;
 };
 
-const syncPlatform = async (platform: string, username: string): Promise<PlatformStats | null> => {
-  let platformStats: PlatformStats | null = null;
-  if (platform === 'codeforces') platformStats = await syncCodeforces(username);
-  else if (platform === 'leetcode') platformStats = await syncLeetcode(username);
-  else if (platform === 'codechef') platformStats = await syncCodechef(username);
-  else if (platform === 'gfg') platformStats = await syncGfg(username);
-  else if (platform === 'atcoder') platformStats = await syncAtcoder(username);
-  else if (platform === 'github') platformStats = await syncGithub(username);
-  return platformStats;
-};
+
 
 export const linkIntegration = async (userId: string, platform: string, username: string) => {
   const supportedPlatforms = ['leetcode', 'codeforces', 'codechef', 'gfg', 'atcoder', 'github'];
@@ -46,33 +30,22 @@ export const linkIntegration = async (userId: string, platform: string, username
     throw new AppError('Unsupported platform', 400);
   }
 
-  let stats: PlatformStats = { solvedCount: 0, rating: 0, maxRating: 0, contributions: 0, tier: null, activityData: null };
-  let apiError: string | null = null;
-
-  try {
-    const platformStats = await syncPlatform(platform, username);
-    if (platformStats) {
-      stats = { ...stats, ...platformStats };
-    }
-  } catch (error: any) {
-    if (error?.message?.toLowerCase().includes('not found') || error?.message?.includes('Token')) {
-      throw error; // Let AppError or other errors bubble up
-    }
-    apiError = error?.message || 'External API unavailable';
-  }
-
   const integration = await integrationRepository.createOrUpdate(userId, platform, {
     username,
-    solvedCount: stats.solvedCount,
-    rating: stats.rating,
-    maxRating: stats.maxRating || stats.rating,
-    tier: stats.tier || null,
-    contributions: stats.contributions || 0,
-    activityData: stats.activityData ?? Prisma.JsonNull,
+    solvedCount: 0,
+    rating: 0,
+    maxRating: 0,
+    tier: null,
+    contributions: 0,
+    activityData: Prisma.JsonNull,
   });
 
+  if (backgroundQueue) {
+    await backgroundQueue.add('platform-sync', { userId, integrations: [integration] });
+  }
+
   await cache.invalidateTag(`user:${userId}`);
-  return { ...integration, _warning: apiError };
+  return { ...integration, _message: 'Sync queued successfully in the background' };
 };
 
 export const unlinkIntegration = async (userId: string, platform: string) => {
@@ -89,34 +62,12 @@ export const syncAllIntegrations = async (userId: string) => {
     throw new AppError('You can only sync integrations once every 1 hour.', 429);
   }
 
-  // If BullMQ queue is available, enqueue; otherwise fall back to inline sync
-  if (syncQueue) {
-    await syncQueue.add('sync-user', { userId, integrations });
-    return { success: true, message: 'Sync job queued successfully' };
+  if (!backgroundQueue) {
+    throw new AppError('Background sync unavailable', 503);
   }
 
-  // Inline fallback when Redis/BullMQ is not available
-  logger.warn('BullMQ unavailable — running platform sync inline');
-  const results = [];
-  for (const integration of integrations) {
-    try {
-      let stats: PlatformStats = { solvedCount: integration.solvedCount, rating: integration.rating, maxRating: integration.maxRating, contributions: integration.contributions, tier: integration.tier, activityData: integration.activityData as any };
-      const platformStats = await syncPlatform(integration.platform, integration.username);
-      if (platformStats) stats = { ...stats, ...platformStats };
-      const updated = await integrationRepository.update(integration.id, {
-        solvedCount: stats.solvedCount || 0, rating: stats.rating || 0,
-        maxRating: Math.max(integration.maxRating, stats.maxRating || stats.rating || 0),
-        tier: stats.tier || null, contributions: stats.contributions || 0,
-        activityData: stats.activityData as any, lastSyncedAt: new Date(),
-      });
-      results.push(updated);
-    } catch (err: any) {
-      logger.error({ err, platform: integration.platform }, `Inline sync failed for ${integration.platform}`);
-      results.push(integration);
-    }
-  }
-  await cache.invalidateTag(`user:${userId}`);
-  return results;
+  await backgroundQueue.add('platform-sync', { userId, integrations });
+  return { success: true, message: 'Sync job queued successfully' };
 };
 
 export const getAggregatedHeatmap = async (userId: string) => {

@@ -17,8 +17,8 @@ export const questionsApi = {
   toggleSolved: (questionId: string): Promise<void> => apiClient.patch(`/questions/${questionId}/solved`),
   toggleStarred: (questionId: string): Promise<void> => apiClient.patch(`/questions/${questionId}/star`),
   updateNotes: (questionId: string, notes: string): Promise<void> => apiClient.put(`/questions/${questionId}/notes`, { notes }),
-  addAttempt: (questionId: string, duration?: number, confidence?: number): Promise<Question> => {
-    return apiClient.post(`/questions/${questionId}/attempts`, { duration, confidence });
+  addAttempt: (questionId: string, confidence?: number): Promise<Question> => {
+    return apiClient.post(`/questions/${questionId}/attempts`, { confidence });
   },
   reorder: (topicId: string, subTopicId: string | null, questionIds: string[]): Promise<void> => {
     const url = subTopicId
@@ -29,5 +29,4 @@ export const questionsApi = {
   
   // System actions related to questions
   resetProgress: (): Promise<void> => apiClient.patch('/system/reset-progress'),
-  fullReset: (): Promise<void> => apiClient.post('/system/full-reset'),
 };

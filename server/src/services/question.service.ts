@@ -91,7 +91,6 @@ export const addAttempt = async (userId: string, questionId: string, data: AddAt
   const [attempt, updatedQuestion] = await questionRepository.addAttemptTransaction(
     userId,
     questionId,
-    data.duration,
     data.confidence,
     nextReviewAt
   );

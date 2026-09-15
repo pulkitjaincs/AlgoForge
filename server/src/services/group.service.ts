@@ -49,10 +49,5 @@ export const leaveGroup = async (userId: string, groupId: string) => {
     throw new AppError('You are not a member of this group', 400);
   }
 
-  await groupRepository.removeMember(groupId, userId);
-
-  const memberCount = await groupRepository.countMembers(groupId);
-  if (memberCount === 0) {
-    await groupRepository.delete(groupId);
-  }
+  await groupRepository.leaveGroupTransaction(groupId, userId);
 };

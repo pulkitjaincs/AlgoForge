@@ -36,7 +36,6 @@ export class QuestionRepository {
   async addAttemptTransaction(
     userId: string,
     questionId: string,
-    duration: number | undefined,
     confidence: number | undefined,
     nextReviewAt: Date
   ) {
@@ -45,7 +44,6 @@ export class QuestionRepository {
         data: {
           userId,
           questionId,
-          duration,
           confidence,
         },
       }),

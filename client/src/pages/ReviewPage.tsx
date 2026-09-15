@@ -2,8 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useReviewQueue, useReviewStats } from '../hooks/useReview';
 import { questionsApi } from '../api/questions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Target, Zap, Clock, ExternalLink } from 'lucide-react';
-import { Timer } from '../components/shared/Timer';
+import { Target, Zap, ExternalLink } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Helmet } from 'react-helmet-async';
 export default function ReviewPage() {
@@ -11,13 +10,11 @@ export default function ReviewPage() {
   const { data: stats } = useReviewStats();
   
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const [duration, setDuration] = useState<number | null>(null);
   const [showConfidence, setShowConfidence] = useState(false);
 
   const queryClient = useQueryClient();
   const addAttemptMutation = useMutation({
-      mutationFn: ({ questionId, duration, confidence }: { questionId: string, duration?: number, confidence?: number }) => questionsApi.addAttempt(questionId, duration, confidence),
+      mutationFn: ({ questionId, confidence }: { questionId: string, confidence?: number }) => questionsApi.addAttempt(questionId, confidence),
       onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['review'] });
           queryClient.invalidateQueries({ queryKey: ['analytics'] });
@@ -29,9 +26,8 @@ export default function ReviewPage() {
 
   const submitAttempt = useCallback((confidenceScore: number) => {
       if (!currentQuestion || !queue) return;
-      addAttemptMutation.mutate({ questionId: currentQuestion.id, duration: duration || undefined, confidence: confidenceScore });
+      addAttemptMutation.mutate({ questionId: currentQuestion.id, confidence: confidenceScore });
       setShowConfidence(false);
-      setDuration(null);
       
       setCurrentIndex(prev => prev + 1);
       
@@ -42,7 +38,7 @@ export default function ReviewPage() {
               origin: { y: 0.6 }
           });
       }
-  }, [currentQuestion, queue, duration, currentIndex, addAttemptMutation]);
+  }, [currentQuestion, queue, currentIndex, addAttemptMutation]);
 
   useEffect(() => {
     if (!showConfidence) return;
@@ -58,11 +54,6 @@ export default function ReviewPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showConfidence, submitAttempt]);
 
-  const handleTimerStop = (durationSecs: number) => {
-      setIsTimerActive(false);
-      setDuration(durationSecs);
-      setShowConfidence(true);
-  };
 
   if (isLoading || !queue || !stats) {
     return <div className="p-8 text-center text-text-muted">Loading Review Queue...</div>;
@@ -129,27 +120,14 @@ export default function ReviewPage() {
                 {!showConfidence ? (
                     <>
                         <p className="text-text-muted text-center max-w-md">
-                            Solve the problem on your preferred platform, then start the timer if you want to track your speed. When you're done, stop the timer to log your attempt.
+                            Solve the problem on your preferred platform, then log your result.
                         </p>
-                        
-                        {!isTimerActive ? (
-                            <button 
-                                onClick={() => setIsTimerActive(true)}
-                                className="btn-primary px-8 py-3 text-lg flex items-center gap-2"
-                            >
-                                <Clock className="w-5 h-5" /> Start Timer
-                            </button>
-                        ) : (
-                            <div className="scale-125 my-4">
-                                <Timer isActive={isTimerActive} onStop={handleTimerStop} />
-                            </div>
-                        )}
                         
                         <button 
                             onClick={() => setShowConfidence(true)}
-                            className="text-sm text-text-muted hover:text-text-main underline decoration-white/20 underline-offset-4 mt-4"
+                            className="btn-primary px-8 py-3 text-lg flex items-center gap-2 mt-4"
                         >
-                            Skip timer & log result
+                            Log Result
                         </button>
                     </>
                 ) : (

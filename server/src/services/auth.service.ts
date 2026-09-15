@@ -35,8 +35,6 @@ export const login = async (data: LoginInput) => {
     throw new AppError('Invalid credentials', 401);
   }
 
-  // Fire and forget cleanup of expired tokens
-  tokenRepository.deleteExpiredTokens().catch(() => {});
 
   return { id: user.id, name: user.name, email: user.email };
 };
@@ -96,11 +94,26 @@ export const refreshAccess = async (
     throw new AppError('Refresh token expired', 401);
   }
 
-  // Mark current token as revoked so any reuse triggers replay attack detection
-  await tokenRepository.markTokenRevoked(hashedToken);
+  // Rotate token: issue new token in the same lineage using a transaction
+  const accessToken = jwt.sign({ userId: tokenRecord.userId }, env.JWT_SECRET, { expiresIn: '15m' });
+  const refreshTokenString = crypto.randomBytes(40).toString('hex');
+  const newHashedToken = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
+  const family = tokenRecord.family || crypto.randomUUID();
 
-  // Rotate token: issue new token in the same lineage
-  return generateTokens(tokenRecord.userId, tokenRecord.family || undefined, meta);
+  await tokenRepository.rotateToken(
+    hashedToken,
+    tokenRecord.userId,
+    newHashedToken,
+    7,
+    family,
+    meta?.deviceInfo,
+    meta?.ipAddress
+  );
+
+  // Enforce maximum active session families per user
+  tokenRepository.enforceMaxActiveSessions(tokenRecord.userId, 5).catch(() => {});
+
+  return { accessToken, refreshToken: refreshTokenString };
 };
 
 export const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {

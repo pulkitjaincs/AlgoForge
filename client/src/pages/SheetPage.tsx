@@ -21,7 +21,7 @@ import { CommandPalette } from '../components/shared/CommandPalette';
 import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search } from 'lucide-react';
 import { FilterBar } from '../components/features/sheet/FilterBar';
 import { useTopics, useCreateTopic, useReorderTopics } from '../hooks/useTopics';
-import { useResetProgress, useFullReset } from '../hooks/useQuestions';
+import { useResetProgress } from '../hooks/useQuestions';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
@@ -34,7 +34,6 @@ export default function SheetPage() {
   const createTopic = useCreateTopic();
   const reorderTopics = useReorderTopics();
   const resetProgress = useResetProgress();
-  const fullReset = useFullReset();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -286,27 +285,6 @@ export default function SheetPage() {
                 className="btn-secondary w-full"
               >
                 Reset Progress Only
-              </button>
-            </div>
-
-            <div className="p-4 rounded-xl bg-danger/10 border border-danger/20">
-              <h4 className="font-semibold text-text-main mb-1">Option 2: Restore Original Sheet</h4>
-              <p className="text-sm text-text-muted mb-4">
-                <span className="text-danger font-medium text-xs uppercase tracking-wider block mb-1">⚠️ Warning</span>
-                Delete everything and restore the original Striver A2Z DSA Sheet from sheet.json.
-              </p>
-              <button
-                onClick={() => {
-                  if (window.confirm("This will delete all custom topics and questions. Are you sure?")) {
-                    window.alert("Please wait this might take a while!...");
-                    fullReset.mutate(undefined, {
-                      onSuccess: () => setIsResetModalOpen(false)
-                    });
-                  }
-                }}
-                className="btn-primary-danger w-full"
-              >
-                Restore Factory Settings
               </button>
             </div>
           </div>

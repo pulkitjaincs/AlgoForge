@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ExternalLink, Check, Trash2, Pencil, Star, StickyNote, Building2 } from 'lucide-react';
 import { useUpdateQuestion, useDeleteQuestion } from '../../../hooks/useQuestions';
-import { Timer } from '../../shared/Timer';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { questionsApi } from '../../../api/questions';
 
@@ -22,7 +21,7 @@ export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit 
     
     const queryClient = useQueryClient();
     const addAttemptMutation = useMutation({
-        mutationFn: ({ duration, confidence }: { duration?: number, confidence?: number }) => questionsApi.addAttempt(question.id, duration, confidence),
+        mutationFn: ({ confidence }: { confidence?: number }) => questionsApi.addAttempt(question.id, confidence),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['topics'] });
             queryClient.invalidateQueries({ queryKey: ['analytics'] });
@@ -31,14 +30,7 @@ export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit 
         }
     });
 
-    const [isTimerActive, setIsTimerActive] = useState(false);
-    const [duration, setDuration] = useState<number | null>(null);
     const [showConfidence, setShowConfidence] = useState(false);
-
-    const handleTimerStop = (durationSecs: number) => {
-        setIsTimerActive(false);
-        setDuration(durationSecs);
-    };
 
     const handleSolveToggle = () => {
         if (!question.isSolved) {
@@ -49,9 +41,8 @@ export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit 
     };
 
     const submitAttempt = (confidenceScore: number) => {
-        addAttemptMutation.mutate({ duration: duration || undefined, confidence: confidenceScore });
+        addAttemptMutation.mutate({ confidence: confidenceScore });
         setShowConfidence(false);
-        setDuration(null);
     };
 
     const qId = question.id || '';
@@ -138,13 +129,7 @@ export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit 
                         >
                             <Pencil className="w-4 h-4" />
                         </button>
-                        <button
-                            onClick={() => setIsTimerActive(!isTimerActive)}
-                            className={`btn-icon ${isTimerActive ? 'text-brand-accent bg-brand-accent/10' : ''}`}
-                            title="Timer"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </button>
+
                         <button
                             onClick={() => deleteQuestion.mutate({ topicId, subTopicId, questionId: qId })}
                             className="btn-danger"
@@ -191,8 +176,6 @@ export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit 
             )}
             
             <div className="mt-2 ml-8 flex items-center justify-between">
-              <Timer isActive={isTimerActive} onStop={handleTimerStop} />
-              
               {showConfidence && (
                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg ml-auto">
                     <span className="text-sm font-medium text-text-main">Rate confidence:</span>

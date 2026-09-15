@@ -7,12 +7,13 @@ export class TokenRepository {
     expiresInDays: number,
     family?: string,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
+    tx: any = prisma
   ) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
-    return prisma.refreshToken.create({
+    return tx.refreshToken.create({
       data: {
         userId,
         token: hashedToken,
@@ -22,6 +23,24 @@ export class TokenRepository {
         ipAddress,
         isRevoked: false,
       },
+    });
+  }
+
+  async rotateToken(
+    oldHashedToken: string,
+    userId: string,
+    newHashedToken: string,
+    expiresInDays: number,
+    family?: string,
+    deviceInfo?: string,
+    ipAddress?: string
+  ) {
+    return prisma.$transaction(async (tx) => {
+      await tx.refreshToken.updateMany({
+        where: { token: oldHashedToken },
+        data: { isRevoked: true },
+      });
+      return this.createRefreshToken(userId, newHashedToken, expiresInDays, family, deviceInfo, ipAddress, tx);
     });
   }
 

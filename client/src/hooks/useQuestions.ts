@@ -81,17 +81,6 @@ export const useResetProgress = () => {
   });
 };
 
-export const useFullReset = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: questionsApi.fullReset,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
-      toast.success('All data reset');
-    },
-  });
-};
-
 export const useReorderQuestions = () => {
   const queryClient = useQueryClient();
   return useMutation({

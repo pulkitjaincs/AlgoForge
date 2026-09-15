@@ -71,14 +71,38 @@ AlgoForge applies a **Cache-Aside** pattern backed by Redis (`ioredis`) to optim
 - **TTL & Tag-Based Invalidation:** Cache entries use a 5-minute TTL with explicit `setWithTag(key, tag, data, ttl)` tagging under `user:{userId}`. Mutating operations (create, update, delete, reorder) trigger `invalidateTag(tag)` for instant cache consistency.
 - **Graceful Shutdown & Degradation:** Graceful termination safely closes Redis connections via `redis.quit()`. If Redis is offline or unconfigured, operations seamlessly fallback to PostgreSQL without application failure.
 
-## 6. Background Processing (BullMQ)
+## 6. Background Processing & Distributed Workers (BullMQ)
 
-To keep the API snappy and avoid blocking HTTP requests with long-running operations (like syncing third-party platforms e.g., LeetCode/Codeforces APIs), AlgoForge delegates heavy tasks to a background worker:
-- **Queue Engine**: `bullmq` running on the Redis cache instance.
-- **Workers**: Dedicated Node workers (e.g. `syncWorker.ts`) poll the `platform-sync` queue, handle network calls securely, and update database records.
-- **Cache Invalidation**: Upon job completion, workers independently trigger `invalidateTag()` so the frontend automatically receives fresh data on its next poll or navigation.
+To keep the API fast and prevent long-running I/O or scheduled maintenance from blocking HTTP requests, AlgoForge utilizes a modular background job processing architecture backed by Redis and BullMQ:
 
-## 6. Data Model (PostgreSQL)
+```
+server/src/workers/
+├── index.ts              ← Worker initialization, event listeners & job dispatch registry
+├── queues.ts             ← Queue definitions exported for services to enqueue jobs
+└── processors/
+    ├── platformSync.ts   ← Synchronizes third-party profile stats (LeetCode, Codeforces)
+    ├── trashPurge.ts     ← Daily scheduled job hard-deleting soft-deleted items > 30 days
+    ├── tokenCleanup.ts   ← Daily scheduled job removing expired & stale revoked tokens
+    ├── sheetClone.ts     ← Batched transactional cloning of public sheets
+    └── dataExport.ts     ← Asynchronous user data serialization and export
+```
+
+- **Queue Engine**: `bullmq` running on the Redis instance with automatic retries and exponential backoff.
+- **Job Registry**: A centralized dispatcher pattern in `workers/index.ts` routes jobs cleanly to pure processor functions.
+- **Scheduled Maintenance (Cron)**: Automated repeatable jobs run during off-peak hours for database hygiene (e.g., daily trash purge at 3:00 AM UTC, token cleanup at 4:00 AM UTC).
+- **Cache Invalidation**: Upon job completion, workers independently trigger `cache.invalidateTag()` so the frontend automatically receives fresh data on subsequent requests.
+
+## 7. Database Transactions & ACID Consistency
+
+To prevent orphaned records and concurrency race conditions, all multi-step database mutations are encapsulated within atomic **Prisma database transactions** (`prisma.$transaction`):
+
+- **Question Attempts (`addAttemptTransaction`):** Creates the attempt record and increments question attempt counters/status atomically in a single pipeline.
+- **Refresh Token Rotation (`rotateToken`):** Atomically revokes the old refresh token and creates the new child token in the same session family.
+- **Group Exit (`leaveGroupTransaction`):** Atomically removes the group member, checks remaining member counts, and deletes the orphaned group if no members remain.
+- **Hierarchical Reordering (`reorder`):** Updates the display orders across multiple topics, subtopics, or questions within a single transactional batch.
+- **Background Maintenance:** Batch deletions during trash purging and token cleanups run inside atomic transactions.
+
+## 8. Data Model (PostgreSQL)
 
 ```mermaid
 erDiagram
@@ -174,7 +198,6 @@ erDiagram
     QuestionAttempt {
         String id PK
         DateTime solvedAt
-        Int duration
         Int confidence
         String questionId FK
         String userId FK
@@ -190,7 +213,7 @@ erDiagram
     }
 ```
 
-## 7. Intelligence Layer & Spaced Repetition
+## 9. Intelligence Layer & Spaced Repetition
 
 AlgoForge incorporates an intelligent learning system to optimize study efficiency:
 
@@ -201,14 +224,14 @@ AlgoForge incorporates an intelligent learning system to optimize study efficien
   2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.
   3. **Random Exploration:** A selection of completely unsolved questions picked using a Fisher-Yates random shuffle on unsolved IDs.
 
-## 8. Social & Growth Features
+## 10. Social & Growth Features
 
 AlgoForge includes networking effects designed to encourage collaborative learning:
 - **Public Profiles**: Users can opt-in to display their statistics, heatmap, and bio on a public `/u/username` page.
 - **Sheet Templates**: Users can publish a snapshot of their current topic tree to the public directory, allowing others to discover and clone curated question lists.
 - **Study Groups**: Users can form study groups by generating an invite code. Group leaderboards track weekly problem-solving velocity among peers.
 
-## 9. Error Handling
+## 11. Error Handling
 
 Express 5 natively catches rejected promises, eliminating the need for `try/catch` in controllers. Errors bubble up to `errorHandler.ts`, which categorizes them:
 - **ZodError:** 400 Bad Request with field-level details.
@@ -217,7 +240,7 @@ Express 5 natively catches rejected promises, eliminating the need for `try/catc
 - **AppError:** Custom operational errors (e.g., 404 Not Found, 403 Forbidden).
 - **Unknown Errors:** Captured by Sentry (`@sentry/node` & `@sentry/react`), logged via Pino, and obscured as 500 Internal Server Error to prevent leaking stack traces.
 
-## 9. Testing Infrastructure
+## 12. Testing Infrastructure
 
 - **Backend:** Vitest + Supertest.
 - **Frontend:** Vitest + React Testing Library (`@testing-library/react` and `@testing-library/jest-dom`).
@@ -225,7 +248,7 @@ Express 5 natively catches rejected promises, eliminating the need for `try/catc
 - **Mocking:** `vitest-mock-extended` deeply mocks the `PrismaClient` and Redis utility.
 - **Advantage:** Unit tests run entirely in-memory at lightning speed without requiring a live Docker database container, while E2E tests provide confidence in user flows.
 
-## 10. Containerization
+## 13. Containerization
 
 The project uses multi-stage Docker builds to minimize image sizes.
 - **Builder Stage:** Installs all `devDependencies` and compiles TypeScript / Vite.

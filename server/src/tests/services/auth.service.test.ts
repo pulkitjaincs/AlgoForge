@@ -7,6 +7,7 @@ import { env } from '../../config/env.js';
 vi.mock('../../repositories/token.repository.js', () => ({
   tokenRepository: {
     createRefreshToken: vi.fn(),
+    rotateToken: vi.fn(),
     findByToken: vi.fn(),
     delete: vi.fn(),
     markTokenRevoked: vi.fn().mockResolvedValue(undefined),
@@ -69,14 +70,14 @@ describe('Auth Service', () => {
         expiresAt: new Date(Date.now() + 100000)
       });
 
-      (tokenRepository.createRefreshToken as any).mockResolvedValue({ id: 'new-rt', token: 'mock-new-rt' });
+      (tokenRepository.rotateToken as any).mockResolvedValue({ id: 'new-rt', token: 'mock-new-rt' });
 
       const result = await refreshAccess('valid-token');
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
-      expect(tokenRepository.markTokenRevoked).toHaveBeenCalledWith(expect.any(String));
-      expect(tokenRepository.createRefreshToken).toHaveBeenCalledWith(
+      expect(tokenRepository.rotateToken).toHaveBeenCalledWith(
+        expect.any(String),
         'user-1',
         expect.any(String),
         7,

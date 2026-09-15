@@ -16,7 +16,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Progress Metrics & Analytics:** Visual indicators of solved questions, streaks, weekly velocity, activity heatmaps, and topic mastery radar charts.
 - **Spaced Repetition & Practice Plans:** SM-2 based spaced repetition system that generates daily review queues and custom practice plans targeting weak areas.
 - **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
-- **Study Notes & Timers:** Markdown-supported notes and inline timers attached directly to questions.
+- **Study Notes:** Markdown-supported notes attached directly to questions.
 - **Drag-and-Drop:** Freely reorder your curriculum to match your study plan.
 
 ### Contest Tracker
@@ -31,8 +31,10 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 
 ### Engineering Excellence
 - **Strictly Typed:** 100% TypeScript across frontend and backend, with a shared `@algoforge/shared` package for schemas.
-- **High Performance:** Redis cache-aside pattern for heavy hierarchical queries.
-- **Advanced Security:** JWT Auth (HttpOnly cookies), Token Family Lineage (replay attack protection), granular Rate Limiting, prototype pollution protection, and strict Zod payload validation.
+- **Distributed Background Processing:** BullMQ & Redis worker pipeline offloading heavy third-party platform syncs and scheduled maintenance jobs (automated trash purges and token cleanups).
+- **ACID Data Integrity:** Multi-query database operations (token rotation, attempts, group lifecycle, reordering) encapsulated inside atomic Prisma `$transaction` pipelines.
+- **High Performance:** Redis cache-aside pattern with tag-based invalidation (`user:{userId}`) for instant consistency.
+- **Advanced Security:** JWT Auth (HttpOnly cookies), Token Family Lineage (replay attack protection with automatic session chain revocation), granular Rate Limiting, prototype pollution protection, and strict Zod payload validation.
 - **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers. Playwright for E2E.
 - **Monorepo Architecture:** Managed by `pnpm` workspaces and `Turborepo` for blazingly fast CI and local builds.
 - **Containerized:** Multi-stage Docker builds and `docker-compose` ready.
@@ -43,9 +45,9 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 
 | Frontend | Backend | Infrastructure |
 |---|---|---|
-| React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM) |
-| React Router (Routing) | Express 5 | Redis (Caching) |
-| React Query (Server State) | Zod (Validation) | BullMQ (Background Jobs) |
+| React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM & Transactions) |
+| React Router (Routing) | Express 5 | Redis (Caching & Job State) |
+| React Query (Server State) | Zod (Validation) | BullMQ (Background Processing & Cron) |
 | Zustand (UI State) | Pino (Structured Logging) | Docker & Playwright |
 | Tailwind CSS & dnd-kit | JWT Authentication | pnpm Workspaces + Turborepo |
 
@@ -82,7 +84,7 @@ If you prefer to run the apps locally for development:
 
 **1. Install dependencies:**
 ```bash
-npm run install:all
+pnpm install
 ```
 
 **2. Environment variables:**
@@ -92,15 +94,12 @@ Configure your `.env` in the `server/` directory with your Postgres connection s
 ```bash
 cd server
 npx prisma migrate dev
+cd ..
 ```
 
 **4. Start development servers:**
 ```bash
-# Terminal 1 - Backend
-npm run dev:server
-
-# Terminal 2 - Frontend
-npm run dev:client
+pnpm run dev
 ```
 
 ---
@@ -112,10 +111,11 @@ Run these from the root directory:
 | Command | Description |
 |---|---|
 | `pnpm install` | Installs dependencies using pnpm workspaces. |
-| `pnpm run dev` | Starts the Vite frontend and Express backend in dev mode. |
+| `pnpm run dev` | Starts the Vite frontend and Express backend in dev mode via Turborepo. |
 | `pnpm run build` | Builds both frontend and backend for production. |
-| `pnpm run lint` | Runs ESLint on both projects. |
+| `pnpm run lint` | Runs ESLint on all packages. |
 | `pnpm run test` | Runs the backend unit tests using Vitest. |
+| `pnpm run test:coverage` | Runs unit tests with code coverage report. |
 | `pnpm run test:e2e` | Runs E2E tests using Playwright. |
 | `pnpm run docker:up` | Builds and starts all containers. |
 
@@ -126,8 +126,8 @@ Run these from the root directory:
 AlgoForge treats testing as a first-class citizen. 
 
 ```bash
-npm run test
-npm run test:coverage
+pnpm run test
+pnpm run test:coverage
 ```
 *Note: Backend unit tests run entirely in-memory using `vitest-mock-extended` for Prisma. No database connection is required.*
 

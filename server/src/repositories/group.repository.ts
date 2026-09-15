@@ -75,6 +75,24 @@ export class GroupRepository {
       where: { id }
     });
   }
+
+  async leaveGroupTransaction(groupId: string, userId: string) {
+    return prisma.$transaction(async (tx) => {
+      await tx.groupMember.delete({
+        where: { groupId_userId: { groupId, userId } }
+      });
+
+      const memberCount = await tx.groupMember.count({
+        where: { groupId }
+      });
+
+      if (memberCount === 0) {
+        await tx.group.delete({
+          where: { id: groupId }
+        });
+      }
+    });
+  }
 }
 
 export const groupRepository = new GroupRepository();

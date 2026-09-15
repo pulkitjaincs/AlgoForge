@@ -6,6 +6,7 @@ import { AppError } from '../../utils/AppError.js';
 vi.mock('../../repositories/token.repository.js', () => ({
   tokenRepository: {
     createRefreshToken: vi.fn(),
+    rotateToken: vi.fn(),
     findByToken: vi.fn(),
     markTokenRevoked: vi.fn(),
     revokeFamily: vi.fn(),
@@ -55,13 +56,13 @@ describe('Refresh Token Family & Replay Attack Security', () => {
     };
 
     vi.mocked(tokenRepository.findByToken).mockResolvedValue(mockRecord as any);
+    vi.mocked(tokenRepository.rotateToken).mockResolvedValue({ id: 'new-tok' } as any);
 
     const rotated = await authService.refreshAccess(fakeToken);
 
-    // Old token should be marked revoked
-    expect(tokenRepository.markTokenRevoked).toHaveBeenCalled();
-    // New token created with same family lineage
-    expect(tokenRepository.createRefreshToken).toHaveBeenCalledWith(
+    // Atomically rotated with same family lineage
+    expect(tokenRepository.rotateToken).toHaveBeenCalledWith(
+      expect.any(String),
       'user-123',
       expect.any(String),
       7,

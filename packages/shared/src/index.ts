@@ -116,7 +116,6 @@ export const updateQuestionSchema = z.object({
 export const addAttemptSchema = z.object({
   params: z.object({ questionId: uuid }),
   body: z.object({
-    duration: z.number().int().nonnegative().optional(),
     confidence: z.number().int().min(1).max(5).optional()
   }),
 });
