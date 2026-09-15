@@ -83,7 +83,7 @@ export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
         const [removed] = newSubTopics.splice(oldIndex, 1);
         newSubTopics.splice(newIndex, 0, removed);
         
-        reorderSubTopics.mutate({ topicId: topic.id, data: { subTopicIds: newSubTopics.map(st => st.id) } });
+        reorderSubTopics.mutate({ topicId: topic.id, data: { orderedIds: newSubTopics.map(st => st.id) } });
       }
     }
   };
@@ -98,7 +98,7 @@ export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
         const [removed] = newQuestions.splice(oldIndex, 1);
         newQuestions.splice(newIndex, 0, removed);
         
-        reorderQuestions.mutate({ topicId: topic.id, subTopicId: null, data: { questionIds: newQuestions.map(q => q.id || '') } });
+        reorderQuestions.mutate({ topicId: topic.id, subTopicId: null, data: { orderedIds: newQuestions.map(q => q.id || '') } });
       }
     }
   };

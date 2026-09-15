@@ -58,7 +58,7 @@ export const SubTopicSection = ({ subTopic, topicId, onAddQuestion, onEditSubTop
         const [removed] = newQuestions.splice(oldIndex, 1);
         newQuestions.splice(newIndex, 0, removed);
         
-        reorderQuestions.mutate({ topicId, subTopicId: subTopic.id, data: { questionIds: newQuestions.map(q => q.id || '') } });
+        reorderQuestions.mutate({ topicId, subTopicId: subTopic.id, data: { orderedIds: newQuestions.map(q => q.id || '') } });
       }
     }
   };

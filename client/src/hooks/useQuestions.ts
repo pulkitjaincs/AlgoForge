@@ -141,8 +141,8 @@ export const useResetProgress = () => {
 export const useReorderQuestions = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ topicId, subTopicId, data }: { topicId: string; subTopicId: string | null; data: { questionIds: string[] } }) => 
-      questionsApi.reorder(topicId, subTopicId, data.questionIds),
+    mutationFn: ({ topicId, subTopicId, data }: { topicId: string; subTopicId: string | null; data: { orderedIds: string[] } }) => 
+      questionsApi.reorder(topicId, subTopicId, data.orderedIds),
     onMutate: async ({ topicId, subTopicId, data }) => {
       await queryClient.cancelQueries({ queryKey: ['topics'] });
       const previousTopics = queryClient.getQueryData(['topics']);
@@ -153,7 +153,7 @@ export const useReorderQuestions = () => {
           if (topic.id === topicId) {
             if (!subTopicId) {
               const newQs = [...topic.questions].sort((a: any, b: any) => 
-                data.questionIds.indexOf(a.id) - data.questionIds.indexOf(b.id)
+                data.orderedIds.indexOf(a.id) - data.orderedIds.indexOf(b.id)
               );
               return { ...topic, questions: newQs };
             } else {
@@ -162,7 +162,7 @@ export const useReorderQuestions = () => {
                 subTopics: topic.subTopics.map((st: any) => {
                   if (st.id === subTopicId) {
                     const newQs = [...st.questions].sort((a: any, b: any) => 
-                      data.questionIds.indexOf(a.id) - data.questionIds.indexOf(b.id)
+                      data.orderedIds.indexOf(a.id) - data.orderedIds.indexOf(b.id)
                     );
                     return { ...st, questions: newQs };
                   }
