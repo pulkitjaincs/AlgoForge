@@ -17,10 +17,18 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     }
   ],
-  webServer: {
-    command: 'pnpm --filter client dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      command: 'pnpm --filter algoforge-server dev',
+      url: 'http://localhost:3001/api/v1/health',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'pnpm --filter client dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    }
+  ],
 });
