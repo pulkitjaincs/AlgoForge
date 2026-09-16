@@ -61,6 +61,23 @@ export default function SheetPage() {
     progress: 0
   };
 
+  useEffect(() => {
+    const handleAddTopicModal = () => setIsAddModalOpen(true);
+    const handleAddQuestionModal = () => {
+      if (topics.length > 0) {
+        window.dispatchEvent(new CustomEvent(`open-add-question-modal-${topics[0].id}`));
+      } else {
+        setIsAddModalOpen(true); // fall back to creating a topic
+      }
+    };
+    window.addEventListener('open-add-topic-modal', handleAddTopicModal);
+    window.addEventListener('open-add-question-modal', handleAddQuestionModal);
+    return () => {
+      window.removeEventListener('open-add-topic-modal', handleAddTopicModal);
+      window.removeEventListener('open-add-question-modal', handleAddQuestionModal);
+    };
+  }, [topics]);
+
   const handleAddTopic = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTopicTitle.trim()) return;

@@ -51,3 +51,12 @@ export const leaveGroup = async (userId: string, groupId: string) => {
 
   await groupRepository.leaveGroupTransaction(groupId, userId);
 };
+
+export const getLeaderboard = async (userId: string, groupId: string) => {
+  const isMember = await groupRepository.isMember(groupId, userId);
+  if (!isMember) {
+    throw new AppError('Not authorized to view this group', 403);
+  }
+
+  return groupRepository.getLeaderboard(groupId);
+};

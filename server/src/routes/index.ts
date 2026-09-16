@@ -13,6 +13,7 @@ import groupRoutes from './group.routes.js';
 import integrationRoutes from './integration.routes.js';
 import contestRoutes from './contest.routes.js';
 import notificationRoutes from './notification.routes.js';
+import exportRoutes from './export.routes.js';
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.use('/groups', groupRoutes);
 router.use('/integrations', integrationRoutes);
 router.use('/contests', contestRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/export', exportRoutes);
 
 export default router;

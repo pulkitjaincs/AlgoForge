@@ -44,6 +44,15 @@ export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
     }
   }, [navigationTarget, topic.id, questions, subTopics]);
 
+  useEffect(() => {
+    const handleAddQuestion = () => {
+      setIsOpen(true);
+      setQuestionModal({ isOpen: true, subTopicId: null, mode: 'add', initialData: null });
+    };
+    window.addEventListener(`open-add-question-modal-${topic.id}`, handleAddQuestion);
+    return () => window.removeEventListener(`open-add-question-modal-${topic.id}`, handleAddQuestion);
+  }, [topic.id]);
+
   // Shared Modals State
   const [questionModal, setQuestionModal] = useState<{
     isOpen: boolean;

@@ -15,3 +15,11 @@ export const usePublishSheet = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sheets', 'public'] })
   });
 };
+
+export const useCloneSheet = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sheetsApi.cloneSheet,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sheets', 'public'] })
+  });
+};

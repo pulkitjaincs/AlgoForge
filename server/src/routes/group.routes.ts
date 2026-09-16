@@ -13,5 +13,6 @@ router.post('/', validate(createGroupSchema), groupController.createGroup);
 router.post('/join', validate(joinGroupSchema), groupController.joinGroup);
 router.get('/:id', groupController.getGroup);
 router.delete('/:id/leave', groupController.leaveGroup);
+router.get('/:id/leaderboard', groupController.getLeaderboard);
 
 export default router;

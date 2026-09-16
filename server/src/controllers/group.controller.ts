@@ -27,3 +27,9 @@ export const leaveGroup = async (req: Request, res: Response) => {
   await groupService.leaveGroup(req.user!.id, id);
   res.status(200).json({ success: true, message: 'Successfully left the group' });
 };
+
+export const getLeaderboard = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const leaderboard = await groupService.getLeaderboard(req.user!.id, id);
+  res.status(200).json({ success: true, data: leaderboard });
+};

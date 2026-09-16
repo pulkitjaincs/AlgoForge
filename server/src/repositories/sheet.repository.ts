@@ -33,6 +33,13 @@ export class SheetRepository {
       }
     });
   }
+
+  async incrementCloneCount(id: string) {
+    return prisma.sheet.update({
+      where: { id },
+      data: { cloneCount: { increment: 1 } }
+    });
+  }
 }
 
 export const sheetRepository = new SheetRepository();

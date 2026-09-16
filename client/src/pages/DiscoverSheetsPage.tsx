@@ -1,4 +1,4 @@
-import { usePublicSheets, usePublishSheet } from '../hooks/useSheets';
+import { usePublicSheets, usePublishSheet, useCloneSheet } from '../hooks/useSheets';
 import { BookOpen, Search, Copy, Download, Star, Share2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 export default function DiscoverSheetsPage() {
   const { data: sheets, isLoading } = usePublicSheets();
   const publishSheet = usePublishSheet();
+  const cloneSheet = useCloneSheet();
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [publishData, setPublishData] = useState({ title: '', description: '', isPublic: true });
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,7 +102,12 @@ export default function DiscoverSheetsPage() {
                   <span className="text-xs font-medium text-text-main">{sheet.author?.name}</span>
                 </Link>
                 <button 
-                   onClick={() => toast.success('Cloning is coming soon!')}
+                   onClick={() => {
+                     cloneSheet.mutate(sheet.id, {
+                       onSuccess: () => toast.success("Cloning started — you'll get a notification when it's ready")
+                     });
+                   }}
+                   disabled={cloneSheet.isPending}
                    className="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5"
                 >
                   <Copy className="w-3.5 h-3.5" /> Clone

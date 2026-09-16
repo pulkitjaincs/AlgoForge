@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useLogout, useUser } from '../hooks/useAuth';
 import {
@@ -21,30 +21,17 @@ import { ThemeToggle } from '../components/shared/ThemeToggle';
 import { useUIStore } from '../store/useUIStore';
 import { CommandPalette } from '../components/shared/CommandPalette';
 import { NotificationsDropdown } from '../components/shared/NotificationsDropdown';
+import { KeyboardShortcutsDialog } from '../components/shared/KeyboardShortcutsDialog';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 export function AppLayout() {
   const { data: user } = useUser();
   const logout = useLogout();
   const location = useLocation();
   const { isSidebarCollapsed, toggleSidebar, isCommandPaletteOpen, setCommandPaletteOpen } = useUIStore();
+  const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-          e.preventDefault();
-          toggleSidebar();
-        }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setCommandPaletteOpen(!isCommandPaletteOpen);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSidebar, isCommandPaletteOpen, setCommandPaletteOpen]);
+  useKeyboardShortcuts(setShowShortcutsDialog);
 
   const navItems = [
     { name: 'Sheet', path: '/app/sheet', icon: List },
@@ -313,6 +300,10 @@ export function AppLayout() {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
+      />
+      <KeyboardShortcutsDialog 
+        isOpen={showShortcutsDialog} 
+        onClose={() => setShowShortcutsDialog(false)} 
       />
     </div>
   );

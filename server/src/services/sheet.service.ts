@@ -2,6 +2,7 @@ import { sheetRepository } from '../repositories/sheet.repository.js';
 import { topicRepository } from '../repositories/topic.repository.js';
 import { PublishSheetInput } from '@algoforge/shared';
 import { AppError } from '../utils/AppError.js';
+import { backgroundQueue } from '../workers/queues.js';
 
 export const publishSheet = async (userId: string, data: PublishSheetInput) => {
   const topics = await topicRepository.findManyWithAllQuestions(userId);
@@ -54,4 +55,25 @@ export const getSheetById = async (id: string) => {
     throw new AppError('Sheet not found', 404);
   }
   return sheet;
+};
+
+export const cloneSheet = async (userId: string, sheetId: string) => {
+  const sheet = await getSheetById(sheetId);
+  
+  if (!sheet.isPublic) {
+    throw new AppError('Sheet is not public', 403);
+  }
+  
+  if (!backgroundQueue) {
+    throw new AppError('Background processing unavailable', 503);
+  }
+  
+  await sheetRepository.incrementCloneCount(sheetId);
+  
+  await backgroundQueue.add('sheet-clone', { userId, sheetId }, {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 1000 }
+  });
+  
+  return { success: true, message: 'Cloning started in background' };
 };

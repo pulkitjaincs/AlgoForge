@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../hooks/useAuth';
 import { useUpdateEmail, useUpdatePassword } from '../hooks/useSettings';
-import { Settings as SettingsIcon, Mail, Lock, ArrowLeft } from 'lucide-react';
+import { useRequestExport } from '../hooks/useExport';
+import { Settings as SettingsIcon, Mail, Lock, ArrowLeft, Download } from 'lucide-react';
 
 export default function SettingsPage() {
   const { data: user } = useUser();
   const updateEmail = useUpdateEmail();
   const updatePassword = useUpdatePassword();
+  const requestExport = useRequestExport();
 
   const [email, setEmail] = useState(user?.email || '');
   
@@ -162,6 +164,27 @@ export default function SettingsPage() {
             {updatePassword.isPending ? 'Updating...' : 'Update Password'}
           </button>
         </form>
+      </div>
+
+      <div className="bg-bg-card border border-border-main rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Download className="w-5 h-5 text-brand-primary" />
+          <h2 className="text-lg font-bold text-text-main">Data Export</h2>
+        </div>
+        <div className="max-w-md">
+          <p className="text-sm text-text-muted mb-4">
+            Download a complete snapshot of your data including topics, questions, attempts, and connected integrations. 
+            This process runs in the background and you will receive a notification when it's ready.
+          </p>
+          <button 
+            onClick={() => requestExport.mutate()}
+            disabled={requestExport.isPending}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            {requestExport.isPending ? 'Starting Export...' : 'Export My Data'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMyGroups, useCreateGroup, useJoinGroup, useGroupDetail, useLeaveGroup } from '../hooks/useGroups';
+import { useMyGroups, useCreateGroup, useJoinGroup, useGroupDetail, useLeaveGroup, useLeaderboard } from '../hooks/useGroups';
 import { Users, Plus, Hash, Copy, Check, LogOut, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Modal } from '../components/shared/Modal';
@@ -17,9 +17,11 @@ export default function GroupsPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'members' | 'leaderboard'>('members');
 
   const leaveGroup = useLeaveGroup();
   const { data: groupDetail, isLoading: isLoadingDetail } = useGroupDetail(selectedGroupId || '');
+  const { data: leaderboard, isLoading: isLoadingLeaderboard } = useLeaderboard(selectedGroupId || '');
 
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,27 +203,66 @@ export default function GroupsPage() {
             </div>
             
             <div>
-              <h4 className="text-sm font-semibold text-text-main mb-3 flex items-center justify-between">
-                Members <span className="bg-bg-elevated text-xs px-2 py-0.5 rounded-full">{groupDetail.members?.length || 0}</span>
-              </h4>
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                {groupDetail.members?.map((member: any) => (
-                  <div key={member.id} className="flex items-center gap-3 p-2 rounded hover:bg-bg-elevated transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary font-bold text-sm">
-                      {member.user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-text-main">{member.user.name}</p>
-                      <p className="text-xs text-text-muted">@{member.user.username}</p>
-                    </div>
-                    {member.role === 'admin' && (
-                      <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold text-brand-secondary bg-brand-secondary/10 px-2 py-1 rounded">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="flex items-center gap-4 border-b border-border-dark mb-4">
+                <button
+                  onClick={() => setActiveTab('members')}
+                  className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'members' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-muted hover:text-text-main'}`}
+                >
+                  Members <span className="bg-bg-elevated text-xs px-2 py-0.5 rounded-full ml-1">{groupDetail.members?.length || 0}</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('leaderboard')}
+                  className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'leaderboard' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-muted hover:text-text-main'}`}
+                >
+                  Leaderboard
+                </button>
               </div>
+
+              {activeTab === 'members' ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  {groupDetail.members?.map((member: any) => (
+                    <div key={member.id} className="flex items-center gap-3 p-2 rounded hover:bg-bg-elevated transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary font-bold text-sm">
+                        {member.user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-text-main">{member.user.name}</p>
+                        <p className="text-xs text-text-muted">@{member.user.username}</p>
+                      </div>
+                      {member.role === 'admin' && (
+                        <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold text-brand-secondary bg-brand-secondary/10 px-2 py-1 rounded">
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  {isLoadingLeaderboard ? (
+                    <div className="flex items-center justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-brand-primary" /></div>
+                  ) : (
+                    leaderboard?.map((user: any, index: number) => (
+                      <div key={user.id} className="flex items-center gap-3 p-2 rounded hover:bg-bg-elevated transition-colors border border-transparent hover:border-border-dark">
+                        <div className="w-6 h-6 flex items-center justify-center font-bold text-sm text-text-muted">
+                          #{index + 1}
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary font-bold text-sm">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-main truncate">{user.name}</p>
+                          <p className="text-xs text-text-muted truncate">@{user.username}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-brand-primary">{user.solvedThisWeek}</p>
+                          <p className="text-[10px] text-text-muted uppercase tracking-wider">Solved</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t border-border-dark">

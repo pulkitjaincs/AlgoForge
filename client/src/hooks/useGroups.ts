@@ -34,7 +34,17 @@ export const useJoinGroup = () => {
 export const useLeaveGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => groupsApi.leaveGroup(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] })
+    mutationFn: groupsApi.leaveGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    }
+  });
+};
+
+export const useLeaderboard = (groupId: string) => {
+  return useQuery({
+    queryKey: ['groups', groupId, 'leaderboard'],
+    queryFn: () => groupsApi.getLeaderboard(groupId).then(res => res.data || res),
+    enabled: !!groupId
   });
 };

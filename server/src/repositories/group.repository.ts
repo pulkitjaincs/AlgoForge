@@ -93,6 +93,38 @@ export class GroupRepository {
       }
     });
   }
+
+  async getLeaderboard(groupId: string) {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const members = await prisma.groupMember.findMany({
+      where: { groupId },
+      include: {
+        user: { select: { id: true, name: true, username: true, avatarUrl: true } }
+      }
+    });
+
+    const userIds = members.map(m => m.userId);
+
+    const attempts = await prisma.questionAttempt.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: userIds },
+        solvedAt: { gte: sevenDaysAgo }
+      },
+      _count: { id: true }
+    });
+
+    const attemptsMap = new Map(attempts.map(a => [a.userId, a._count.id]));
+
+    const leaderboard = members.map(m => ({
+      ...m.user,
+      solvedThisWeek: attemptsMap.get(m.userId) || 0
+    }));
+
+    return leaderboard.sort((a, b) => b.solvedThisWeek - a.solvedThisWeek);
+  }
 }
 
 export const groupRepository = new GroupRepository();
