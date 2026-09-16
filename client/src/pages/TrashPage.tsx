@@ -2,8 +2,11 @@ import { useTrash, useRestoreTrash, useDeleteTrash } from '../hooks/useTrash';
 import { Trash2, RefreshCcw, FileText, Layers, Target } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
+import { Modal } from '../components/shared/Modal';
+import { useState } from 'react';
 
 export default function TrashPage() {
+  const [deleteModal, setDeleteModal] = useState<{ id: string; type: string } | null>(null);
   const { data: trashItems, isLoading } = useTrash();
   const restoreTrash = useRestoreTrash();
   const deleteTrash = useDeleteTrash();
@@ -15,9 +18,16 @@ export default function TrashPage() {
   };
 
   const handleDelete = (id: string, type: string) => {
-    if (window.confirm('Are you sure you want to permanently delete this item?')) {
-      deleteTrash.mutate({ id, type }, {
-        onSuccess: () => toast.success('Item permanently deleted')
+    setDeleteModal({ id, type });
+  };
+
+  const confirmDelete = () => {
+    if (deleteModal) {
+      deleteTrash.mutate({ id: deleteModal.id, type: deleteModal.type }, {
+        onSuccess: () => {
+          toast.success('Item permanently deleted');
+          setDeleteModal(null);
+        }
       });
     }
   };
@@ -88,6 +98,26 @@ export default function TrashPage() {
           ))}
         </div>
       )}
+
+      <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)} title="Confirm Permanent Deletion">
+        <div className="space-y-4">
+          <p className="text-text-muted">
+            Are you sure you want to permanently delete this item? This action cannot be undone.
+          </p>
+          <div className="flex items-center gap-3 mt-6">
+            <button onClick={() => setDeleteModal(null)} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button 
+              onClick={confirmDelete}
+              disabled={deleteTrash.isPending}
+              className="btn-primary bg-danger hover:bg-danger/80 border-transparent text-white flex-1"
+            >
+              {deleteTrash.isPending ? 'Deleting...' : 'Permanently Delete'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

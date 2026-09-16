@@ -17,7 +17,6 @@ import { useUIStore } from '../store/useUIStore';
 import { TopicCard } from '../components/features/sheet/TopicCard';
 import { Modal } from '../components/shared/Modal';
 
-import { CommandPalette } from '../components/shared/CommandPalette';
 import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search } from 'lucide-react';
 import { FilterBar } from '../components/features/sheet/FilterBar';
 import { useTopics, useCreateTopic, useReorderTopics } from '../hooks/useTopics';
@@ -28,7 +27,7 @@ import { Helmet } from 'react-helmet-async';
 
 export default function SheetPage() {
   const [searchParams] = useSearchParams();
-  const { isCommandPaletteOpen, setCommandPaletteOpen } = useUIStore();
+  const { setCommandPaletteOpen } = useUIStore();
   
   const { data: topics = [], isLoading, refetch } = useTopics(searchParams.toString());
   const createTopic = useCreateTopic();
@@ -69,18 +68,6 @@ export default function SheetPage() {
       }
     });
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setCommandPaletteOpen(!isCommandPaletteOpen);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCommandPaletteOpen, setCommandPaletteOpen]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -201,11 +188,22 @@ export default function SheetPage() {
 
         {isLoading ? (
           <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="glass p-6 animate-pulse">
-                <div className="h-6 bg-white/10 rounded w-1/3 mb-4"></div>
-                <div className="h-2 bg-white/5 rounded w-full mb-2"></div>
-                <div className="h-2 bg-white/5 rounded w-5/6"></div>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="glass p-4 animate-pulse flex items-center justify-between ml-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/5 rounded-xl"></div>
+                  <div>
+                    <div className="h-5 bg-white/10 rounded w-48 mb-2"></div>
+                    <div className="h-3 bg-white/5 rounded w-24"></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 pr-2">
+                  <div className="hidden md:flex items-center gap-3">
+                    <div className="w-32 h-2 bg-white/5 rounded-full"></div>
+                    <div className="h-4 bg-white/10 rounded w-8"></div>
+                  </div>
+                  <div className="w-8 h-8 bg-white/5 rounded-md"></div>
+                </div>
               </div>
             ))}
           </div>
@@ -290,11 +288,6 @@ export default function SheetPage() {
           </div>
         </Modal>
       </div>
-
-        <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-      />
     </div>
   );
 }

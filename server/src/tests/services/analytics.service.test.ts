@@ -1,66 +1,54 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getStreaks } from '../../services/analytics.service.js';
+import { getSummary } from '../../services/analytics.service.js';
 import { analyticsRepository } from '../../repositories/analytics.repository.js';
 import { cache } from '../../utils/cache.js';
 
 vi.mock('../../repositories/analytics.repository.js', () => ({
   analyticsRepository: {
-    getStreaks: vi.fn(),
+    getSummaryStats: vi.fn(),
   },
 }));
 
-describe('Analytics Service - getStreaks', () => {
+describe('Analytics Service - getSummary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (cache.get as any).mockResolvedValue(null);
   });
 
-  it('should return 0 streaks if no attempts', async () => {
-    (analyticsRepository.getStreaks as any).mockResolvedValue({ current_streak: 0, max_streak: 0, last_active: null });
-    const result = await getStreaks('user-1');
-    expect(result).toEqual({ currentStreak: 0, maxStreak: 0, lastActive: null });
+  it('should return zeroed stats if no questions exist', async () => {
+    (analyticsRepository.getSummaryStats as any).mockResolvedValue([]);
+    const result = await getSummary('user-1');
+    expect(result.totalQuestions).toBe(0);
+    expect(result.solvedQuestions).toBe(0);
+    expect(result.solvedByDifficulty).toEqual({ Easy: 0, Medium: 0, Hard: 0, Basic: 0 });
   });
 
-  it('should calculate current and max streak correctly with consecutive dates', async () => {
-    const today = new Date();
-    (analyticsRepository.getStreaks as any).mockResolvedValue({
-      current_streak: 3,
-      max_streak: 3,
-      last_active: today
-    });
+  it('should aggregate difficulty stats correctly', async () => {
+    (analyticsRepository.getSummaryStats as any).mockResolvedValue([
+      { difficulty: 'Easy', total: 10, solved: 8 },
+      { difficulty: 'Medium', total: 15, solved: 5 },
+      { difficulty: 'Hard', total: 5, solved: 1 },
+    ]);
 
-    const result = await getStreaks('user-1');
-    expect(result.currentStreak).toBe(3);
-    expect(result.maxStreak).toBe(3);
-    expect(result.lastActive).toEqual(today);
+    const result = await getSummary('user-1');
+    expect(result.totalQuestions).toBe(30);
+    expect(result.solvedQuestions).toBe(14);
+    expect(result.solvedByDifficulty.Easy).toBe(8);
+    expect(result.solvedByDifficulty.Medium).toBe(5);
+    expect(result.solvedByDifficulty.Hard).toBe(1);
   });
 
-  it('should break current streak if inactive today and yesterday', async () => {
-    const today = new Date();
-    const twoDaysAgo = new Date(today);
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-    
-    (analyticsRepository.getStreaks as any).mockResolvedValue({
-      current_streak: 0,
-      max_streak: 2,
-      last_active: twoDaysAgo
-    });
+  it('should return cached result if available', async () => {
+    const cachedResult = {
+      totalQuestions: 20,
+      solvedQuestions: 10,
+      difficultyStats: { Easy: 10, Medium: 5, Hard: 5, Basic: 0 },
+      solvedByDifficulty: { Easy: 5, Medium: 3, Hard: 2, Basic: 0 },
+    };
+    (cache.get as any).mockResolvedValue(cachedResult);
 
-    const result = await getStreaks('user-1');
-    expect(result.currentStreak).toBe(0);
-    expect(result.maxStreak).toBe(2);
-    expect(result.lastActive).toEqual(twoDaysAgo);
-  });
-
-  it('should calculate max streak accurately across gaps', async () => {
-    (analyticsRepository.getStreaks as any).mockResolvedValue({
-      current_streak: 0,
-      max_streak: 3,
-      last_active: new Date('2026-09-10T10:00:00Z')
-    });
-
-    const result = await getStreaks('user-1');
-    expect(result.currentStreak).toBe(0); // Assuming today is NOT Sep 10 or 11
-    expect(result.maxStreak).toBe(3); // Sep 8-10 is the max
+    const result = await getSummary('user-1');
+    expect(result).toEqual(cachedResult);
+    expect(analyticsRepository.getSummaryStats).not.toHaveBeenCalled();
   });
 });

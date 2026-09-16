@@ -61,7 +61,23 @@ export const processPlatformSync = async (job: Job) => {
     }
   }
 
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:integrations`);
+  await cache.invalidateTag(`user:${userId}:analytics`);
+  
+  // Import notification service at the top dynamically or use existing import
+  const { notificationService } = await import('../../services/notification.service.js');
+  
+  if (results.length > 0) {
+    const successCount = results.filter(r => r.id).length;
+    await notificationService.createNotification(
+      userId,
+      'Platform Sync Complete',
+      `Successfully synced stats for ${successCount} platform${successCount !== 1 ? 's' : ''}.`,
+      'success',
+      '/app/integrations'
+    );
+  }
+
   logger.info(`Completed platform sync for user ${userId}`);
   return results;
 };

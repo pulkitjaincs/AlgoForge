@@ -40,7 +40,7 @@ export const getAllTopics = async (userId: string, filters: TopicFilters = {}) =
   const topics = await topicRepository.findManyWithFilters(userId, questionFilter);
 
   if (!hasFilters) {
-    await cache.setWithTag(cacheKey, `user:${userId}`, topics, 300);
+    await cache.setWithTag(cacheKey, `user:${userId}:topics`, topics, 300);
   }
   return topics;
 };

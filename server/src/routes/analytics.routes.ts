@@ -9,7 +9,6 @@ router.use(protect, analyticsLimiter);
 
 router.get('/summary', analyticsController.getSummary);
 router.get('/heatmap', analyticsController.getHeatmap);
-router.get('/streaks', analyticsController.getStreaks);
 router.get('/topic-mastery', analyticsController.getTopicMastery);
 router.get('/weak-areas', analyticsController.getWeakAreas);
 router.get('/velocity', analyticsController.getVelocity);

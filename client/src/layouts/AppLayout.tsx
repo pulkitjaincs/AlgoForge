@@ -19,12 +19,14 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '../components/shared/ThemeToggle';
 import { useUIStore } from '../store/useUIStore';
+import { CommandPalette } from '../components/shared/CommandPalette';
+import { NotificationsDropdown } from '../components/shared/NotificationsDropdown';
 
 export function AppLayout() {
   const { data: user } = useUser();
   const logout = useLogout();
   const location = useLocation();
-  const { isSidebarCollapsed, toggleSidebar, setCommandPaletteOpen } = useUIStore();
+  const { isSidebarCollapsed, toggleSidebar, isCommandPaletteOpen, setCommandPaletteOpen } = useUIStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,10 +37,14 @@ export function AppLayout() {
           toggleSidebar();
         }
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen(!isCommandPaletteOpen);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSidebar]);
+  }, [toggleSidebar, isCommandPaletteOpen, setCommandPaletteOpen]);
 
   const navItems = [
     { name: 'Sheet', path: '/app/sheet', icon: List },
@@ -261,21 +267,17 @@ export function AppLayout() {
         <header className="h-16 shrink-0 bg-bg-elevated/80 backdrop-blur-md border-b border-border-dark flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             {/* Search Bar / Command Palette trigger */}
-            {location.pathname.startsWith('/app/sheet') && (
-              <button 
-                onClick={() => setCommandPaletteOpen(true)}
-                className="hidden md:flex items-center gap-2 text-sm text-text-muted bg-bg-dark border border-border-dark px-4 py-1.5 rounded-lg hover:border-brand-primary/50 transition-colors w-64 cursor-pointer"
-              >
-                <Search className="w-4 h-4" />
-                <span>Search anything...</span>
-                <span className="ml-auto text-xs bg-border-dark px-1.5 rounded">⌘K</span>
-              </button>
-            )}
+            <button 
+              onClick={() => setCommandPaletteOpen(true)}
+              className="hidden md:flex items-center gap-2 text-sm text-text-muted bg-bg-dark border border-border-dark px-4 py-1.5 rounded-lg hover:border-brand-primary/50 transition-colors w-64 cursor-pointer"
+            >
+              <Search className="w-4 h-4" />
+              <span>Search anything...</span>
+              <span className="ml-auto text-xs bg-border-dark px-1.5 rounded">⌘K</span>
+            </button>
           </div>
           <div className="flex items-center gap-4">
-            <button className="btn-icon cursor-pointer" title="Notifications">
-              <Bell className="w-5 h-5" />
-            </button>
+            <NotificationsDropdown />
             <ThemeToggle />
           </div>
         </header>
@@ -308,6 +310,10 @@ export function AppLayout() {
           );
         })}
       </nav>
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </div>
   );
 }

@@ -9,7 +9,7 @@ export const getReviewQueue = async (userId: string) => {
   const now = new Date();
   const queue = await questionRepository.findReviewQueue(userId, now);
   
-  await cache.setWithTag(cacheKey, `user:${userId}`, queue, 300); // 5 mins cache
+  await cache.setWithTag(cacheKey, `user:${userId}:review`, queue, 300); // 5 mins cache
   return queue;
 };
 
@@ -25,7 +25,7 @@ export const getReviewStats = async (userId: string) => {
   const overdueCount = await questionRepository.countReviewQueue(userId, now);
 
   const stats = { dueToday: dueTodayCount, overdue: overdueCount };
-  await cache.setWithTag(cacheKey, `user:${userId}`, stats, 300); // 5 mins cache
+  await cache.setWithTag(cacheKey, `user:${userId}:review`, stats, 300); // 5 mins cache
 
   return stats;
 };

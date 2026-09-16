@@ -23,7 +23,8 @@ export const restoreItem = async (userId: string, id: string, type: 'topic' | 's
     updated = await trashRepository.restoreQuestion(id);
   }
 
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
+  await cache.invalidateTag(`user:${userId}:analytics`);
   return updated;
 };
 
@@ -42,5 +43,6 @@ export const permanentlyDeleteItem = async (userId: string, id: string, type: 't
     await trashRepository.deleteQuestion(id);
   }
 
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
+  await cache.invalidateTag(`user:${userId}:analytics`);
 };

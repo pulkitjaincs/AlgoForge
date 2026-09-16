@@ -15,13 +15,6 @@ export const useAnalyticsHeatmap = (year?: number) => {
   });
 };
 
-export const useAnalyticsStreaks = () => {
-  return useQuery({
-    queryKey: ['analytics', 'streaks'],
-    queryFn: analyticsApi.getStreaks,
-  });
-};
-
 export const useTopicMastery = () => {
   return useQuery({
     queryKey: ['analytics', 'topic-mastery'],

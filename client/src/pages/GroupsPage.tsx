@@ -16,6 +16,7 @@ export default function GroupsPage() {
   const [newGroupName, setNewGroupName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   const leaveGroup = useLeaveGroup();
   const { data: groupDetail, isLoading: isLoadingDetail } = useGroupDetail(selectedGroupId || '');
@@ -46,10 +47,15 @@ export default function GroupsPage() {
   };
 
   const handleLeaveGroup = () => {
-    if (selectedGroupId && window.confirm('Are you sure you want to leave this group?')) {
+    setIsLeaveModalOpen(true);
+  };
+
+  const confirmLeaveGroup = () => {
+    if (selectedGroupId) {
       leaveGroup.mutate(selectedGroupId, {
         onSuccess: () => {
           setSelectedGroupId(null);
+          setIsLeaveModalOpen(false);
           toast.success('Left group successfully');
         },
         onError: (err: any) => {
@@ -230,6 +236,26 @@ export default function GroupsPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal isOpen={isLeaveModalOpen} onClose={() => setIsLeaveModalOpen(false)} title="Confirm Leave Group">
+        <div className="space-y-4">
+          <p className="text-text-muted">
+            Are you sure you want to leave this group? You will need an invite code to rejoin.
+          </p>
+          <div className="flex items-center gap-3 mt-6">
+            <button onClick={() => setIsLeaveModalOpen(false)} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button 
+              onClick={confirmLeaveGroup}
+              disabled={leaveGroup.isPending}
+              className="btn-primary bg-danger hover:bg-danger/80 border-transparent text-white flex-1"
+            >
+              {leaveGroup.isPending ? 'Leaving...' : 'Leave Group'}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

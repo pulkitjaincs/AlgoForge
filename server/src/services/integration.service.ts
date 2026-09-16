@@ -18,7 +18,7 @@ export const getIntegrations = async (userId: string) => {
   const cached = await cache.get(cacheKey);
   if (cached) return cached as PlatformIntegration[];
   const result = await integrationRepository.findByUserId(userId);
-  await cache.setWithTag(cacheKey, `user:${userId}`, result, 300);
+  await cache.setWithTag(cacheKey, `user:${userId}:integrations`, result, 300);
   return result;
 };
 
@@ -44,13 +44,13 @@ export const linkIntegration = async (userId: string, platform: string, username
     await backgroundQueue.add('platform-sync', { userId, integrations: [integration] });
   }
 
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:integrations`);
   return { ...integration, _message: 'Sync queued successfully in the background' };
 };
 
 export const unlinkIntegration = async (userId: string, platform: string) => {
   await integrationRepository.delete(userId, platform);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:integrations`);
 };
 
 export const syncAllIntegrations = async (userId: string) => {

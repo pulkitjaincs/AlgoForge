@@ -37,6 +37,7 @@ export const useDeleteTopic = () => {
     mutationFn: topicsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Topic deleted');
     },
   });

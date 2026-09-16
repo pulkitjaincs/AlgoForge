@@ -30,6 +30,7 @@ export const useDeleteSubTopic = () => {
     mutationFn: ({ topicId, subTopicId }: { topicId: string; subTopicId: string }) => subtopicsApi.delete(topicId, subTopicId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Sub-topic deleted');
     },
   });

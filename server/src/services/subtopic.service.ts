@@ -15,7 +15,7 @@ export const createSubTopic = async (userId: string, topicId: string, data: Crea
     order: count,
     topicId,
   });
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
   return subTopic;
 };
 
@@ -26,7 +26,7 @@ export const updateSubTopic = async (userId: string, subTopicId: string, data: U
   if (subTopic.topic.userId !== userId || subTopic.topic.deletedAt !== null) throw new AppError('Unauthorized or topic deleted', 403);
 
   const updated = await subTopicRepository.update(subTopicId, data);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
   return updated;
 };
 
@@ -37,7 +37,7 @@ export const deleteSubTopic = async (userId: string, subTopicId: string) => {
   if (subTopic.topic.userId !== userId || subTopic.topic.deletedAt !== null) throw new AppError('Unauthorized or topic deleted', 403);
 
   await subTopicRepository.softDelete(subTopicId);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
 };
 
 export const reorderSubTopics = async (userId: string, topicId: string, orderedIds: string[]) => {
@@ -45,6 +45,6 @@ export const reorderSubTopics = async (userId: string, topicId: string, orderedI
   if (!topic) throw new AppError('Topic not found', 404);
 
   await subTopicRepository.reorder(topicId, orderedIds);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
 };
 

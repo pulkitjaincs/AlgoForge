@@ -6,6 +6,7 @@ import AuthLayout from './layouts/AuthLayout';
 import AppLayout from './layouts/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { LoadingSpinner } from './components/shared/LoadingSpinner';
 
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
@@ -30,7 +31,7 @@ export default function App() {
     <>
       <Toaster position="top-right" />
       <ErrorBoundary>
-        <Suspense fallback={<div className="flex h-screen items-center justify-center text-brand-primary">Loading...</div>}>
+        <Suspense fallback={<LoadingSpinner fullScreen />}>
           <Routes>
             {/* Public Landing */}
             <Route element={<LandingLayout />}>

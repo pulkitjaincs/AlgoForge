@@ -12,11 +12,6 @@ export const getHeatmap = async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data });
 };
 
-export const getStreaks = async (req: Request, res: Response) => {
-  const data = await analyticsService.getStreaks(req.user!.id);
-  res.status(200).json({ success: true, data });
-};
-
 export const getTopicMastery = async (req: Request, res: Response) => {
   const data = await analyticsService.getTopicMastery(req.user!.id);
   res.status(200).json({ success: true, data });

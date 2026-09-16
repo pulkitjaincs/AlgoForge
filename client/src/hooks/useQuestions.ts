@@ -10,6 +10,7 @@ export const useCreateQuestion = () => {
       questionsApi.create(topicId, subTopicId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Question added');
     },
   });
@@ -34,6 +35,7 @@ export const useDeleteQuestion = () => {
       questionsApi.delete(topicId, subTopicId, questionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Question deleted');
     },
   });

@@ -28,45 +28,6 @@ export const analyticsRepository = {
     }));
   },
 
-  async getStreaks(userId: string) {
-    // Computes streaks by distinct date
-    const rawResult = await prisma.$queryRaw<
-      { current_streak: number; max_streak: number; last_active: Date | null }[]
-    >`
-      WITH attempt_dates AS (
-        SELECT DISTINCT DATE_TRUNC('day', "solvedAt") AS active_date
-        FROM "QuestionAttempt"
-        WHERE "userId" = ${userId}
-      ),
-      date_groups AS (
-        SELECT 
-          active_date,
-          active_date - (ROW_NUMBER() OVER(ORDER BY active_date) * INTERVAL '1 day') AS grp
-        FROM attempt_dates
-      ),
-      streaks AS (
-        SELECT 
-          COUNT(*) AS streak_length,
-          MAX(active_date) AS streak_end
-        FROM date_groups
-        GROUP BY grp
-      )
-      SELECT 
-        COALESCE(MAX(streak_length), 0)::integer AS max_streak,
-        COALESCE((
-          SELECT streak_length 
-          FROM streaks 
-          WHERE streak_end >= DATE_TRUNC('day', NOW() - INTERVAL '1 day')
-          ORDER BY streak_end DESC 
-          LIMIT 1
-        ), 0)::integer AS current_streak,
-        (SELECT MAX(active_date) FROM attempt_dates) AS last_active
-      FROM streaks;
-    `;
-    
-    return rawResult[0] || { current_streak: 0, max_streak: 0, last_active: null };
-  },
-
   async getTopicMastery(userId: string) {
     const rawResult = await prisma.$queryRaw<
       { topic_id: string; title: string; total: bigint; solved: bigint }[]
@@ -95,5 +56,33 @@ export const analyticsRepository = {
       solved: Number(row.solved),
       percentage: Number(row.total) === 0 ? 0 : Math.round((Number(row.solved) / Number(row.total)) * 100),
     }));
-  }
+  },
+
+  async getHeatmapData(userId: string, year?: number) {
+    return prisma.questionAttempt.findMany({
+      where: {
+        userId,
+        ...(year ? {
+          solvedAt: {
+            gte: new Date(year, 0, 1),
+            lte: new Date(year, 11, 31, 23, 59, 59),
+          }
+        } : {}),
+      },
+      orderBy: { solvedAt: 'desc' },
+      select: { solvedAt: true },
+    });
+  },
+
+  async getVelocityData(userId: string, startDate: Date) {
+    return prisma.questionAttempt.findMany({
+      where: {
+        userId,
+        solvedAt: { gte: startDate },
+      },
+      orderBy: { solvedAt: 'desc' },
+      select: { solvedAt: true },
+    });
+  },
 };
+

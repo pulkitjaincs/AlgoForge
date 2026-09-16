@@ -37,34 +37,35 @@ export const createQuestion = async (userId: string, topicId: string, subTopicId
     subTopicId: subTopicId || null,
   });
   
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
   return question;
 };
 
 export const updateQuestion = async (userId: string, questionId: string, data: Partial<CreateQuestionInput> & Partial<UpdateNotesInput>) => {
   await assertQuestionOwnership(userId, questionId);
   const updated = await questionRepository.update(questionId, data);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
   return updated;
 };
 
 export const deleteQuestion = async (userId: string, questionId: string) => {
   await assertQuestionOwnership(userId, questionId);
   await questionRepository.softDelete(questionId);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
 };
 
 export const toggleSolved = async (userId: string, questionId: string) => {
   const question = await assertQuestionOwnership(userId, questionId);
   const updated = await questionRepository.update(questionId, { isSolved: !question.isSolved });
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
+  await cache.invalidateTag(`user:${userId}:analytics`);
   return updated;
 };
 
 export const toggleStarred = async (userId: string, questionId: string) => {
   const question = await assertQuestionOwnership(userId, questionId);
   const updated = await questionRepository.update(questionId, { isStarred: !question.isStarred });
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
   return updated;
 };
 
@@ -95,7 +96,9 @@ export const addAttempt = async (userId: string, questionId: string, data: AddAt
     nextReviewAt
   );
 
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
+  await cache.invalidateTag(`user:${userId}:analytics`);
+  await cache.invalidateTag(`user:${userId}:review`);
   return updatedQuestion;
 };
 
@@ -104,5 +107,5 @@ export const reorderQuestions = async (userId: string, orderedIds: string[]) => 
   // Verify ownership of the first question, assume rest are same topic/subtopic
   await assertQuestionOwnership(userId, orderedIds[0]);
   await questionRepository.reorder(orderedIds);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:topics`);
 };

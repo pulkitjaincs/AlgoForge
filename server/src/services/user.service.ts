@@ -37,7 +37,7 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput) =>
     }
   }
   const updated = await userRepository.update(userId, data);
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:profile`);
   return updated;
 };
 
@@ -47,7 +47,7 @@ export const updateEmail = async (userId: string, data: UpdateEmailInput) => {
     throw new AppError('Email already in use', 400);
   }
   const updated = await userRepository.update(userId, { email: data.email });
-  await cache.invalidateTag(`user:${userId}`);
+  await cache.invalidateTag(`user:${userId}:profile`);
   return updated;
 };
 

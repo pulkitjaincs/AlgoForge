@@ -31,7 +31,7 @@ The backend follows a strict layered architecture to separate concerns, making t
 | **Middleware** | Intercepts requests for auth, validation, and rate limiting. | Zod, Helmet, JWT, Rate Limit |
 | **Controllers** | Thin adapters. Parses `req`, calls Service, sends `res`. | Express 5 |
 | **Services** | Core business logic. No HTTP knowledge. | TypeScript |
-| **Repositories** | Dedicated Data Access Layer (Class-based singletons). | Prisma ORM, ioredis |
+| **Repositories** | Dedicated Data Access Layer (Class-based singletons). Encapsulates database queries including SQL-native analytics aggregations and heatmaps. | Prisma ORM, raw PostgreSQL, ioredis |
 
 ## 3. Authentication & Security Pipeline
 
@@ -39,7 +39,7 @@ AlgoForge uses stateless JWT authentication via `HttpOnly` cookies to protect ag
 
 **Middleware & Token Pipeline Order:**
 1. `helmet()` — Sets secure HTTP headers and Content Security Policy (CSP).
-2. `rateLimit()` — Granular limiters (global + strict limits for login/register/refresh/sync).
+2. `rateLimit()` — Granular limiters (global + strict limits for login/register/refresh/sync/analytics).
 3. `sanitize()` — Strips dangerous keys to prevent NoSQL injection and Prototype Pollution.
 4. `cookieParser()` — Parses `HttpOnly` cookies.
 5. `doubleCsrfProtection` — Validates CSRF tokens using the Double Submit Cookie pattern.
@@ -53,10 +53,13 @@ Refresh tokens use a **Token Family Lineage** architecture. Every session has a 
 ## 4. Frontend Architecture
 
 - **Routing & Layout:** `react-router-dom` is used for multi-page routing, featuring `AuthLayout` for public routes and `AppLayout` with `ProtectedRoute` for authenticated sessions. The `AppLayout` features a resilient, viewport-bounded fixed sidebar (`100dvh`) that ensures stable UI transitions without layout shifts.
+- **Global Command Palette (`Ctrl+K`):** Mounted globally in `AppLayout.tsx`, allowing instant keyboard navigation across topics, questions, and pages from anywhere in the application.
+- **Notifications System:** A header notification bell backed by `useNotifications` polling query renders real-time alerts (e.g. background sync completion) with unread counters and one-click mark-as-read functionality.
+- **Unified Multi-Platform Dashboard:** The analytics dashboard combines native sheet attempts with third-party sync data (LeetCode, Codeforces). Users can interactively filter between "All Platforms", "AlgoForge Sheets", "LeetCode", and "Codeforces". Streaks are dynamically computed from the combined activity heatmap.
 - **State Management:**
-  - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates for rapid interactions.
+  - **Server State:** `@tanstack/react-query` handles all API communication, caching, synchronization, and optimistic UI updates (e.g., instant toggling of `isSolved` and `isStarred`).
   - **UI State:** `Zustand` (`useUIStore`) is restricted strictly to global transient UI states (like command palette visibility and navigation targets).
-- **Component Design:** The codebase follows a feature-based architecture (`features/sheet`, `shared`, `features/profile`) prioritizing focused, decomposed components over monoliths. The Settings and Profile flow are deeply integrated to offer streamlined account management.
+- **Component Design & UX Polish:** Built with modern design tokens, branded `<LoadingSpinner>` glowing spinners, realistic card skeletons, and custom AlgoForge `<Modal>` confirmations.
 - **Drag-and-Drop:** `@dnd-kit` powers the smooth interactive reordering of topics, subtopics, and questions with custom sortable list strategies. All reorder mutations utilize React Query `onMutate` optimistic updates to completely eliminate perceived network lag.
 
 ## 5. Caching Strategy
@@ -65,10 +68,10 @@ AlgoForge applies a **Cache-Aside** pattern backed by Redis (`ioredis`) to optim
 
 - **Cached Domains:**
   - **Contests:** Cross-platform contest aggregation results (LeetCode, Codeforces, CodeChef, AtCoder).
-  - **Analytics:** Summary, heatmaps, streaks, topic mastery, weak areas, and weekly velocity.
+  - **Analytics:** Summary stats, heatmaps, topic mastery, weak areas, and weekly velocity.
   - **Spaced Repetition:** Daily review queues and review stats.
   - **Integrations & Profiles:** Platform stats and public user profiles.
-- **TTL & Granular Invalidation:** Cache entries use a 5-minute TTL. Granular cache invalidation leverages Redis `SCAN` (`invalidatePattern`) to accurately invalidate specific groups of keys (e.g. `topics:${userId}*`) without unnecessarily purging the entire user cache (like analytics or profiles) across the platform.
+- **TTL & Granular Invalidation Tags:** Cache entries use a 5-minute TTL. Granular cache invalidation leverages dedicated cache tags (`user:{userId}:topics`, `user:{userId}:analytics`, `user:{userId}:integrations`, `user:{userId}:profile`, `user:{userId}:review`) via `cache.invalidateTag()` to surgically invalidate only the affected cache domains without purging unrelated user data.
 - **Graceful Shutdown & Degradation:** Graceful termination safely closes Redis connections via `redis.quit()`. If Redis is offline or unconfigured, operations seamlessly fallback to PostgreSQL without application failure.
 
 ## 6. Background Processing & Distributed Workers (BullMQ)
@@ -91,6 +94,7 @@ server/src/workers/
 - **Job Registry**: A centralized dispatcher pattern in `workers/index.ts` routes jobs cleanly to pure processor functions.
 - **Scheduled Maintenance (Cron)**: Automated repeatable jobs run during off-peak hours for database hygiene (e.g., daily trash purge at 3:00 AM UTC, token cleanup at 4:00 AM UTC).
 - **Cache Invalidation**: Upon job completion, workers independently trigger `cache.invalidateTag()` so the frontend automatically receives fresh data on subsequent requests.
+- **In-App Notification Dispatch**: Processors (such as `platformSync.ts`) create in-app notifications in the PostgreSQL `Notification` table upon job completion, notifying the user via the bell icon in real time.
 
 ## 7. Database Transactions & ACID Consistency
 
@@ -118,6 +122,7 @@ erDiagram
     User ||--o{ GroupMember : joins
     Group ||--o{ GroupMember : has
     User ||--o{ RefreshToken : authenticates
+    User ||--o{ Notification : receives
 
     User {
         String id PK
@@ -169,6 +174,16 @@ erDiagram
         String tier
         Json activityData
     }
+    Notification {
+        String id PK
+        String userId FK
+        String title
+        String message
+        String type
+        Boolean isRead
+        String link
+        DateTime createdAt
+    }
     Topic {
         String id PK
         String title
@@ -218,7 +233,8 @@ erDiagram
 AlgoForge incorporates an intelligent learning system to optimize study efficiency:
 
 - **Spaced Repetition (SM-2 Variant):** Questions are scheduled for review based on a modified SM-2 algorithm. When a user submits an attempt, they provide a self-evaluated confidence score (1-5). The system calculates the next optimal review date (`nextReviewAt`) to maximize retention.
-- **Analytics Engine:** The analytics service leverages raw PostgreSQL SQL queries (`GROUP BY`, `CTE`, and conditional aggregations) instead of performing in-memory map-reduce operations. This guarantees fast performance even as the user scales to thousands of questions and attempts.
+- **SQL-Native Analytics Engine:** The analytics service leverages raw PostgreSQL SQL queries (`GROUP BY`, `CTE`, and conditional aggregations) via `analytics.repository.ts` instead of performing in-memory map-reduce operations. This guarantees fast performance even as the user scales to thousands of questions and attempts.
+- **Multi-Platform Analytics Aggregation & Filtering:** In addition to local question sheet metrics, the dashboard integrates third-party solved problem counts and activity logs from LeetCode and Codeforces. Users can dynamically toggle views between "All Platforms", "AlgoForge Sheets", "LeetCode", and "Codeforces". Streaks (current and longest) are dynamically computed from the combined activity heatmap.
 - **Daily Practice Plans:** The `practice.service.ts` dynamically generates a daily practice session by pulling from three strategic queues:
   1. **Review Queue:** Questions due for spaced repetition today.
   2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.

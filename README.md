@@ -12,12 +12,14 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Personalized Accounts:** Secure sign-up, login, and an integrated user profile with streamlined settings management.
 - **Responsive Layout:** Viewport-bounded fixed sidebar ensuring smooth and stable navigation without layout shifts.
 - **Hierarchical Tracking:** Organize questions into Topics and Subtopics.
-- **Multi-page Dashboard:** Dedicated views for your main sheet, analytics dashboard, and spaced-repetition review.
-- **Progress Metrics & Analytics:** Visual indicators of solved questions, streaks, weekly velocity, activity heatmaps, and topic mastery radar charts.
+- **Unified Multi-Platform Analytics:** Visual indicators of solved questions, difficulty distribution (Easy, Medium, Hard), weekly velocity, activity heatmaps, and topic mastery radar charts—aggregating both native AlgoForge sheet attempts and synced data from LeetCode & Codeforces.
+- **Platform Filtering & Toggles:** Switch seamlessly between "All Platforms", "AlgoForge Sheets", "LeetCode", or "Codeforces" views on your dashboard to inspect platform-specific or aggregated progress.
+- **Global Command Palette:** Fast keyboard-first navigation with `Ctrl+K` accessible across all pages to quickly jump to topics, problems, and views.
+- **In-App Notifications Bell:** Central notification dropdown with real-time polling and unread badges alerting you when third-party platform syncs complete.
 - **Spaced Repetition & Practice Plans:** SM-2 based spaced repetition system that generates daily review queues and custom practice plans targeting weak areas.
-- **Rich Metadata:** Track difficulty, platforms (LeetCode, GFG), and company tags.
-- **Study Notes:** Markdown-supported notes attached directly to questions.
+- **Rich Metadata & Notes:** Track difficulty, platforms (LeetCode, GFG, Codeforces), and company tags with markdown-supported study notes.
 - **Drag-and-Drop:** Freely reorder your curriculum to match your study plan with zero-latency optimistic UI updates.
+- **Modern UI Polish:** Branded glowing loading spinners, realistic skeleton cards, custom styled confirmation modals, and helpful empty states.
 
 ### Contest Tracker
 - **Multi-Platform Aggregation:** Real-time contest tracking for LeetCode, Codeforces, CodeChef, and AtCoder.
@@ -31,10 +33,10 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 
 ### Engineering Excellence
 - **Strictly Typed:** 100% TypeScript across frontend and backend, with a shared `@algoforge/shared` package for schemas.
-- **Distributed Background Processing:** BullMQ & Redis worker pipeline offloading heavy third-party platform syncs and scheduled maintenance jobs (automated trash purges and token cleanups).
-- **ACID Data Integrity:** Multi-query database operations (token rotation, attempts, group lifecycle, reordering) encapsulated inside atomic Prisma `$transaction` pipelines. Highly optimized raw SQL `$executeRawUnsafe` statements used for complex batch operations.
-- **High Performance:** Redis cache-aside pattern with granular pattern-based invalidation (e.g. `topics:${userId}*`) via `SCAN` for instant consistency without unnecessarily purging unrelated user caches.
-- **SQL-Native Analytics:** Advanced PostgreSQL features (`GROUP BY`, `CTE`s, conditional aggregations) push heavy analytics computations directly to the database layer for maximum scalability.
+- **Distributed Background Processing:** BullMQ & Redis worker pipeline offloading heavy third-party platform syncs and scheduled maintenance jobs (automated trash purges, token cleanups, and automated sync-completion notifications).
+- **ACID Data Integrity:** Multi-query database operations (token rotation, attempts, group lifecycle, reordering) encapsulated inside atomic Prisma `$transaction` pipelines. Highly optimized raw SQL `$executeRawUnsafe` statements (`CASE WHEN`) used for atomic batch reordering.
+- **Granular Cache Invalidation:** Redis cache-aside pattern with fine-grained tags (e.g., `user:{userId}:topics`, `user:{userId}:analytics`, `user:{userId}:integrations`) enabling surgical invalidation without purging unrelated user caches.
+- **SQL-Native Analytics:** Advanced PostgreSQL raw queries (`GROUP BY`, conditional sums, CTEs) push heavy analytics computations directly to the database layer via `analytics.repository.ts`.
 - **Advanced Security:** JWT Auth (HttpOnly cookies), Token Family Lineage (replay attack protection with automatic session chain revocation), granular Rate Limiting, prototype pollution protection, and strict Zod payload validation.
 - **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers. Playwright for E2E.
 - **Monorepo Architecture:** Managed by `pnpm` workspaces and `Turborepo` for blazingly fast CI and local builds.
@@ -156,7 +158,8 @@ All endpoints are versioned under `/api/v1/`. Responses follow a consistent enve
 | **SubTopics**| `POST /topics/:topicId/subtopics`, `PUT /subtopics/:subTopicId`, `PUT /topics/:topicId/subtopics/reorder`, `DELETE /subtopics/:subTopicId` |
 | **Questions**| `POST /topics/:topicId/questions`, `POST /topics/:topicId/subtopics/:subTopicId/questions`, `PUT /questions/:questionId`, `PATCH /questions/:questionId/solved`, `PATCH /questions/:questionId/star`, `PUT /questions/:questionId/notes`, `PUT /questions/reorder`, `DELETE /questions/:questionId`, `POST /questions/:questionId/attempts` |
 | **Integrations**| `GET /integrations`, `POST /integrations`, `DELETE /integrations/:platform`, `POST /integrations/sync`, `GET /integrations/heatmap` |
-| **Analytics**| `GET /analytics/summary`, `GET /analytics/heatmap`, `GET /analytics/streaks`, `GET /analytics/mastery`, `GET /analytics/weak-areas`, `GET /analytics/velocity` |
+| **Analytics**| `GET /analytics/summary`, `GET /analytics/heatmap`, `GET /analytics/topic-mastery`, `GET /analytics/weak-areas`, `GET /analytics/velocity` |
+| **Notifications**| `GET /notifications`, `POST /notifications/read`, `POST /notifications/read-all` |
 | **Users**| `PATCH /users/me/profile`, `GET /users/check-username`, `GET /users/:username/profile` |
 | **Sheets**| `POST /sheets/publish`, `GET /sheets`, `GET /sheets/:id` |
 | **Groups**| `POST /groups`, `POST /groups/join`, `GET /groups`, `GET /groups/:id` |
