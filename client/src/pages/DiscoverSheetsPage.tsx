@@ -92,7 +92,7 @@ export default function DiscoverSheetsPage() {
               <div className="flex items-center justify-between pt-4 border-t border-border-dark mt-auto">
                 <Link to={`/u/${sheet.author?.username}`} className="flex items-center gap-2 hover:bg-bg-elevated p-1.5 -ml-1.5 rounded-lg transition-colors">
                   {sheet.author?.avatarUrl ? (
-                    <img src={sheet.author.avatarUrl} alt="" className="w-6 h-6 rounded-full bg-border-dark object-cover" />
+                    <img src={sheet.author.avatarUrl} alt="" loading="lazy" className="w-6 h-6 rounded-full bg-border-dark object-cover" />
                   ) : (
                     <div className="w-6 h-6 rounded-full bg-brand-accent/20 text-brand-accent flex items-center justify-center text-[10px] font-bold">
                       {sheet.author?.name?.charAt(0).toUpperCase()}

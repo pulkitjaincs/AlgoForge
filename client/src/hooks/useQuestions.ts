@@ -10,6 +10,7 @@ export const useCreateQuestion = () => {
       questionsApi.create(topicId, subTopicId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['topicStats'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Question added');
     },
@@ -23,6 +24,7 @@ export const useUpdateQuestion = () => {
       questionsApi.update(questionId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['topicStats'] });
       toast.success('Question updated');
     },
   });
@@ -35,6 +37,7 @@ export const useDeleteQuestion = () => {
       questionsApi.delete(topicId, subTopicId, questionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['topicStats'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Question deleted');
     },
@@ -75,6 +78,7 @@ export const useToggleSolved = () => {
     onSettled: () => {
       // Silent background refetch
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['topicStats'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
@@ -135,6 +139,7 @@ export const useResetProgress = () => {
     mutationFn: questionsApi.resetProgress,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['topicStats'] });
       toast.success('Progress reset');
     },
   });

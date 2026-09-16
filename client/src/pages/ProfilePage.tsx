@@ -72,7 +72,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <div className="relative group">
               {formData.avatarUrl ? (
-                <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full bg-bg-elevated border border-border-dark object-cover" />
+                <img src={formData.avatarUrl} alt="Avatar" loading="lazy" className="w-24 h-24 rounded-full bg-bg-elevated border border-border-dark object-cover" />
               ) : (
                 <div className="w-24 h-24 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center text-4xl font-bold border border-brand-primary/20">
                   {user.name?.charAt(0).toUpperCase()}

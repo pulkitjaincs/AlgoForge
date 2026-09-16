@@ -1,12 +1,19 @@
 import { redis } from '../config/redis.js';
 import { logger } from './logger.js';
+import zlib from 'zlib';
+import { promisify } from 'util';
+
+const compress = promisify(zlib.brotliCompress);
+const decompress = promisify(zlib.brotliDecompress);
 
 export const cache = {
   async get<T>(key: string): Promise<T | null> {
     if (!redis) return null;
     try {
-      const data = await redis.get(key);
-      return data ? JSON.parse(data) : null;
+      const data = await redis.getBuffer(key);
+      if (!data) return null;
+      const decompressed = await decompress(data);
+      return JSON.parse(decompressed.toString('utf-8'));
     } catch (err) {
       logger.error({ err, key }, 'Redis GET error');
       return null;
@@ -16,7 +23,8 @@ export const cache = {
   async set(key: string, data: unknown, ttlSeconds: number = 300): Promise<void> {
     if (!redis) return;
     try {
-      await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+      const compressed = await compress(JSON.stringify(data));
+      await redis.set(key, compressed, 'EX', ttlSeconds);
     } catch (err) {
       logger.error({ err, key }, 'Redis SET error');
     }
@@ -34,7 +42,8 @@ export const cache = {
   async setWithTag(key: string, tag: string, data: unknown, ttlSeconds: number = 300): Promise<void> {
     if (!redis) return;
     try {
-      await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+      const compressed = await compress(JSON.stringify(data));
+      await redis.set(key, compressed, 'EX', ttlSeconds);
       const tagKey = `tag:${tag}`;
       await redis.sadd(tagKey, key);
       await redis.expire(tagKey, ttlSeconds);

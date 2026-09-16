@@ -132,6 +132,22 @@ export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
     subTopics.reduce((acc, st) => acc + (st.questions?.filter(q => q.isSolved).length || 0), 0);
   const progress = totalQuestions > 0 ? (solvedQuestions / totalQuestions) * 100 : 0;
 
+  const handleOpenAddQuestion = React.useCallback((stId: string | null) => {
+    setQuestionModal({ isOpen: true, subTopicId: stId, mode: 'add', initialData: null });
+  }, []);
+
+  const handleOpenEditQuestion = React.useCallback((stId: string | null, qObj: any) => {
+    setQuestionModal({ isOpen: true, subTopicId: stId, mode: 'edit', initialData: qObj });
+  }, []);
+
+  const handleOpenEditSubTopic = React.useCallback((stObj: SubTopic) => {
+    setSubTopicModal({ isOpen: true, subTopic: stObj });
+  }, []);
+
+  const handleOpenEditTopicQuestion = React.useCallback((qObj: any) => {
+    handleOpenEditQuestion(null, qObj);
+  }, [handleOpenEditQuestion]);
+
   return (
     <div ref={setNodeRef} style={style} id={topic.id} className="glass glass-hover group/topic animate-fade-in">
       <div className="flex items-center">
@@ -198,9 +214,9 @@ export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
                       key={st.id}
                       subTopic={st}
                       topicId={topic.id}
-                      onAddQuestion={(stId) => setQuestionModal({ isOpen: true, subTopicId: stId, mode: 'add', initialData: null })}
-                      onEditSubTopic={(stObj) => setSubTopicModal({ isOpen: true, subTopic: stObj })}
-                      onEditQuestion={(stId, qObj) => setQuestionModal({ isOpen: true, subTopicId: stId, mode: 'edit', initialData: qObj })}
+                      onAddQuestion={handleOpenAddQuestion}
+                      onEditSubTopic={handleOpenEditSubTopic}
+                      onEditQuestion={handleOpenEditQuestion}
                     />
                   ))}
                 </SortableContext>
@@ -218,7 +234,7 @@ export const TopicCard = React.memo(({ topic }: TopicCardProps) => {
                       question={q}
                       topicId={topic.id}
                       subTopicId={null}
-                      onEdit={(qObj) => setQuestionModal({ isOpen: true, subTopicId: null, mode: 'edit', initialData: qObj })}
+                      onEdit={handleOpenEditTopicQuestion}
                     />
                   ))}
                 </SortableContext>

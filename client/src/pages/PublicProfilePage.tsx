@@ -207,7 +207,7 @@ export default function PublicProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 blur-[80px] rounded-full pointer-events-none" />
           
           {profile.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="" className="w-32 h-32 rounded-full border border-border-dark object-cover z-10 bg-bg-elevated" />
+            <img src={profile.avatarUrl} alt="" loading="lazy" className="w-32 h-32 rounded-full border border-border-dark object-cover z-10 bg-bg-elevated" />
           ) : (
             <div className="w-32 h-32 rounded-full border border-brand-primary/30 bg-brand-primary/10 text-brand-primary flex items-center justify-center text-5xl font-bold z-10">
               {profile.name.charAt(0).toUpperCase()}

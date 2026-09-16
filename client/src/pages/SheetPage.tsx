@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import {
   DndContext,
   closestCenter,
@@ -19,7 +20,7 @@ import { Modal } from '../components/shared/Modal';
 
 import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search } from 'lucide-react';
 import { FilterBar } from '../components/features/sheet/FilterBar';
-import { useTopics, useCreateTopic, useReorderTopics } from '../hooks/useTopics';
+import { useTopics, useCreateTopic, useReorderTopics, useTopicStats } from '../hooks/useTopics';
 import { useResetProgress } from '../hooks/useQuestions';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -44,17 +45,20 @@ export default function SheetPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  let totalNum = 0, solvedNum = 0;
-  topics.forEach(topic => {
-    topic.questions?.forEach(q => { totalNum++; if (q.isSolved) solvedNum++; });
-    topic.subTopics?.forEach(st => {
-      st.questions?.forEach(q => { totalNum++; if (q.isSolved) solvedNum++; });
-    });
+  const listRef = useRef<HTMLDivElement>(null);
+  
+  const virtualizer = useWindowVirtualizer({
+    count: topics.length,
+    estimateSize: () => 90,
+    overscan: 5,
   });
-  const stats = {
-    total: totalNum,
-    solved: solvedNum,
-    progress: totalNum > 0 ? Math.round((solvedNum / totalNum) * 100) : 0
+
+  const { data: statsData } = useTopicStats();
+
+  const stats = statsData || {
+    total: 0,
+    solved: 0,
+    progress: 0
   };
 
   const handleAddTopic = (e: React.FormEvent) => {
@@ -210,10 +214,27 @@ export default function SheetPage() {
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={topics.map(t => t.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-4">
-                {topics.map(topic => (
-                  <TopicCard key={topic.id} topic={topic} />
-                ))}
+              <div ref={listRef} style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const topic = topics[virtualRow.index];
+                  return (
+                    <div
+                      key={topic.id}
+                      data-index={virtualRow.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualRow.start}px)`,
+                        paddingBottom: '1rem' // replaces space-y-4
+                      }}
+                    >
+                      <TopicCard topic={topic} />
+                    </div>
+                  );
+                })}
               </div>
             </SortableContext>
           </DndContext>

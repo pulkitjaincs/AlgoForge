@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import { Topic } from '@algoforge/shared';
 
 export const topicsApi = {
+  getStats: (): Promise<{ total: number; solved: number; progress: number }> => apiClient.get('/topics/stats'),
   getAll: (queryStr: string = ''): Promise<Topic[]> => apiClient.get(`/topics${queryStr ? `?${queryStr}` : ''}`),
   create: (data: { title: string; description?: string }): Promise<Topic> => apiClient.post('/topics', data),
   update: (id: string, data: { title: string; description?: string }): Promise<Topic> => apiClient.put(`/topics/${id}`, data),

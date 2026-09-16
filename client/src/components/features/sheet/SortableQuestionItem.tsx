@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { QuestionItem } from './QuestionItem';
 import { Question } from '@algoforge/shared';
+import React from 'react';
 
 interface SortableQuestionItemProps {
   question: Question;
@@ -11,7 +12,8 @@ interface SortableQuestionItemProps {
   onEdit: (q: Question) => void;
 }
 
-export const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }: SortableQuestionItemProps) => {
+
+export const SortableQuestionItem = React.memo(({ question, topicId, subTopicId, onEdit }: SortableQuestionItemProps) => {
   const itemId = question.id || '';
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: itemId });
 
@@ -21,6 +23,10 @@ export const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }: 
     zIndex: isDragging ? 40 : 1,
     opacity: isDragging ? 0.7 : 1,
   };
+
+  const handleEdit = React.useCallback(() => {
+    onEdit(question);
+  }, [onEdit, question]);
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-center group/question">
@@ -32,9 +38,9 @@ export const SortableQuestionItem = ({ question, topicId, subTopicId, onEdit }: 
           question={question}
           topicId={topicId}
           subTopicId={subTopicId}
-          onEdit={() => onEdit(question)}
+          onEdit={handleEdit}
         />
       </div>
     </div>
   );
-};
+});

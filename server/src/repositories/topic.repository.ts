@@ -57,23 +57,49 @@ export class TopicRepository {
   }
 
   async findManyWithFilters(userId: string, questionFilter: any) {
+    const questionSelect = {
+      id: true,
+      title: true,
+      isSolved: true,
+      difficulty: true,
+      order: true,
+      problemUrl: true,
+      platform: true,
+      companyTags: true,
+      isStarred: true,
+      notes: true,
+      topicId: true,
+      subTopicId: true,
+    };
+
     return prisma.topic.findMany({
       where: { userId, deletedAt: null },
       orderBy: { order: 'asc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        order: true,
+        status: true,
         subTopics: {
           where: { deletedAt: null },
           orderBy: { order: 'asc' },
-          include: {
+          select: {
+            id: true,
+            title: true,
+            order: true,
+            topicId: true,
             questions: { 
               where: questionFilter,
-              orderBy: { order: 'asc' } 
+              orderBy: { order: 'asc' },
+              select: questionSelect
             },
           },
         },
         questions: { 
           where: questionFilter,
-          orderBy: { order: 'asc' } 
+          orderBy: { order: 'asc' },
+          select: questionSelect
         },
       },
     });

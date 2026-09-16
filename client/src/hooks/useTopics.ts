@@ -9,6 +9,16 @@ export const useTopics = (queryStr: string = '') => {
   });
 };
 
+export const useTopicStats = () => {
+  return useQuery({
+    queryKey: ['topicStats'],
+    queryFn: async () => {
+      const res = await topicsApi.getStats() as any;
+      return res.data;
+    },
+  });
+};
+
 export const useCreateTopic = () => {
   const queryClient = useQueryClient();
   return useMutation({

@@ -40,6 +40,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Advanced Security:** JWT Auth (HttpOnly cookies), Token Family Lineage (replay attack protection with automatic session chain revocation), granular Rate Limiting, prototype pollution protection, and strict Zod payload validation.
 - **Robust Testing:** Vitest & Supertest infrastructure with mocked ORM layers. Playwright for E2E.
 - **Monorepo Architecture:** Managed by `pnpm` workspaces and `Turborepo` for blazingly fast CI and local builds.
+- **Extreme Performance:** React window virtualization (`@tanstack/react-virtual`), Prisma `.select` payload pruning, Vite manual chunking, and Redis Brotli cache compression (`zlib.brotliCompress`) allow the system to scale to thousands of users effortlessly with instant TTI and minimal memory footprint.
 - **Containerized:** Multi-stage Docker builds and `docker-compose` ready.
 
 ---

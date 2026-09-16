@@ -16,4 +16,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['lucide-react', 'clsx', 'tailwind-merge', 'sonner'],
+          charts: ['recharts'],
+          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          sentry: ['@sentry/react', '@sentry/tracing']
+        },
+      },
+    },
+  },
 })
