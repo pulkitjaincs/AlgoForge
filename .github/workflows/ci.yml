@@ -121,7 +121,7 @@ jobs:
 
       - name: Push database schema
         working-directory: server
-        run: pnpm exec prisma db push --skip-generate
+        run: pnpm exec prisma db push
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
