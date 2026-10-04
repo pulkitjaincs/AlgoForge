@@ -33,6 +33,7 @@ jobs:
 
       - name: TypeScript type-check
         run: |
+          pnpm --filter @algoforge/shared run build
           pnpm --filter client exec tsc --noEmit
           pnpm --filter algoforge-server exec tsc --noEmit
 
