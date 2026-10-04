@@ -11,7 +11,8 @@ jobs:
     name: Build, Lint, Test, and E2E
     runs-on: ubuntu-latest
     env:
-      REDIS_URL: ${{ secrets.REDIS_URL }}
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      REDIS_URL: ${{ vars.REDIS_URL }}
       JWT_SECRET: "test-secret-key-that-is-at-least-32-chars-long-for-e2e"
       CLIENT_URL: http://127.0.0.1:5173
       NODE_ENV: test
