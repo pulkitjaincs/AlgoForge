@@ -7,100 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  backend:
+  ci:
+    name: Build, Lint, Test, and E2E
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 10
-          
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build shared package
-        run: pnpm --filter @algoforge/shared build
-
-      - name: TypeScript type-check
-        working-directory: server
-        run: pnpm exec tsc --noEmit
-
-      - name: Lint
-        working-directory: server
-        run: pnpm run lint
-
-      - name: Run tests with coverage
-        working-directory: server
-        run: pnpm run test:coverage
-
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 10
-          
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build shared package
-        run: pnpm --filter @algoforge/shared build
-
-      - name: TypeScript type-check
-        working-directory: client
-        run: pnpm exec tsc --noEmit
-
-      - name: Lint
-        working-directory: client
-        run: pnpm run lint
-
-      - name: Build
-        working-directory: client
-        run: pnpm run build
-
-  e2e:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: algoforge_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/algoforge_test
+      REDIS_URL: ${{ secrets.REDIS_URL }}
       JWT_SECRET: "test-secret-key-that-is-at-least-32-chars-long-for-e2e"
-      REDIS_URL: redis://localhost:6379
-      CLIENT_URL: http://localhost:5173
+      CLIENT_URL: http://127.0.0.1:5173
       NODE_ENV: test
       CI: true
     steps:
@@ -118,16 +31,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build shared package
-        run: pnpm --filter @algoforge/shared build
+      - name: TypeScript type-check
+        run: |
+          pnpm --filter client exec tsc --noEmit
+          pnpm --filter algoforge-server exec tsc --noEmit
 
-      - name: Generate Prisma client
-        working-directory: server
-        run: pnpm exec prisma generate
+      - name: Lint All (Turbo)
+        run: pnpm run lint
 
-      - name: Push database schema
+      - name: Build All (Turbo)
+        run: pnpm run build
+
+      - name: Unit Tests (Turbo)
+        run: pnpm run test:coverage
+
+      - name: Generate Prisma client & Push Schema
         working-directory: server
-        run: pnpm exec prisma db push
+        run: |
+          pnpm exec prisma generate
+          pnpm exec prisma db push
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
