@@ -27,8 +27,8 @@ const startServer = async () => {
         process.exit(1);
     }
 
-    const server = app.listen(env.PORT, () => {
-        logger.info(`🚀 Server running at http://localhost:${env.PORT}`);
+    const server = app.listen(env.PORT, '0.0.0.0', () => {
+        logger.info(`🚀 Server running at http://0.0.0.0:${env.PORT}`);
     });
 
     const shutdown = async (signal: string) => {

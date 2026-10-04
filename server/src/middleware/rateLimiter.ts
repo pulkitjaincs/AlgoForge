@@ -15,7 +15,7 @@ export const loginLimiter = rateLimit({
 // Stricter registration limiter: max 5 accounts created per 15 min per IP
 export const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === 'test' ? 100 : 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many accounts registered from this IP. Please try again later.' },
@@ -33,7 +33,7 @@ export const refreshLimiter = rateLimit({
 // General auth limiter
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: process.env.NODE_ENV === 'test' ? 100 : 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many authentication attempts, please try again later' },

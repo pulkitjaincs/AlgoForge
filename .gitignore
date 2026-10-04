@@ -30,3 +30,11 @@ sheet.json
 
 implementation_plan.md
 final_performance_analysis.md
+
+# Testing
+playwright-report/
+test-results/
+
+# TS Builds
+*.tsbuildinfo
+

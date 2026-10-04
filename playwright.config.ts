@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
   },
   projects: [
@@ -19,14 +19,14 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --filter algoforge-server dev',
-      url: 'http://localhost:3001/api/v1/health',
+      command: 'pnpm --filter algoforge-server exec tsx src/server.ts',
+      url: 'http://127.0.0.1:3001/api/v1/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },
     {
       command: 'pnpm --filter client dev',
-      url: 'http://localhost:5173',
+      url: 'http://127.0.0.1:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     }
