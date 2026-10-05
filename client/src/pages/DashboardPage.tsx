@@ -74,7 +74,7 @@ export default function DashboardPage() {
   const isLoading = !summary || !mastery || !weakAreas || !velocity || !heatmap || !dailyPlan;
 
   const aggregateStats = useMemo(() => {
-    let totalSolved = summary?.solvedQuestions || 0;
+    const totalSolved = summary?.solvedQuestions || 0;
     let peakRating = 0;
     let peakPlatform = '';
     let githubContributions = 0;
@@ -83,7 +83,6 @@ export default function DashboardPage() {
       if (int.platform === 'github') {
         githubContributions += int.contributions;
       } else {
-        totalSolved += int.solvedCount;
         if (int.maxRating > peakRating) {
           peakRating = int.maxRating;
           peakPlatform = int.platform;

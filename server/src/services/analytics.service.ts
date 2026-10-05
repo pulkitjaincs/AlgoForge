@@ -52,7 +52,9 @@ export const getSummary = async (userId: string, platforms: string[] = ['local']
   const integrations = await analyticsRepository.getPlatformIntegrations(userId);
   for (const integration of integrations) {
     if (platforms.includes(integration.platform)) {
-      solvedQuestions += integration.solvedCount;
+      if (integration.platform !== 'github') {
+        solvedQuestions += integration.solvedCount;
+      }
       const intAny = integration as any;
       if (intAny.statsData && typeof intAny.statsData === 'object') {
         const stats: any = intAny.statsData;
