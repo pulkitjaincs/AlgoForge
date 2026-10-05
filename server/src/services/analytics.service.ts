@@ -26,25 +26,46 @@ export interface VelocityEntry {
   count: number;
 }
 
-export const getSummary = async (userId: string): Promise<AnalyticsSummary> => {
-  const cacheKey = `analytics_summary:${userId}`;
+export const getSummary = async (userId: string, platforms: string[] = ['local']): Promise<AnalyticsSummary> => {
+  const cacheKey = `analytics_summary:${userId}:${platforms.sort().join(',')}`;
   const cached = await cache.get<AnalyticsSummary>(cacheKey);
   if (cached) return cached;
-
-  const stats = await analyticsRepository.getSummaryStats(userId);
 
   let totalQuestions = 0;
   let solvedQuestions = 0;
   const difficultyStats = { Easy: 0, Medium: 0, Hard: 0, Basic: 0 };
   const solvedByDifficulty = { Easy: 0, Medium: 0, Hard: 0, Basic: 0 };
 
-  for (const stat of stats) {
-    totalQuestions += stat.total;
-    solvedQuestions += stat.solved;
-    const diff = stat.difficulty;
-    if (diff in difficultyStats) {
-      difficultyStats[diff as keyof typeof difficultyStats] = stat.total;
-      solvedByDifficulty[diff as keyof typeof solvedByDifficulty] = stat.solved;
+  if (platforms.length === 0 || platforms.includes('local')) {
+    const stats = await analyticsRepository.getSummaryStats(userId);
+    for (const stat of stats) {
+      totalQuestions += stat.total;
+      solvedQuestions += stat.solved;
+      const diff = stat.difficulty;
+      if (diff in difficultyStats) {
+        difficultyStats[diff as keyof typeof difficultyStats] += stat.total;
+        solvedByDifficulty[diff as keyof typeof solvedByDifficulty] += stat.solved;
+      }
+    }
+  }
+
+  const integrations = await analyticsRepository.getPlatformIntegrations(userId);
+  for (const integration of integrations) {
+    if (platforms.includes(integration.platform)) {
+      solvedQuestions += integration.solvedCount;
+      const intAny = integration as any;
+      if (intAny.statsData && typeof intAny.statsData === 'object') {
+        const stats: any = intAny.statsData;
+        if (stats.difficulty) {
+          solvedByDifficulty.Easy += stats.difficulty.Easy || 0;
+          solvedByDifficulty.Medium += stats.difficulty.Medium || 0;
+          solvedByDifficulty.Hard += stats.difficulty.Hard || 0;
+          
+          difficultyStats.Easy += stats.difficulty.Easy || 0;
+          difficultyStats.Medium += stats.difficulty.Medium || 0;
+          difficultyStats.Hard += stats.difficulty.Hard || 0;
+        }
+      }
     }
   }
 
@@ -95,8 +116,8 @@ export const getWeakAreas = async (userId: string): Promise<TopicMastery[]> => {
   return result;
 };
 
-export const getVelocity = async (userId: string, period: string = 'weekly'): Promise<VelocityEntry[]> => {
-  const cacheKey = `analytics_velocity:${userId}:${period}`;
+export const getVelocity = async (userId: string, period: string = 'weekly', platforms: string[] = ['local']): Promise<VelocityEntry[]> => {
+  const cacheKey = `analytics_velocity:${userId}:${period}:${platforms.sort().join(',')}`;
   const cached = await cache.get<VelocityEntry[]>(cacheKey);
   if (cached) return cached;
 
@@ -104,13 +125,32 @@ export const getVelocity = async (userId: string, period: string = 'weekly'): Pr
   const weeks = 8;
   const startDate = new Date(today.getTime() - weeks * 7 * 24 * 60 * 60 * 1000);
   
-  const attempts = await analyticsRepository.getVelocityData(userId, startDate);
-
   const velocityMap: Record<string, number> = {};
-  for (const a of attempts) {
-    const d = a.solvedAt;
-    const yearWeek = `${d.getFullYear()}-W${Math.ceil((d.getDate() - d.getDay() + 1) / 7)}`;
-    velocityMap[yearWeek] = (velocityMap[yearWeek] || 0) + 1;
+
+  if (platforms.length === 0 || platforms.includes('local')) {
+    const attempts = await analyticsRepository.getVelocityData(userId, startDate);
+    for (const a of attempts) {
+      const d = a.solvedAt;
+      const yearWeek = `${d.getFullYear()}-W${Math.ceil((d.getDate() - d.getDay() + 1) / 7)}`;
+      velocityMap[yearWeek] = (velocityMap[yearWeek] || 0) + 1;
+    }
+  }
+
+  const integrations = await analyticsRepository.getPlatformIntegrations(userId);
+  for (const integration of integrations) {
+    if (platforms.includes(integration.platform)) {
+      if (integration.activityData && Array.isArray(integration.activityData)) {
+        for (const rawItem of integration.activityData) {
+          const item = rawItem as any;
+          if (!item || !item.date || typeof item.count !== 'number') continue;
+          const d = new Date(item.date);
+          if (d >= startDate) {
+            const yearWeek = `${d.getFullYear()}-W${Math.ceil((d.getDate() - d.getDay() + 1) / 7)}`;
+            velocityMap[yearWeek] = (velocityMap[yearWeek] || 0) + item.count;
+          }
+        }
+      }
+    }
   }
   
   const result = Object.entries(velocityMap).map(([period, count]) => ({ period, count }));

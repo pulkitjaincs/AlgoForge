@@ -44,7 +44,7 @@ export const useSyncIntegrations = () => {
   return useMutation({
     mutationFn: integrationsApi.syncIntegrations,
     onSuccess: () => {
-      toast.success('Synced successfully');
+      toast.info('Syncing started in the background...');
       queryClient.invalidateQueries({ queryKey: ['integrations'] });
       queryClient.invalidateQueries({ queryKey: ['integration-heatmap'] });
     }

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '../api/analytics';
 
-export const useAnalyticsSummary = () => {
+export const useAnalyticsSummary = (platforms?: string[]) => {
   return useQuery({
-    queryKey: ['analytics', 'summary'],
-    queryFn: analyticsApi.getSummary,
+    queryKey: ['analytics', 'summary', platforms],
+    queryFn: () => analyticsApi.getSummary(platforms),
   });
 };
 
@@ -29,9 +29,9 @@ export const useWeakAreas = () => {
   });
 };
 
-export const useVelocity = (period: string = 'weekly') => {
+export const useVelocity = (period: string = 'weekly', platforms?: string[]) => {
   return useQuery({
-    queryKey: ['analytics', 'velocity', period],
-    queryFn: () => analyticsApi.getVelocity(period),
+    queryKey: ['analytics', 'velocity', period, platforms],
+    queryFn: () => analyticsApi.getVelocity(period, platforms),
   });
 };

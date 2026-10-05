@@ -6,6 +6,8 @@ import { cache } from '../../utils/cache.js';
 vi.mock('../../repositories/analytics.repository.js', () => ({
   analyticsRepository: {
     getSummaryStats: vi.fn(),
+    getPlatformIntegrations: vi.fn(),
+    getVelocityData: vi.fn(),
   },
 }));
 
@@ -17,6 +19,7 @@ describe('Analytics Service - getSummary', () => {
 
   it('should return zeroed stats if no questions exist', async () => {
     (analyticsRepository.getSummaryStats as any).mockResolvedValue([]);
+    (analyticsRepository.getPlatformIntegrations as any).mockResolvedValue([]);
     const result = await getSummary('user-1');
     expect(result.totalQuestions).toBe(0);
     expect(result.solvedQuestions).toBe(0);
@@ -29,6 +32,7 @@ describe('Analytics Service - getSummary', () => {
       { difficulty: 'Medium', total: 15, solved: 5 },
       { difficulty: 'Hard', total: 5, solved: 1 },
     ]);
+    (analyticsRepository.getPlatformIntegrations as any).mockResolvedValue([]);
 
     const result = await getSummary('user-1');
     expect(result.totalQuestions).toBe(30);

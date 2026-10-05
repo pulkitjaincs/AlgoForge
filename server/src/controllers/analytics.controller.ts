@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import * as analyticsService from '../services/analytics.service.js';
 
 export const getSummary = async (req: Request, res: Response) => {
-  const data = await analyticsService.getSummary(req.user!.id);
+  const platformsStr = req.query.platforms as string;
+  const platforms = platformsStr ? platformsStr.split(',') : ['local'];
+  const data = await analyticsService.getSummary(req.user!.id, platforms);
   res.status(200).json({ success: true, data });
 };
 
@@ -24,6 +26,8 @@ export const getWeakAreas = async (req: Request, res: Response) => {
 
 export const getVelocity = async (req: Request, res: Response) => {
   const period = (req.query.period as string) || 'weekly';
-  const data = await analyticsService.getVelocity(req.user!.id, period);
+  const platformsStr = req.query.platforms as string;
+  const platforms = platformsStr ? platformsStr.split(',') : ['local'];
+  const data = await analyticsService.getVelocity(req.user!.id, period, platforms);
   res.status(200).json({ success: true, data });
 };

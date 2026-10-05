@@ -19,6 +19,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 - **Spaced Repetition & Practice Plans:** SM-2 based spaced repetition system that generates daily review queues and custom practice plans targeting weak areas.
 - **Rich Metadata & Notes:** Track difficulty, platforms (LeetCode, GFG, Codeforces), and company tags with markdown-supported study notes.
 - **Drag-and-Drop:** Freely reorder your curriculum to match your study plan with zero-latency optimistic UI updates.
+- **Data Export:** Download a complete JSON snapshot of your data including topics, questions, attempts, and connected integrations, processed asynchronously in the background.
 - **Modern UI Polish:** Branded glowing loading spinners, realistic skeleton cards, custom styled confirmation modals, and helpful empty states.
 
 ### Contest Tracker
@@ -53,7 +54,8 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 | React Router (Routing) | Express 5 | Redis (Caching & Job State) |
 | React Query (Server State) | Zod (Validation) | BullMQ (Background Processing & Cron) |
 | Zustand (UI State) | Pino (Structured Logging) | Docker & Playwright |
-| Tailwind CSS & dnd-kit | JWT Authentication | pnpm Workspaces + Turborepo |
+| Tailwind CSS & dnd-kit | JWT Authentication | Sentry (Error Tracking & Profiling) |
+| Vite (Build Tool) | Express 5 | pnpm Workspaces + Turborepo |
 
 ---
 
@@ -162,7 +164,8 @@ All endpoints are versioned under `/api/v1/`. Responses follow a consistent enve
 | **Analytics**| `GET /analytics/summary`, `GET /analytics/heatmap`, `GET /analytics/topic-mastery`, `GET /analytics/weak-areas`, `GET /analytics/velocity` |
 | **Notifications**| `GET /notifications`, `POST /notifications/read`, `POST /notifications/read-all` |
 | **Users**| `PATCH /users/me/profile`, `GET /users/check-username`, `GET /users/:username/profile` |
-| **Sheets**| `POST /sheets/publish`, `GET /sheets`, `GET /sheets/:id` |
+| **Data Export**| `POST /export`, `GET /export/download` |
+| **Sheets**| `POST /sheets/publish`, `GET /sheets`, `GET /sheets/:id`, `POST /sheets/:id/clone` |
 | **Groups**| `POST /groups`, `POST /groups/join`, `GET /groups`, `GET /groups/:id` |
 | **Practice/Review**| `GET /practice/daily`, `GET /review/due` |
 | **Contests** | `GET /contests` |

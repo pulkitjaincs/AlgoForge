@@ -181,6 +181,7 @@ model PlatformIntegration {
   maxRating     Int      @default(0)
   tier          String?
   activityData  Json?
+  statsData     Json?
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, platform])

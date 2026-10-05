@@ -84,5 +84,11 @@ export const analyticsRepository = {
       select: { solvedAt: true },
     });
   },
+
+  async getPlatformIntegrations(userId: string) {
+    return prisma.platformIntegration.findMany({
+      where: { userId }
+    });
+  },
 };
 

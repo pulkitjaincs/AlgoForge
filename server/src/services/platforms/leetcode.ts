@@ -87,6 +87,18 @@ export const syncLeetcode = async (username: string) => {
     const allStat = stats.find(s => s.difficulty === 'All');
     const solvedCount = allStat ? allStat.count : 0;
     
+    const easyCount = stats.find(s => s.difficulty === 'Easy')?.count || 0;
+    const mediumCount = stats.find(s => s.difficulty === 'Medium')?.count || 0;
+    const hardCount = stats.find(s => s.difficulty === 'Hard')?.count || 0;
+    
+    const statsData = {
+      difficulty: {
+        Easy: easyCount,
+        Medium: mediumCount,
+        Hard: hardCount
+      }
+    };
+    
     const ranking = data?.data?.userContestRanking;
     const rating = ranking ? Math.round(ranking.rating) : 0;
     const tier = ranking?.badge?.name || null;
@@ -123,7 +135,8 @@ export const syncLeetcode = async (username: string) => {
       maxRating,
       tier,
       contributions: 0,
-      activityData
+      activityData,
+      statsData
     };
   } catch (error: any) {
     if (error?.name === 'AbortError') {

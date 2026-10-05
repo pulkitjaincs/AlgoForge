@@ -13,12 +13,37 @@ import { ActivityHeatmap } from '../components/features/dashboard/ActivityHeatma
 import { PlatformCards } from '../components/features/dashboard/PlatformCards';
 import { Charts } from '../components/features/dashboard/Charts';
 import { FocusPlan } from '../components/features/dashboard/FocusPlan';
+import { Filter } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { data: summary } = useAnalyticsSummary();
+  const { data: integrations } = useIntegrations();
+  
+  const availablePlatforms = useMemo(() => {
+    const list = ['local'];
+    if (integrations) {
+      integrations.forEach(i => {
+        if (!list.includes(i.platform) && i.platform !== 'github') {
+          list.push(i.platform);
+        }
+      });
+    }
+    return list;
+  }, [integrations]);
+
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['local']);
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+
+  useEffect(() => {
+    if (integrations && !hasAutoSelected && availablePlatforms.length > 1) {
+      setSelectedPlatforms(availablePlatforms);
+      setHasAutoSelected(true);
+    }
+  }, [integrations, availablePlatforms, hasAutoSelected]);
+
+  const { data: summary } = useAnalyticsSummary(selectedPlatforms);
   const { data: mastery } = useTopicMastery();
   const { data: weakAreas } = useWeakAreas();
-  const { data: velocity } = useVelocity();
+  const { data: velocity } = useVelocity('weekly', selectedPlatforms);
   const { data: user } = useUser();
   const [heatmapRange, setHeatmapRange] = useState(user?.defaultHeatmapRange || '1year');
   const queryClient = useQueryClient();
@@ -44,7 +69,6 @@ export default function DashboardPage() {
 
   const { data: heatmap } = useAnalyticsHeatmap();
   const { data: dailyPlan } = useDailyPlan();
-  const { data: integrations } = useIntegrations();
   const { data: integrationHeatmap } = useIntegrationHeatmap();
 
   const isLoading = !summary || !mastery || !weakAreas || !velocity || !heatmap || !dailyPlan;
@@ -216,11 +240,40 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-4 md:p-8 lg:p-12 space-y-8 animate-fade-in">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-text-main">Analytics Dashboard</h1>
-          <Link to="/app/integrations" className="btn-secondary flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Link Platform
-          </Link>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 glass-subtle px-3 py-1.5 rounded-full border border-border-dark">
+              <Filter className="w-4 h-4 text-brand-primary" />
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider mr-2">Sources:</span>
+              {availablePlatforms.map(platform => (
+                <button
+                  key={platform}
+                  onClick={() => {
+                    if (selectedPlatforms.includes(platform)) {
+                      if (selectedPlatforms.length > 1) {
+                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
+                      }
+                    } else {
+                      setSelectedPlatforms([...selectedPlatforms, platform]);
+                    }
+                  }}
+                  className={`text-xs px-2.5 py-1 rounded-full capitalize font-medium transition-colors ${
+                    selectedPlatforms.includes(platform)
+                      ? 'bg-brand-primary text-white'
+                      : 'bg-bg-dark text-text-muted hover:text-text-main hover:bg-border-dark'
+                  }`}
+                >
+                  {platform === 'local' ? 'AlgoForge' : platform}
+                </button>
+              ))}
+            </div>
+
+            <Link to="/app/integrations" className="btn-secondary flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Link Platform
+            </Link>
+          </div>
         </div>
         
         <HeroStatsBar 

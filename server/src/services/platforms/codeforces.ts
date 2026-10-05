@@ -14,6 +14,7 @@ interface CodeforcesStatus {
     verdict: string;
     problem: {
       name: string;
+      rating?: number;
     };
   }[];
 }
@@ -46,12 +47,14 @@ export const syncCodeforces = async (username: string) => {
     });
     let solvedCount = 0;
     const activityData: { date: string, count: number }[] = [];
+    let statsData: any = undefined;
 
     if (statusRes.ok) {
       const statusData = await statusRes.json() as CodeforcesStatus;
       if (statusData.status === 'OK' && statusData.result) {
          // Unique solved problems
          const solvedSet = new Set();
+         const solvedProblems = new Map<string, number | undefined>();
          const dateCounts = new Map<string, number>();
 
          for (const submission of statusData.result) {
@@ -61,9 +64,27 @@ export const syncCodeforces = async (username: string) => {
             }
             if (submission.verdict === 'OK') {
                solvedSet.add(submission.problem.name);
+               if (!solvedProblems.has(submission.problem.name)) {
+                 solvedProblems.set(submission.problem.name, submission.problem.rating);
+               }
             }
          }
          solvedCount = solvedSet.size;
+
+         let easy = 0, medium = 0, hard = 0;
+         for (const rating of solvedProblems.values()) {
+           if (!rating || rating < 1300) easy++;
+           else if (rating <= 1800) medium++;
+           else hard++;
+         }
+         
+         statsData = {
+           difficulty: {
+             Easy: easy,
+             Medium: medium,
+             Hard: hard
+           }
+         };
 
          for (const [date, count] of dateCounts.entries()) {
             activityData.push({ date, count });
@@ -76,7 +97,8 @@ export const syncCodeforces = async (username: string) => {
       rating: user.rating || 0,
       maxRating: user.maxRating || user.rating || 0,
       contributions: 0,
-      activityData
+      activityData,
+      statsData: typeof statsData !== 'undefined' ? statsData : { difficulty: { Easy: 0, Medium: 0, Hard: 0 } }
     };
   } catch (error: any) {
     if (error?.name === 'AbortError') {
