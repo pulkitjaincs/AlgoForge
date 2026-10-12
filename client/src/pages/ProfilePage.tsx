@@ -160,12 +160,15 @@ export default function ProfilePage() {
                   {formData.isProfilePublic ? <Globe className="w-4 h-4 text-brand-primary" /> : <Lock className="w-4 h-4 text-text-muted" />}
                   <h3 className="font-semibold text-text-main">Public Profile</h3>
                 </div>
-                <p className="text-sm text-text-muted">Allow others to see your stats, heatmap, and bio.</p>
-                {formData.isProfilePublic && formData.username && (
-                   <a href={`/u/${formData.username}`} target="_blank" rel="noreferrer" className="text-xs text-brand-primary hover:underline flex items-center gap-1 mt-2 w-fit">
+                {user.isProfilePublic && user.username ? (
+                   <a href={`/u/${user.username}`} target="_blank" rel="noreferrer" className="text-xs text-brand-primary hover:underline flex items-center gap-1 mt-2 w-fit">
                       <LinkIcon className="w-3 h-3" /> View public profile
                    </a>
-                )}
+                ) : formData.isProfilePublic && formData.username ? (
+                   <p className="text-xs text-amber-500/90 flex items-center gap-1 mt-2">
+                      Save changes to activate and view your public profile
+                   </p>
+                ) : null}
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 

@@ -27,7 +27,7 @@ export interface PublicProfile {
 }
 
 export const usersApi = {
-  getPublicProfile: (username: string) => apiClient.get<{ data: PublicProfile }>(`/users/${username}/profile`),
+  getPublicProfile: (username: string) => apiClient.get<PublicProfile>(`/users/${username}/profile`),
   checkUsername: (username: string) => apiClient.get('/users/check-username', { params: { username } }),
   updateProfile: (data: UpdateProfileInput) => apiClient.patch('/users/me/profile', data),
   updateEmail: (data: UpdateEmailInput) => apiClient.patch('/users/me/email', data),

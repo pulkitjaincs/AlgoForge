@@ -73,7 +73,7 @@ export const checkUsername = async (username: string) => {
 };
 
 export const getPublicProfile = async (username: string) => {
-  const cacheKey = `public_profile:${username}`;
+  const cacheKey = `public_profile:${username.toLowerCase()}`;
   const cached = await cache.get<PublicProfile>(cacheKey);
   if (cached) return cached;
 
@@ -110,6 +110,6 @@ export const getPublicProfile = async (username: string) => {
     }))
   };
 
-  await cache.setWithTag(cacheKey, `user:${user.id}`, result, 300);
+  await cache.setWithTag(cacheKey, `user:${user.id}:profile`, result, 300);
   return result;
 };

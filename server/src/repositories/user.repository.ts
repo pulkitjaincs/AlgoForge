@@ -18,7 +18,16 @@ export class UserRepository {
   }
 
   async findByUsername(username: string) {
-    return prisma.user.findUnique({ where: { username } });
+    const user = await prisma.user.findUnique({ where: { username } });
+    if (user) return user;
+    return prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+      },
+    });
   }
 
   async update(id: string, data: Prisma.UserUpdateInput) {
