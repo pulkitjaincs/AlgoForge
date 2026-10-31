@@ -343,6 +343,6 @@ export type GeneratedQuestion = z.infer<typeof generatedQuestionSchema>;
 export type GeneratedSubTopic = z.infer<typeof generatedSubTopicSchema>;
 export type GeneratedTopic = z.infer<typeof generatedTopicSchema>;
 export type SheetActionDiff = z.infer<typeof sheetActionDiffSchema>;
-export type SheetAgentPlanInput = z.infer<typeof sheetAgentPlanSchema>['body'];
-export type SheetAgentApplyInput = z.infer<typeof sheetAgentApplySchema>['body'];
+export type SheetAgentPlanInput = z.input<typeof sheetAgentPlanSchema>['body'];
+export type SheetAgentApplyInput = z.input<typeof sheetAgentApplySchema>['body'];
 

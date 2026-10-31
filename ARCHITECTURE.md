@@ -10,7 +10,7 @@ graph TD
     API["Express REST API (Node.js 20)"]
     DB[("PostgreSQL")]
     Cache[("Redis Cache")]
-    Gemini["Google Gemini 2.5 (AI Sheet Agent & Coach)"]
+    Gemini["Google Gemini 3.6 (AI Sheet Agent & Coach)"]
     Platforms["External Platforms (LeetCode / CF / CodeChef / AtCoder / GitHub)"]
     BullMQ[("BullMQ Queue")]
     Worker["Background Worker"]
@@ -240,7 +240,7 @@ AlgoForge incorporates an intelligent learning system and tool-calling agent to 
 
 ### A. Tool-Calling Sheet Agent (Human-in-the-Loop)
 - **Natural Language Sheet Operations (`/api/v1/sheets/agent/plan` & `/api/v1/sheets/agent/apply`):** Users can input natural language prompts, target specific companies (e.g., "Google L4 Interview Prep"), paste job descriptions, or ask for curated sets (e.g., "Top 75 dynamic programming problems").
-- **Gemini Function Calling with Resilient Fallback:** The backend leverages Google Gemini 2.5 (`@google/genai`) with structured tool definitions. If Gemini is unavailable, rate-limited, or unconfigured, an internal heuristic engine automatically takes over without user-facing failures.
+- **Gemini Function Calling with Resilient Fallback:** The backend leverages Google Gemini 3.6 Flash (`@google/genai`) with structured tool definitions. If Gemini is unavailable, rate-limited, or unconfigured, an internal heuristic engine automatically takes over without user-facing failures.
 - **Structured Action Diff:** Rather than blindly overwriting user data, the agent computes a verifiable diff (`+added questions`, `-pruned solved questions`, and reordered topics). Users inspect and selectively toggle proposed changes in an interactive drawer before committing.
 - **Atomic Destination Modes:**
   - `workspace`: Appends newly generated topics and questions directly to the user's active personal curriculum.

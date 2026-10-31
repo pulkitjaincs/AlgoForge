@@ -397,7 +397,7 @@ export const applySheetAction = async (
     const currentCount = await tx.topic.count({ where: { userId, deletedAt: null } });
     let globalOrder = destination === 'replace' ? 0 : currentCount;
 
-    for (const topicData of diff.addedTopics) {
+    for (const topicData of diff.addedTopics || []) {
       const topic = await tx.topic.create({
         data: {
           title: topicData.title,

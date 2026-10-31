@@ -9,7 +9,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 ## 🎯 Key Features
 
 ### AI Sheet Copilot & Curriculum Generator
-- **Natural Language Sheet Agent:** Generate, reorder, or prune problem sheets from job descriptions, company targets (e.g., "Google L4 Interview Prep"), or custom constraints (e.g., "Top 75 DP questions") via Gemini 2.5 function calling with automatic heuristic fallback.
+- **Natural Language Sheet Agent:** Generate, reorder, or prune problem sheets from job descriptions, company targets (e.g., "Google L4 Interview Prep"), or custom constraints (e.g., "Top 75 DP questions") via Gemini 3.6 Flash function calling with automatic heuristic fallback.
 - **Interactive Action Diff (Human-in-the-Loop):** Review proposed additions, deletions of already-solved problems, and reorderings with visual diff cards and toggle checkboxes before committing.
 - **Flexible Commit Targets:** Append to active workspace, create a standalone sheet, or atomically replace curriculum in a single Prisma transaction.
 - **CSV & JSON Importer:** Import problem sheets via drag-and-drop or paste with RFC 4180 parsing (handles quoted strings, commas, newlines) and preview verification.
@@ -61,7 +61,7 @@ A highly optimized, full-stack Data Structures and Algorithms (DSA) preparation 
 |---|---|---|
 | React 19 + Vite | Node.js 20 | PostgreSQL (Prisma ORM & Transactions) |
 | React Router (Routing) | Express 5 | Redis (Caching & Job State) |
-| React Query (Server State) | Google Gemini 2.5 (`@google/genai`) | BullMQ (Background Processing & Cron) |
+| React Query (Server State) | Google Gemini 3.6 Flash (`@google/genai`) | BullMQ (Background Processing & Cron) |
 | Zustand (UI State) | Server-Sent Events (SSE Streaming) | Docker & Playwright |
 | Tailwind CSS & dnd-kit | Zod (Validation) | Sentry (Error Tracking & Profiling) |
 | Vite (Build Tool) | JWT Authentication (Token Lineage) | pnpm Workspaces + Turborepo |

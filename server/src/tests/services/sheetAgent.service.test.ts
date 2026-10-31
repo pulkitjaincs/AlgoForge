@@ -151,7 +151,7 @@ describe('Sheet Agent Service', () => {
             subtopics: [
               {
                 title: 'BFS',
-                questions: [{ title: 'Rotting Oranges', difficulty: 'Medium' }],
+                questions: [{ title: 'Rotting Oranges', difficulty: 'Medium' as const }],
               },
             ],
           },
