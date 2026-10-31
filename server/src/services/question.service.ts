@@ -32,6 +32,10 @@ export const createQuestion = async (userId: string, topicId: string, subTopicId
 
   const question = await questionRepository.create({
     ...data,
+    problemUrl: data.problemUrl ?? '#',
+    resource: data.resource ?? '#',
+    notes: data.notes ?? '',
+    isStarred: data.isStarred ?? false,
     order: count,
     topicId: subTopicId ? null : topicId,
     subTopicId: subTopicId || null,
@@ -43,9 +47,16 @@ export const createQuestion = async (userId: string, topicId: string, subTopicId
 
 export const updateQuestion = async (userId: string, questionId: string, data: Partial<CreateQuestionInput> & Partial<UpdateNotesInput>) => {
   await assertQuestionOwnership(userId, questionId);
-  const updated = await questionRepository.update(questionId, data);
+  const sanitizedData = { ...data };
+  if (sanitizedData.problemUrl === null) sanitizedData.problemUrl = '#';
+  if (sanitizedData.resource === null) sanitizedData.resource = '#';
+  const updated = await questionRepository.update(questionId, sanitizedData as any);
   await cache.invalidateTag(`user:${userId}:topics`);
   return updated;
+};
+
+export const getQuestionById = async (userId: string, questionId: string) => {
+  return assertQuestionOwnership(userId, questionId);
 };
 
 export const deleteQuestion = async (userId: string, questionId: string) => {
@@ -56,9 +67,15 @@ export const deleteQuestion = async (userId: string, questionId: string) => {
 
 export const toggleSolved = async (userId: string, questionId: string) => {
   const question = await assertQuestionOwnership(userId, questionId);
-  const updated = await questionRepository.update(questionId, { isSolved: !question.isSolved });
+  const willBeSolved = !question.isSolved;
+  const updatePayload: { isSolved: boolean; nextReviewAt?: Date } = { isSolved: willBeSolved };
+  if (willBeSolved && !question.nextReviewAt) {
+    updatePayload.nextReviewAt = new Date();
+  }
+  const updated = await questionRepository.update(questionId, updatePayload);
   await cache.invalidateTag(`user:${userId}:topics`);
   await cache.invalidateTag(`user:${userId}:analytics`);
+  await cache.invalidateTag(`user:${userId}:review`);
   return updated;
 };
 

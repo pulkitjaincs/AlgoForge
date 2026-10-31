@@ -7,7 +7,7 @@ const compress = promisify(zlib.brotliCompress);
 const decompress = promisify(zlib.brotliDecompress);
 
 export const cache = {
-  async get<T>(key: string): Promise<T | null> {
+  async get<T = any>(key: string): Promise<T | null> {
     if (!redis) return null;
     try {
       const data = await redis.getBuffer(key);

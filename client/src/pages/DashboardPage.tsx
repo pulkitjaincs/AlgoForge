@@ -13,6 +13,7 @@ import { ActivityHeatmap } from '../components/features/dashboard/ActivityHeatma
 import { PlatformCards } from '../components/features/dashboard/PlatformCards';
 import { Charts } from '../components/features/dashboard/Charts';
 import { FocusPlan } from '../components/features/dashboard/FocusPlan';
+import { AICoachCard } from '../components/features/ai/AICoachCard';
 import { Filter } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -74,16 +75,17 @@ export default function DashboardPage() {
   const isLoading = !summary || !mastery || !weakAreas || !velocity || !heatmap || !dailyPlan;
 
   const aggregateStats = useMemo(() => {
-    const totalSolved = summary?.solvedQuestions || 0;
+    let totalSolved = 0;
     let peakRating = 0;
     let peakPlatform = '';
     let githubContributions = 0;
 
     integrations?.forEach(int => {
       if (int.platform === 'github') {
-        githubContributions += int.contributions;
+        githubContributions += int.contributions || 0;
       } else {
-        if (int.maxRating > peakRating) {
+        totalSolved += int.solvedCount || 0;
+        if ((int.maxRating || 0) > peakRating) {
           peakRating = int.maxRating;
           peakPlatform = int.platform;
         }
@@ -91,7 +93,7 @@ export default function DashboardPage() {
     });
 
     return { totalSolved, peakRating, peakPlatform, githubContributions };
-  }, [summary, integrations]);
+  }, [integrations]);
 
   const combinedHeatmap = useMemo(() => {
     const map = new Map<string, { count: number, platforms: Record<string, number> }>();
@@ -280,6 +282,8 @@ export default function DashboardPage() {
           computedStreaks={computedStreaks} 
           githubUsername={githubUsername}
         />
+
+        <AICoachCard />
 
         <ActivityHeatmap 
           heatmapRange={heatmapRange}

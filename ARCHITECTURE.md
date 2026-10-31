@@ -6,18 +6,24 @@ AlgoForge is a full-stack Data Structures and Algorithms (DSA) preparation platf
 
 ```mermaid
 graph TD
-    Client[Client Browser<br/>Vite + React + Zustand]
-    API[Express REST API<br/>Node.js 20]
-    DB[(PostgreSQL)]
-    Cache[(Redis Cache)]
+    Client["Client Browser (Vite + React 19 + TanStack Query)"]
+    API["Express REST API (Node.js 20)"]
+    DB[("PostgreSQL")]
+    Cache[("Redis Cache")]
+    Gemini["Google Gemini 2.5 (AI Sheet Agent & Coach)"]
+    Platforms["External Platforms (LeetCode / CF / CodeChef / AtCoder / GitHub)"]
+    BullMQ[("BullMQ Queue")]
+    Worker["Background Worker"]
 
-    Client <-->|JSON over HTTPS| API
-    API <-->|Prisma ORM| DB
-    API <-->|ioredis| Cache
-    API -->|enqueue job| BullMQ[(BullMQ)]
-    BullMQ -->|process| Worker[Background Worker]
-    Worker <-->|Prisma ORM| DB
-    Worker <-->|ioredis| Cache
+    Client <-->|"JSON over HTTPS & SSE Stream"| API
+    API <-->|"Prisma ORM"| DB
+    API <-->|"ioredis"| Cache
+    API <-->|"Function Calling & Tool Calling"| Gemini
+    API <-->|"Live Scraping & Stats"| Platforms
+    API -->|"enqueue job"| BullMQ
+    BullMQ -->|"process"| Worker
+    Worker <-->|"Prisma ORM"| DB
+    Worker <-->|"ioredis"| Cache
 ```
 
 ## 2. Backend Architecture (Layered)
@@ -228,17 +234,41 @@ erDiagram
     }
 ```
 
-## 9. Intelligence Layer & Spaced Repetition
+## 9. AI Agent, Intelligence Layer & Real-Time Sync
 
-AlgoForge incorporates an intelligent learning system to optimize study efficiency:
+AlgoForge incorporates an intelligent learning system and tool-calling agent to optimize study efficiency and automate curriculum generation:
 
-- **Spaced Repetition (SM-2 Variant):** Questions are scheduled for review based on a modified SM-2 algorithm. When a user submits an attempt, they provide a self-evaluated confidence score (1-5). The system calculates the next optimal review date (`nextReviewAt`) to maximize retention.
-- **SQL-Native Analytics Engine:** The analytics service leverages raw PostgreSQL SQL queries (`GROUP BY`, `CTE`, and conditional aggregations) via `analytics.repository.ts` instead of performing in-memory map-reduce operations. This guarantees fast performance even as the user scales to thousands of questions and attempts.
-- **Multi-Platform Analytics Aggregation & Filtering:** In addition to local question sheet metrics, the dashboard integrates third-party solved problem counts and activity logs from LeetCode and Codeforces. Users can dynamically toggle views between "All Platforms", "AlgoForge Sheets", "LeetCode", and "Codeforces". Streaks (current and longest) are dynamically computed from the combined activity heatmap.
-- **Daily Practice Plans:** The `practice.service.ts` dynamically generates a daily practice session by pulling from three strategic queues:
-  1. **Review Queue:** Questions due for spaced repetition today.
-  2. **Weak Areas:** Topics where the user's mastery percentage is under 50%.
-  3. **Random Exploration:** A selection of completely unsolved questions picked using a Fisher-Yates random shuffle on unsolved IDs.
+### A. Tool-Calling Sheet Agent (Human-in-the-Loop)
+- **Natural Language Sheet Operations (`/api/v1/sheets/agent/plan` & `/api/v1/sheets/agent/apply`):** Users can input natural language prompts, target specific companies (e.g., "Google L4 Interview Prep"), paste job descriptions, or ask for curated sets (e.g., "Top 75 dynamic programming problems").
+- **Gemini Function Calling with Resilient Fallback:** The backend leverages Google Gemini 2.5 (`@google/genai`) with structured tool definitions. If Gemini is unavailable, rate-limited, or unconfigured, an internal heuristic engine automatically takes over without user-facing failures.
+- **Structured Action Diff:** Rather than blindly overwriting user data, the agent computes a verifiable diff (`+added questions`, `-pruned solved questions`, and reordered topics). Users inspect and selectively toggle proposed changes in an interactive drawer before committing.
+- **Atomic Destination Modes:**
+  - `workspace`: Appends newly generated topics and questions directly to the user's active personal curriculum.
+  - `sheet`: Creates a new standalone public or private sheet without altering current active topics.
+  - `replace`: Replaces the current curriculum in an atomic Prisma transaction after verifying ownership across direct and nested subtopic hierarchies.
+
+### B. AI Study Coach & Rate Limit Token Guard
+- **Daily Tactical Recommendations (`/api/v1/ai/study-coach-plan`):** Analyzes recent activity, velocity, weak areas, and upcoming contests to generate actionable advice.
+- **Token Guard & Cooldown Architecture:** Daily plans are cached for 24 hours (`86,400s`) under `ai_coach_plan:${userId}` in Redis. Manual refreshes are locked with a 1-hour Redis TTL key (`ai_coach_cooldown:${userId}`), supported by a live countdown timer badge (`Locked (Xm)`) on the client to eliminate API token exhaustion.
+- **Evaluation Harness (`evals/`):** Automated test suite verifying schema compliance, zero solution leaks, and advice quality across 20+ test scenarios.
+
+### C. Real-Time Integration Sync via Server-Sent Events (SSE)
+- **Streaming Pipeline (`GET /api/v1/integrations/sync/stream`):** Replaces blind background polling with real-time direct platform scraping streamed over SSE.
+- **Keepalive & Abort Safety:** Emits 15-second `: keepalive` heartbeats to prevent proxy timeouts, listens to `req.on('close')` to immediately abort background platform fetching if the client disconnects, and broadcasts animated progress percentages (`0%` to `100%`) directly to the client.
+- **Instant Cache Hydration:** The frontend automatically hydrates TanStack Query caches (`['integrations']`, `['integration-heatmap']`) upon receiving the `complete` event, eliminating manual page reloads.
+
+### D. CSV & JSON Sheet Importer
+- **RFC 4180 Compliant Parser:** Parses user-supplied problem sheets with support for quoted strings, escaped delimiters, and multiline values.
+- **Format Auto-Detection:** Automatically distinguishes between CSV structures and JSON schemas, routing parsed questions into the Sheet Agent's interactive diff preview before database insertion.
+
+### E. Solved Metrics Isolation Architecture
+- **Sheet Progress Isolation:** Solved question status, topic completion percentages, and progress bars are strictly isolated to `/app/sheet`.
+- **Aggregated Platform "Total Solved":** The hero metric "Total Solved" displayed on the Dashboard (`HeroStatsBar`) and Public Profile (`/u/:username`) is calculated exclusively from connected external coding platforms (`integrations`: LeetCode, Codeforces, CodeChef, GFG, AtCoder). Local sheet questions never contaminate global competitive programming stats.
+
+### F. Spaced Repetition (SM-2 Variant) & SQL-Native Analytics
+- **Modified SM-2 Algorithm:** Questions are scheduled for review based on user confidence ratings (1–5). Optimal review intervals (`nextReviewAt`) adjust dynamically to maximize long-term retention.
+- **SQL-Native Analytics Engine:** Raw PostgreSQL queries (`GROUP BY`, `CTE`, and conditional sums) in `analytics.repository.ts` offload analytics calculations to the database for instant execution.
+- **Daily Practice Plans:** `practice.service.ts` pulls dynamically from three queues: Due Spaced Repetition, Weak Topics (< 50% mastery), and Unsolved Exploration.
 
 ## 10. Social & Growth Features
 

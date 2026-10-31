@@ -16,6 +16,7 @@ import {
   Trophy,
   PanelLeftClose,
   PanelLeftOpen,
+  Zap,
 } from 'lucide-react';
 import { ThemeToggle } from '../components/shared/ThemeToggle';
 import { useUIStore } from '../store/useUIStore';
@@ -36,8 +37,9 @@ export function AppLayout() {
   const navItems = [
     { name: 'Sheet', path: '/app/sheet', icon: List },
     { name: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
+    { name: 'Practice', path: '/app/practice', icon: Zap },
+    { name: 'Review', path: '/app/review', icon: CheckSquare },
     { name: 'Contests', path: '/app/contests', icon: Trophy },
-    { name: 'Practice', path: '/app/review', icon: CheckSquare },
     { name: 'Discover', path: '/app/discover', icon: Search },
     { name: 'Groups', path: '/app/groups', icon: Users },
   ];

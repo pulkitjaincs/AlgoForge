@@ -3,9 +3,14 @@ import * as questionService from '../services/question.service.js';
 
 export const create = async (req: Request, res: Response) => {
   const { topicId, subTopicId } = req.params;
-  const parsedSubTopicId = (subTopicId as string) === 'null' ? null : (subTopicId as string);
+  const parsedSubTopicId = !subTopicId || (subTopicId as string) === 'null' ? null : (subTopicId as string);
   const question = await questionService.createQuestion(req.user!.id, topicId as string, parsedSubTopicId, req.body);
   res.status(201).json({ success: true, data: question });
+};
+
+export const getById = async (req: Request, res: Response) => {
+  const question = await questionService.getQuestionById(req.user!.id, req.params.questionId as string);
+  res.status(200).json({ success: true, data: question });
 };
 
 export const update = async (req: Request, res: Response) => {

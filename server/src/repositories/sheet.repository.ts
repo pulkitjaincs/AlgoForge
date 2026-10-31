@@ -40,6 +40,22 @@ export class SheetRepository {
       data: { cloneCount: { increment: 1 } }
     });
   }
+
+  async delete(id: string) {
+    return prisma.sheet.delete({
+      where: { id }
+    });
+  }
+
+  async findByAuthorId(authorId: string) {
+    return prisma.sheet.findMany({
+      where: { authorId },
+      include: {
+        author: { select: { name: true, username: true, avatarUrl: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
 
 export const sheetRepository = new SheetRepository();

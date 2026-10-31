@@ -28,6 +28,45 @@ export const syncIntegrations = async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data: result });
 };
 
+export const streamSyncIntegrations = async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  let isAborted = false;
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) {
+      res.write(': keepalive\n\n');
+    }
+  }, 15000);
+
+  req.on('close', () => {
+    isAborted = true;
+    clearInterval(heartbeat);
+  });
+
+  try {
+    const result = await integrationService.syncUserPlatformsDirect(req.user!.id, (update) => {
+      if (!isAborted && !res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: 'progress', ...update })}\n\n`);
+      }
+    });
+
+    if (!isAborted && !res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ type: 'complete', percent: 100, ...result })}\n\n`);
+      res.end();
+    }
+  } catch (err: any) {
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ type: 'error', message: err.message || 'Sync failed' })}\n\n`);
+      res.end();
+    }
+  } finally {
+    clearInterval(heartbeat);
+  }
+};
+
 export const getHeatmap = async (req: Request, res: Response) => {
   const data = await integrationService.getAggregatedHeatmap(req.user!.id);
   res.status(200).json({ success: true, data });

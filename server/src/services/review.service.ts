@@ -1,9 +1,14 @@
 import { questionRepository } from '../repositories/question.repository.js';
 import { cache } from '../utils/cache.js';
 
+export interface ReviewStats {
+  dueToday: number;
+  overdue: number;
+}
+
 export const getReviewQueue = async (userId: string) => {
   const cacheKey = `review_queue:${userId}`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get<Awaited<ReturnType<typeof questionRepository.findReviewQueue>>>(cacheKey);
   if (cached) return cached;
 
   const now = new Date();
@@ -13,9 +18,9 @@ export const getReviewQueue = async (userId: string) => {
   return queue;
 };
 
-export const getReviewStats = async (userId: string) => {
+export const getReviewStats = async (userId: string): Promise<ReviewStats> => {
   const cacheKey = `review_stats:${userId}`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get<ReviewStats>(cacheKey);
   if (cached) return cached;
 
   const now = new Date();
@@ -24,7 +29,7 @@ export const getReviewStats = async (userId: string) => {
   const dueTodayCount = await questionRepository.countReviewQueue(userId, endOfDay);
   const overdueCount = await questionRepository.countReviewQueue(userId, now);
 
-  const stats = { dueToday: dueTodayCount, overdue: overdueCount };
+  const stats: ReviewStats = { dueToday: dueTodayCount, overdue: overdueCount };
   await cache.setWithTag(cacheKey, `user:${userId}:review`, stats, 300); // 5 mins cache
 
   return stats;

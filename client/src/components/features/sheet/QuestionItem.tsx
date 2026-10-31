@@ -104,7 +104,7 @@ export const QuestionItem = React.memo(({ question, topicId, subTopicId, onEdit 
                     </span>
 
                     <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover/item:opacity-100 transition-all">
-                        {qObj.problemUrl && (
+                        {qObj.problemUrl && qObj.problemUrl !== '#' && (
                             <a
                                 href={qObj.problemUrl}
                                 target="_blank"

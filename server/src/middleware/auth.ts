@@ -11,7 +11,7 @@ export const protect = async (req: Request, _res: Response, next: NextFunction) 
   if (!token) throw new AppError('Not authenticated', 401);
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, env.JWT_SECRET)  as { userId: string };
     
     // Check cache first
     const cacheKey = `user_session:${decoded.userId}`;

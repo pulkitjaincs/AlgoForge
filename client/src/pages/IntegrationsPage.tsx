@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useIntegrations, useLinkIntegration, useUnlinkIntegration, useSyncIntegrations } from '../hooks/useIntegrations';
-import { RefreshCw, Link as LinkIcon, Trash2, Code2, TerminalSquare, Github, Activity } from 'lucide-react';
+import { RefreshCw, Link as LinkIcon, Trash2, Code2, TerminalSquare, Github, Activity, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const PLATFORMS = [
   {
@@ -76,7 +76,7 @@ export default function IntegrationsPage() {
   const { data: integrations, isLoading } = useIntegrations();
   const linkMutation = useLinkIntegration();
   const unlinkMutation = useUnlinkIntegration();
-  const syncMutation = useSyncIntegrations();
+  const { syncState, startSync, isPending: isSyncing } = useSyncIntegrations();
 
   const [inputs, setInputs] = useState<Record<string, { username: string; token?: string }>>({});
 
@@ -110,20 +110,49 @@ export default function IntegrationsPage() {
         <title>Integrations — AlgoForge</title>
       </Helmet>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-text-main mb-2">Platform Integrations</h1>
           <p className="text-text-muted">Connect your coding profiles to aggregate stats, ratings, and activity.</p>
         </div>
         <button 
-          onClick={() => syncMutation.mutate()}
-          disabled={syncMutation.isPending || integrations?.length === 0}
+          onClick={startSync}
+          disabled={isSyncing || (integrations?.length || 0) === 0}
           className="btn-primary flex items-center gap-2 whitespace-nowrap"
         >
-          <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-          {syncMutation.isPending ? 'Syncing...' : 'Sync All'}
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Syncing...' : 'Sync All'}
         </button>
       </div>
+
+      {/* Real-time Progress Bar Banner */}
+      {(syncState.isSyncing || syncState.isComplete) && (
+        <div className="mb-8 p-4 rounded-xl border border-brand-primary/30 bg-bg-elevated shadow-lg animate-fade-in">
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="flex items-center gap-2.5">
+              {syncState.isComplete ? (
+                <CheckCircle2 className="w-5 h-5 text-success animate-bounce" />
+              ) : (
+                <RefreshCw className="w-5 h-5 text-brand-primary animate-spin" />
+              )}
+              <span className="text-sm font-semibold text-text-main">
+                {syncState.message || (syncState.isComplete ? 'All platforms synchronized!' : 'Syncing platforms...')}
+              </span>
+            </div>
+            <span className="text-xs font-mono font-bold text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded">
+              {syncState.percent}%
+            </span>
+          </div>
+          <div className="w-full h-2.5 bg-bg-dark rounded-full overflow-hidden border border-border-dark">
+            <div 
+              className={`h-full transition-all duration-300 ease-out rounded-full ${
+                syncState.isComplete ? 'bg-success' : 'bg-gradient-to-r from-brand-primary to-brand-accent'
+              }`}
+              style={{ width: `${syncState.percent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {PLATFORMS.map((platform) => {

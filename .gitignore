@@ -38,3 +38,18 @@ test-results/
 # TS Builds
 *.tsbuildinfo
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+AGENTS.md
+
+.projectmem
+.codegraph
+.github/context-mode

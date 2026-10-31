@@ -3,6 +3,7 @@ import { logger } from '../../utils/logger.js';
 import { prisma } from '../../config/database.js';
 import { sheetRepository } from '../../repositories/sheet.repository.js';
 import { notificationService } from '../../services/notification.service.js';
+import { cache } from '../../utils/cache.js';
 
 export const processSheetClone = async (job: Job) => {
   const { userId, sheetId } = job.data;
@@ -34,8 +35,9 @@ export const processSheetClone = async (job: Job) => {
         });
 
         // Insert subtopics and questions
-        if (topicData.subTopics && topicData.subTopics.length > 0) {
-          for (const subTopicData of topicData.subTopics) {
+        const subtopicsList = topicData.subTopics || topicData.subtopics || [];
+        if (subtopicsList.length > 0) {
+          for (const subTopicData of subtopicsList) {
             const subTopicId = await tx.subTopic.create({
               data: {
                 title: subTopicData.title,
@@ -81,6 +83,9 @@ export const processSheetClone = async (job: Job) => {
         }
       }
     });
+
+    await cache.invalidateTag(`user:${userId}:topics`);
+    await cache.invalidateTag(`user:${userId}:analytics`);
 
     // Generate Notification
     if (notificationService) {

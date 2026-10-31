@@ -11,11 +11,12 @@ export const errorHandler = (err: Error & { code?: string; statusCode?: number }
   }
 
   // Zod validation failure
-  if (err instanceof ZodError) {
+  if (err instanceof ZodError || err.name === 'ZodError' || ('issues' in err && Array.isArray((err as any).issues))) {
     if (env.NODE_ENV === 'test') {
       console.error('ERROR:', err);
     }
-    const message = err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+    const issues = (err as any).issues || [];
+    const message = issues.map((i: any) => `${(i.path || []).join('.')}: ${i.message || 'Validation error'}`).join(', ');
     return res.status(400).json({ success: false, error: message });
   }
 

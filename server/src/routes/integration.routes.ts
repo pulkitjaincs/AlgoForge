@@ -12,6 +12,7 @@ router.use(protect);
 router.get('/', integrationController.getIntegrations);
 router.post('/', validate(linkIntegrationSchema), integrationController.linkIntegration);
 router.delete('/:platform', integrationController.unlinkIntegration);
+router.get('/sync/stream', integrationController.streamSyncIntegrations);
 router.post('/sync', syncLimiter, integrationController.syncIntegrations);
 router.get('/heatmap', integrationController.getHeatmap);
 

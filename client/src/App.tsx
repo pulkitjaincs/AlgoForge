@@ -13,6 +13,7 @@ const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const SheetPage = React.lazy(() => import('./pages/SheetPage'));
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
 const ReviewPage = React.lazy(() => import('./pages/ReviewPage'));
+const PracticePage = React.lazy(() => import('./pages/PracticePage'));
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
@@ -55,6 +56,8 @@ export default function App() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="contests" element={<ContestsPage />} />
                 <Route path="review" element={<ReviewPage />} />
+                <Route path="practice" element={<PracticePage />} />
+                <Route path="practice/:questionId" element={<PracticePage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="discover" element={<DiscoverSheetsPage />} />
                 <Route path="groups" element={<GroupsPage />} />

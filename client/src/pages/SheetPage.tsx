@@ -18,7 +18,9 @@ import { useUIStore } from '../store/useUIStore';
 import { TopicCard } from '../components/features/sheet/TopicCard';
 import { Modal } from '../components/shared/Modal';
 
-import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search } from 'lucide-react';
+import { Sparkles, RotateCcw, Plus, BookOpen, CheckCircle2, Target, Zap, RefreshCcw, Search, UploadCloud } from 'lucide-react';
+import { SheetAgentDrawer } from '../components/features/sheet/SheetAgentDrawer';
+import { CSVImportModal } from '../components/features/sheet/CSVImportModal';
 import { FilterBar } from '../components/features/sheet/FilterBar';
 import { useTopics, useCreateTopic, useReorderTopics, useTopicStats } from '../hooks/useTopics';
 import { useResetProgress } from '../hooks/useQuestions';
@@ -37,6 +39,8 @@ export default function SheetPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isAgentOpen, setIsAgentOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [newTopicDescription, setNewTopicDescription] = useState('');
 
@@ -155,7 +159,23 @@ export default function SheetPage() {
                 <RotateCcw className="w-4 h-4" />
                 <span className="hidden sm:inline">Reset</span>
               </button>
-              <button onClick={() => setIsAddModalOpen(true)} className="btn-primary flex items-center gap-2">
+              <button
+                onClick={() => setIsAgentOpen(true)}
+                className="btn-primary flex items-center gap-2 bg-gradient-to-r from-brand-primary to-brand-accent shadow-md shadow-brand-primary/20"
+                title="Open AI Sheet Copilot"
+              >
+                <Sparkles className="w-4 h-4 animate-pulse" />
+                <span>AI Copilot</span>
+              </button>
+              <button
+                onClick={() => setIsImportOpen(true)}
+                className="btn-secondary flex items-center gap-2"
+                title="Import CSV or JSON"
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span className="hidden sm:inline">Import</span>
+              </button>
+              <button onClick={() => setIsAddModalOpen(true)} className="btn-secondary flex items-center gap-2">
                 <Plus className="w-4 h-4" />
                 Add Topic
               </button>
@@ -325,6 +345,9 @@ export default function SheetPage() {
             </div>
           </div>
         </Modal>
+
+        <SheetAgentDrawer isOpen={isAgentOpen} onClose={() => setIsAgentOpen(false)} />
+        <CSVImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
       </div>
     </div>
   );

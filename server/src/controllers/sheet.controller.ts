@@ -16,12 +16,23 @@ export const getPublicSheets = async (req: Request, res: Response) => {
 
 export const getSheetById = async (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const sheet = await sheetService.getSheetById(id);
+  const sheet = await sheetService.getSheetById(id, req.user?.id);
   res.status(200).json({ success: true, data: sheet });
 };
 
 export const cloneSheet = async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const result = await sheetService.cloneSheet(req.user!.id, id);
-  res.status(202).json(result);
+  res.status(202).json({ success: true, data: result });
+};
+
+export const deleteSheet = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await sheetService.deleteSheet(req.user!.id, id);
+  res.status(200).json({ success: true, data: result });
+};
+
+export const getMySheets = async (req: Request, res: Response) => {
+  const sheets = await sheetService.getMySheets(req.user!.id);
+  res.status(200).json({ success: true, data: sheets });
 };

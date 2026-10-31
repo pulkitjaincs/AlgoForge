@@ -56,15 +56,30 @@ export const AddQuestionModal = ({ isOpen, onClose, onSubmit, initialData = null
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.title.trim()) return;
+        const trimmedTitle = formData.title.trim();
+        if (!trimmedTitle) return;
 
         const tagsArray = formData.companyTags
             .split(',')
             .map(tag => tag.trim())
             .filter(tag => tag !== '');
 
+        let cleanProblemUrl = formData.problemUrl.trim();
+        if (cleanProblemUrl && !/^https?:\/\//i.test(cleanProblemUrl) && cleanProblemUrl !== '#') {
+            cleanProblemUrl = `https://${cleanProblemUrl}`;
+        }
+
+        let cleanResource = formData.resource.trim();
+        if (cleanResource && !/^https?:\/\//i.test(cleanResource) && cleanResource !== '#') {
+            cleanResource = `https://${cleanResource}`;
+        }
+
         onSubmit({
             ...formData,
+            title: trimmedTitle,
+            problemUrl: cleanProblemUrl,
+            resource: cleanResource,
+            notes: formData.notes.trim(),
             companyTags: tagsArray
         });
 

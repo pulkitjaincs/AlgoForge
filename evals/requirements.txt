@@ -1,0 +1,8 @@
+# AlgoForge AI Evaluation Suite Requirements
+# Note: The evaluation harness runs standalone with Python 3.12 stdlib,
+# but can optionally use pytest and requests/openai/google-genai for live runs.
+
+pytest>=8.0.0
+requests>=2.31.0
+tabulate>=0.9.0
+pydantic>=2.0.0

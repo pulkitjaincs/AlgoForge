@@ -8,6 +8,8 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
   REDIS_URL: z.string().url().optional(),
   SENTRY_DSN: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().optional().transform((val) => (val ? val.split('#')[0].trim() : undefined)),
 });
 
 export const env = envSchema.parse(process.env);

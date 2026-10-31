@@ -86,10 +86,12 @@ export const createQuestionSchema = z.object({
   body: z.object({
     title: z.string().min(1).max(500),
     difficulty: z.enum(['Basic', 'Easy', 'Medium', 'Hard']).optional(),
-    problemUrl: z.string().url().optional(),
+    problemUrl: z.union([z.string().url(), z.literal(''), z.literal('#')]).nullable().optional(),
     platform: z.enum(['leetcode', 'geeksforgeeks', 'codestudio', 'hackerrank', 'codechef', 'interviewbit', 'ninjas', 'other']).optional(),
-    resource: z.string().url().optional(),
+    resource: z.union([z.string().url(), z.literal(''), z.literal('#')]).nullable().optional(),
     companyTags: z.array(z.string().max(50)).max(20).optional(),
+    notes: z.string().max(5000).optional(),
+    isStarred: z.boolean().optional(),
   }),
 });
 
@@ -105,11 +107,12 @@ export const updateQuestionSchema = z.object({
   body: z.object({
     title: z.string().min(1).max(500).optional(),
     difficulty: z.enum(['Basic', 'Easy', 'Medium', 'Hard']).optional(),
-    problemUrl: z.string().url().optional(),
+    problemUrl: z.union([z.string().url(), z.literal(''), z.literal('#')]).nullable().optional(),
     platform: z.enum(['leetcode', 'geeksforgeeks', 'codestudio', 'hackerrank', 'codechef', 'interviewbit', 'ninjas', 'other']).optional(),
-    resource: z.string().url().optional(),
+    resource: z.union([z.string().url(), z.literal(''), z.literal('#')]).nullable().optional(),
     companyTags: z.array(z.string().max(50)).max(20).optional(),
     notes: z.string().max(5000).optional(),
+    isStarred: z.boolean().optional(),
   }),
 });
 
@@ -247,3 +250,99 @@ export const updatePasswordSchema = z.object({
 
 export type UpdateEmailInput = z.infer<typeof updateEmailSchema>['body'];
 export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>['body'];
+
+// AI Schemas
+export const socraticHintSchema = z.object({
+  body: z.object({
+    questionId: uuid,
+    userCode: z.string().max(20000).optional(),
+    currentApproach: z.string().max(2000).optional(),
+    hintLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  }),
+});
+
+export type SocraticHintInput = z.infer<typeof socraticHintSchema>['body'];
+
+export interface SocraticHintResponse {
+  hintLevel: 1 | 2 | 3;
+  levelName: 'conceptual' | 'complexity_edge_case' | 'counter_example';
+  guidance: string;
+  complexityTarget?: string;
+  counterExample?: string;
+  thoughtPrompt: string;
+}
+
+export interface AICoachPlan {
+  headline: string;
+  analysis: string;
+  targetMinutes: number;
+  contestAlert?: {
+    platform: string;
+    title: string;
+    startTime: string;
+    hoursUntil: number;
+  };
+  recommendations: Array<{
+    type: 'review' | 'weak_area' | 'contest_prep' | 'speed_drill';
+    title: string;
+    reason: string;
+    difficulty?: string;
+  }>;
+  motivationalTip: string;
+}
+
+// Sheet Agent & Generation Schemas
+export const generatedQuestionSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1).max(500),
+  difficulty: z.enum(['Basic', 'Easy', 'Medium', 'Hard']).default('Medium'),
+  problemUrl: z.string().url().or(z.literal('')).or(z.literal('#')).default(''),
+  platform: z.enum(['leetcode', 'geeksforgeeks', 'codestudio', 'hackerrank', 'codechef', 'interviewbit', 'ninjas', 'other']).default('leetcode'),
+  companyTags: z.array(z.string()).default([]),
+  notes: z.string().optional(),
+});
+
+export const generatedSubTopicSchema = z.object({
+  title: z.string().min(1).max(200),
+  questions: z.array(generatedQuestionSchema).default([]),
+});
+
+export const generatedTopicSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  subtopics: z.array(generatedSubTopicSchema).default([]),
+});
+
+export const sheetActionDiffSchema = z.object({
+  summary: z.string(),
+  addedTopics: z.array(generatedTopicSchema).default([]),
+  removedQuestionIds: z.array(z.string()).default([]),
+  reorderedTopicIds: z.array(z.string()).default([]),
+});
+
+export const sheetAgentPlanSchema = z.object({
+  body: z.object({
+    prompt: z.string().min(2, 'Prompt must be at least 2 characters').max(5000),
+    targetCount: z.number().int().min(5).max(100).optional().default(25),
+    topicFocus: z.string().optional(),
+    difficulty: z.string().optional(),
+  }),
+});
+
+export const sheetAgentApplySchema = z.object({
+  body: z.object({
+    diff: sheetActionDiffSchema,
+    destination: z.enum(['workspace', 'sheet', 'replace']).default('workspace'),
+    sheetTitle: z.string().max(200).optional(),
+    sheetDescription: z.string().max(1000).optional(),
+    isPublic: z.boolean().optional().default(false),
+  }),
+});
+
+export type GeneratedQuestion = z.infer<typeof generatedQuestionSchema>;
+export type GeneratedSubTopic = z.infer<typeof generatedSubTopicSchema>;
+export type GeneratedTopic = z.infer<typeof generatedTopicSchema>;
+export type SheetActionDiff = z.infer<typeof sheetActionDiffSchema>;
+export type SheetAgentPlanInput = z.infer<typeof sheetAgentPlanSchema>['body'];
+export type SheetAgentApplyInput = z.infer<typeof sheetAgentApplySchema>['body'];
+

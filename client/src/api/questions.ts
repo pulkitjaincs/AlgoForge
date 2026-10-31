@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import { Question } from '@algoforge/shared';
 
 export const questionsApi = {
+  getById: (questionId: string): Promise<Question> => apiClient.get(`/questions/${questionId}`),
   create: (topicId: string, subTopicId: string | null, data: Partial<Question>): Promise<Question> => {
     const url = subTopicId
       ? `/topics/${topicId}/subtopics/${subTopicId}/questions`

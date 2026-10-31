@@ -14,6 +14,8 @@ import integrationRoutes from './integration.routes.js';
 import contestRoutes from './contest.routes.js';
 import notificationRoutes from './notification.routes.js';
 import exportRoutes from './export.routes.js';
+import aiRoutes from './ai.routes.js';
+import sheetAgentRoutes from './sheetAgent.routes.js';
 
 const router = Router();
 
@@ -38,11 +40,13 @@ router.use('/analytics', analyticsRoutes);
 router.use('/practice', practiceRoutes);
 router.use('/review', reviewRoutes);
 router.use('/users', userRoutes);
+router.use('/sheets/agent', sheetAgentRoutes);
 router.use('/sheets', sheetRoutes);
 router.use('/groups', groupRoutes);
 router.use('/integrations', integrationRoutes);
 router.use('/contests', contestRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/export', exportRoutes);
+router.use('/ai', aiRoutes);
 
 export default router;

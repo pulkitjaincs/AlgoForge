@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { integrationsApi } from '../api/integrations';
+import { integrationsApi, SyncProgressEvent, Integration, IntegrationHeatmapItem } from '../api/integrations';
 import { toast } from 'sonner';
 
 export const useIntegrations = () => {
@@ -39,16 +40,82 @@ export const useUnlinkIntegration = () => {
   });
 };
 
+export interface SyncState {
+  isSyncing: boolean;
+  percent: number;
+  message: string;
+  isComplete: boolean;
+  error: string | null;
+}
+
 export const useSyncIntegrations = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: integrationsApi.syncIntegrations,
-    onSuccess: () => {
-      toast.info('Syncing started in the background...');
-      queryClient.invalidateQueries({ queryKey: ['integrations'] });
-      queryClient.invalidateQueries({ queryKey: ['integration-heatmap'] });
-    }
+  const [syncState, setSyncState] = useState<SyncState>({
+    isSyncing: false,
+    percent: 0,
+    message: '',
+    isComplete: false,
+    error: null,
   });
+
+  const startSync = async () => {
+    setSyncState({
+      isSyncing: true,
+      percent: 5,
+      message: 'Connecting to platform sync service...',
+      isComplete: false,
+      error: null,
+    });
+
+    try {
+      const result = await integrationsApi.streamSync((event: SyncProgressEvent) => {
+        if (event.type === 'progress') {
+          setSyncState((prev) => ({
+            ...prev,
+            percent: event.percent ?? prev.percent,
+            message: event.message ?? prev.message,
+          }));
+        }
+      });
+
+      if (result.integrations) {
+        queryClient.setQueryData(['integrations'], result.integrations);
+      }
+      if (result.heatmap) {
+        queryClient.setQueryData(['integration-heatmap'], result.heatmap);
+      }
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+
+      setSyncState({
+        isSyncing: false,
+        percent: 100,
+        message: 'All platforms synchronized!',
+        isComplete: true,
+        error: null,
+      });
+
+      toast.success('All platforms synchronized!');
+
+      setTimeout(() => {
+        setSyncState((prev) => ({ ...prev, isComplete: false }));
+      }, 3500);
+    } catch (err: any) {
+      setSyncState({
+        isSyncing: false,
+        percent: 0,
+        message: '',
+        isComplete: false,
+        error: err.message || 'Sync failed',
+      });
+      toast.error(err.message || 'Platform sync failed');
+    }
+  };
+
+  return {
+    syncState,
+    startSync,
+    isPending: syncState.isSyncing,
+  };
 };
 
 export const useIntegrationHeatmap = () => {

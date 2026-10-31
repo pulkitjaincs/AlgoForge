@@ -55,7 +55,7 @@ export default function PublicProfilePage() {
   const { data: profile, isLoading, error } = usePublicProfile(username || '');
 
   const aggregateStats = useMemo(() => {
-    let totalSolved = profile?.stats?.solvedQuestions || 0;
+    let totalSolved = 0;
     let peakRating = 0;
     let peakPlatform = '';
     let githubContributions = 0;

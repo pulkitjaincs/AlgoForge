@@ -10,7 +10,7 @@ import { syncGithub } from '../../services/platforms/github.js';
 import { cache } from '../../utils/cache.js';
 import { PlatformStats } from '../../types/platform.js';
 
-const syncPlatform = async (platform: string, username: string): Promise<PlatformStats | null> => {
+export const syncPlatform = async (platform: string, username: string): Promise<PlatformStats | null> => {
   if (platform === 'codeforces') return await syncCodeforces(username);
   if (platform === 'leetcode') return await syncLeetcode(username);
   if (platform === 'codechef') return await syncCodechef(username);

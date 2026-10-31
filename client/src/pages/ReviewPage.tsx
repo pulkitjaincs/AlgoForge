@@ -101,7 +101,7 @@ export default function ReviewPage() {
             <div className="mb-6">
                 <div className="flex justify-between items-start mb-2">
                     <h2 className="text-2xl font-bold text-text-main pr-8">{currentQuestion.title}</h2>
-                    {currentQuestion.problemUrl && (
+                    {currentQuestion.problemUrl && currentQuestion.problemUrl !== '#' && (
                         <a href={currentQuestion.problemUrl} target="_blank" rel="noreferrer" className="p-2 rounded bg-white/5 hover:bg-brand-primary/20 text-brand-primary transition-colors">
                             <ExternalLink className="w-5 h-5" />
                         </a>

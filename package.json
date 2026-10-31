@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "A full-stack DSA preparation platform with progress tracking",
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "pnpm --parallel --filter algoforge-server --filter client dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
